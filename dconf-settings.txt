@@ -1,0 +1,21 @@
+[org/gnome/settings-daemon/plugins/media-keys]
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0]
+binding='<Super>f'
+command='catfish'
+name='Launch Catfish'
+
+[org/gnome/shell/extensions/system-monitor]
+compact-display=true
+cpu-refresh-time=5000
+disk-refresh-time=5000
+freq-refresh-time=5000
+icon-display=false
+net-refresh-time=5000
+show-tooltip=true
+thermal-display=true
+
+[org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9]
+default-size-rows=35
+login-shell=true

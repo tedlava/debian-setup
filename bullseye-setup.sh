@@ -117,6 +117,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				touch fixed_btrfs
 				echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 				echo
+			fi
 		fi
 		# Create @home subvolume if not present, and move all user directories to it
 		if [ -z "$(grep @home /etc/fstab)" ]; then
@@ -138,6 +139,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				touch fixed_btrfs
 				echo '@home btrfs subvolume was created and all user directories have'
 				echo 'been moved to it.  '
+			fi
 		fi
 		if [ -a fixed_btrfs ]; then
 			echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
@@ -158,6 +160,14 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 		confirm_cmd "rsync -avu /etc/skel/ $HOME/"
 	fi
 	echo
+
+
+	# Add non-free and contrib to sources.list
+	echo
+	read -p 'Add non-free and contrib repositories to your /etc/apt/sources.list? [Y/n] '
+	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		confirm_cmd "sed -i 's/^\(deb.*$stable_name.*main\)$/\1 non-free contrib/' /etc/apt/sources.list"
+	fi
 
 
 	# Update/upgrade for base packages first
@@ -285,6 +295,14 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 	read -p 'firmware-iwlwifi? [y/N] '
 	if [ "${REPLY,}" == 'y' ]; then
 		firmware="$firmware firmware-iwlwifi"
+	fi
+	echo 'Please enter the package names (as they appear in the Debian repositories) of'
+	echo 'any other firmware not listed above that you would like to install now'
+	echo '(separated by spaces).'
+	echo
+	read -p 'Input extra firmware package names here, ENTER when finished: '
+	if [ -n "$REPLY" ]; then
+		firmware="$firmware $REPLY"
 	fi
 
 	if [ "$firmware" != '' ]; then

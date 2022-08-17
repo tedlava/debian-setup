@@ -12,7 +12,7 @@
 
 stable_name='bullseye'
 interactive=0
-
+home="$(getent passwd $SUDO_USER | cut -d: -f6)"
 
 function confirm_cmd {
 	local cmd="$*"
@@ -135,7 +135,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 					confirm_cmd "mv /mnt/$dir /mnt/@home/"
 				done
 				confirm_cmd 'umount /mnt'
-				confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" fstab'
+				confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
 				touch fixed_btrfs
 				echo '@home btrfs subvolume was created and all user directories have'
 				echo 'been moved to it.  '
@@ -156,8 +156,8 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 	echo
 	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "rm -rf $HOME/.*"
-		confirm_cmd "rsync -avu /etc/skel/ $HOME/"
+		confirm_cmd "rm -rf $home/.*"
+		confirm_cmd "rsync -avu /etc/skel/ $home/"
 	fi
 	echo
 
@@ -373,7 +373,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 		confirm_cmd "rm ${EXTENSION_ID}.zip"
 	done
 	# Move system-monitor extension to the left of the status area
-	confirm_cmd "sed -i \"s/Main.panel._addToPanelBox('system-monitor', tray, 1, panel);/Main.panel._addToPanelBox('system-monitor', tray, 0, panel);/\" $HOME/.local/share/gnome-shell/extensions/system-monitor@paradoxxx.zero.gmail.com/extension.js"
+	confirm_cmd "sed -i \"s/Main.panel._addToPanelBox('system-monitor', tray, 1, panel);/Main.panel._addToPanelBox('system-monitor', tray, 0, panel);/\" $home/.local/share/gnome-shell/extensions/system-monitor@paradoxxx.zero.gmail.com/extension.js"
 	echo
 
 
@@ -409,9 +409,9 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 	echo
 	read -p 'Install Windscribe? [Y/n] '
 	if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $HOME/windscribe.deb"
-		confirm_cmd "apt-get -y install $HOME/windscribe.deb"
-		confirm_cmd "rm $HOME/windscribe.deb"
+		confirm_cmd "curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $home/windscribe.deb"
+		confirm_cmd "apt-get -y install $home/windscribe.deb"
+		confirm_cmd "rm $home/windscribe.deb"
 	fi
 	echo
 
@@ -420,7 +420,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 	echo
 	echo 'Setting up links to detect fonts...'
 	echo
-	confirm_cmd "sudo -u $USER ln -s $HOME/fonts $HOME/.local/share/fonts"
+	confirm_cmd "sudo -u $SUDO_USER ln -s $home/fonts $home/.local/share/fonts"
 	confirm_cmd 'fc-cache -fv'
 	echo
 
@@ -457,10 +457,10 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 	echo 'Installing Neovim...'
 	echo
 	# Clone neovim-config first
-	confirm_cmd "sudo -u $USER mkdir $HOME/dotfiles"
-	confirm_cmd "sudo -u $USER git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
-	confirm_cmd "sudo -u $USER mkdir $HOME/.config/nvim"
-	confirm_cmd "sudo -u $USER ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
+	confirm_cmd "sudo -u $SUDO_USER mkdir $home/dotfiles"
+	confirm_cmd "sudo -u $SUDO_USER git -C $home/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
+	confirm_cmd "sudo -u $SUDO_USER mkdir $home/.config/nvim"
+	confirm_cmd "sudo -u $SUDO_USER ln -s $home/dotfiles/neovim-config/init.vim $home/.config/nvim/"
 
 	# Check all available versions in release, if greater than 0.4, install from apt, else download and install from github latest release!
 	nvim_ver=$(apt list neovim -a 2>/dev/null | grep neovim | cut -d' ' -f2 | cut -c1-3 | sort | tail -n1)
@@ -473,30 +473,30 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 		echo
 		echo 'Neovim version is too old in apt, downloading from github...'
 		echo
-		confirm_cmd "curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'\"' -f2) -o $HOME/nvim-github-latest-release.deb"
-		confirm_cmd "apt-get -y install $HOME/nvim-github-latest-release.deb"
-		confirm_cmd "rm $HOME/nvim-github-latest-release.deb"
+		confirm_cmd "curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'\"' -f2) -o $home/nvim-github-latest-release.deb"
+		confirm_cmd "apt-get -y install $home/nvim-github-latest-release.deb"
+		confirm_cmd "rm $home/nvim-github-latest-release.deb"
 	fi
 
 	# Install vim-plug
 	echo
 	echo 'Installing vim-plug into Neovim...'
 	echo
-	confirm_cmd "sudo -u $USER sh -c 'curl -fLo \"${XDG_DATA_HOME:-$HOME/.local/share}\"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'"
+	confirm_cmd "sudo -u $SUDO_USER sh -c 'curl -fLo \"${XDG_DATA_HOME:-$home/.local/share}\"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'"
 	echo
 	echo 'About to install Neovim plugins.  When Neovim is finished, please exit'
 	echo 'Neovim by typing ":qa" and then pressing ENTER.'
 	echo '*** Do NOT close the terminal window! ***'
 	echo
 	read -p 'Press ENTER to proceed with Neovim plugin installation. '
-	confirm_cmd "sudo -u $USER nvim -c PlugInstall"
+	confirm_cmd "sudo -u $SUDO_USER nvim -c PlugInstall"
 	echo
 
 	# Load Nautilus mime types for Neovim
 	echo
 	echo 'Loading Nautilus mime types (open all text files with Neovim)...'
 	echo
-	confirm_cmd "rsync -avu mimeapps.list $HOME/.config/"
+	confirm_cmd "rsync -avu mimeapps.list $home/.config/"
 	echo
 
 
@@ -572,8 +572,8 @@ elif [ -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 	fi
 	echo
 
-	confirm_cmd "sudo -u $USER mkdir -p $HOME/dotfiles/var"
-	confirm_cmd "ln -s $HOME/dotfiles/var $HOME/.var"
+	confirm_cmd "sudo -u $SUDO_USER mkdir -p $home/dotfiles/var"
+	confirm_cmd "ln -s $home/dotfiles/var $home/.var"
 
 
 	# Settings to fix after this script...

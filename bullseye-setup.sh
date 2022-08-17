@@ -105,11 +105,6 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 		fi
 
 
-		if [ -n "$( ls )" ]; then
-			confirm_cmd 'ls -l'
-		fi
-
-
 		# Move @rootfs btrfs subvolume to @ for timeshift
 		if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 			read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
@@ -118,9 +113,8 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				echo "Detected your / partition is on device: $dev"
 				confirm_cmd "mount $dev /mnt"
 				confirm_cmd 'mv /mnt/@rootfs /mnt/@'
-				old_root_fs=$(grep @rootfs /etc/fstab)
-				new_root_fs=$(echo $old_root_fs | sed 's/@rootfs/@/')
-				confirm_cmd "sed -i \"s|$old_root_fs|$new_root_fs|\" /etc/fstab"
+				confirm_cmd 'umount /mnt'
+				confirm_cmd 'sed -i "s/@rootfs/@/" /etc/fstab'
 				confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 				confirm_cmd 'update-grub'
 				touch fixed_btrfs
@@ -140,11 +134,8 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				for dir in ${user_dirs[@]}; do
 					confirm_cmd "mv /mnt/$dir /mnt/@home/"
 				done
-				old_home_fs=$(grep '/home.*btrfs' /etc/fstab)
-				new_home_fs=$(grep '/home.*btrfs' /etc/fstab | sed 's/defaults/defaults,subvol=@home/')
-				# sed -i "s|$old_home_fs|$new_home_fs|" /etc/fstab
-				# confirm_cmd 'sed -i "s|'"$old_home_fs|$new_home_fs|"'" /etc/fstab'
-				confirm_cmd "sed -i \"s|$old_home_fs|$new_home_fs|\" /etc/fstab"
+				confirm_cmd 'umount /mnt'
+				confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" fstab'
 				touch fixed_btrfs
 				echo '@home btrfs subvolume was created and all user directories have'
 				echo 'been moved to it.  '

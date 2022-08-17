@@ -11,16 +11,15 @@
 
 
 stable_name='bullseye'
-interactive=0
 home="$(getent passwd $SUDO_USER | cut -d: -f6)"
 
 function confirm_cmd {
 	local cmd="$*"
-	if [ $interactive -eq 1 ]; then
+	if [ -n $interactive ]; then
 		echo -e "About to execute command...\n    # $cmd"
 		read -p 'Proceed? [Y/n] '
 	fi
-	if [ $interactive -eq 0 ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+	if [ -z $interactive ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		eval $cmd
 	fi
 }
@@ -117,6 +116,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				confirm_cmd 'sed -i "s/@rootfs/@/" /etc/fstab'
 				confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 				confirm_cmd 'update-grub'
+				fixed_btrfs=1
 				touch fixed_btrfs
 				echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 				echo
@@ -132,22 +132,40 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				user_dirs=( $(ls /mnt) )
 				confirm_cmd "btrfs subvolume create /mnt/@home"
 				for dir in ${user_dirs[@]}; do
-					confirm_cmd "mv /mnt/$dir /mnt/@home/"
+					confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
 				done
 				confirm_cmd 'umount /mnt'
 				confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
+				fixed_btrfs=1
 				touch fixed_btrfs
-				echo '@home btrfs subvolume was created and all user directories have'
-				echo 'been moved to it.  '
+				echo '@home btrfs subvolume was created and all user directories were copied to it.'
 			fi
 		fi
-		if [ -a fixed_btrfs ]; then
+		if [ -n "$fixed_btrfs" ] || [ -a fixed_btrfs ]; then
 			echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
 			echo 'When it is finished rebooting, please re-run this same script and it will'
 			echo 'resume from where it left off.'
 			echo
 			read -p 'Press ENTER to reboot...'
 			systemctl reboot
+		fi
+	fi
+
+
+	# Remove old home directories in top level of btrfs @home partition
+	if [ -a fixed_btrfs ]; then
+		read -p 'Remove old copies of user directories? [Y/n] '
+		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+			dev=$(grep /home /etc/mtab | cut -d' ' -f1)
+			echo "Detected your /home partition is on device: $dev"
+			confirm_cmd "mount $dev /mnt"
+			user_dirs=( $(ls /mnt) )
+			for dir in ${user_dirs[@]}; do
+				if [ "$dir" != '@home' ]; then
+					confirm_cmd "rm -rf /mnt/$dir"
+				fi
+			done
+			confirm_cmd 'umount /mnt'
 		fi
 	fi
 

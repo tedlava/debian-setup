@@ -114,6 +114,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				confirm_cmd 'mv /mnt/@rootfs /mnt/@'
 				confirm_cmd 'umount /mnt'
 				confirm_cmd 'sed -i "s/@rootfs/@/" /etc/fstab'
+				echo 'Reinstalling grub and updating grub...'
 				confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 				confirm_cmd 'update-grub'
 				fixed_btrfs=1
@@ -131,17 +132,19 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				confirm_cmd "mount $dev /mnt"
 				user_dirs=( $(ls /mnt) )
 				confirm_cmd "btrfs subvolume create /mnt/@home"
+				touch fixed_btrfs # Creating this here so it gets copied to the new @home subvolume
 				for dir in ${user_dirs[@]}; do
 					confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
 				done
 				confirm_cmd 'umount /mnt'
 				confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
 				fixed_btrfs=1
-				touch fixed_btrfs
 				echo '@home btrfs subvolume was created and all user directories were copied to it.'
+				echo
 			fi
 		fi
 		if [ -n "$fixed_btrfs" ] || [ -a fixed_btrfs ]; then
+			echo
 			echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
 			echo 'When it is finished rebooting, please re-run this same script and it will'
 			echo 'resume from where it left off.'

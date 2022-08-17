@@ -10,18 +10,22 @@
 # since I now have an easy way of restoring my Debian back to it's ideal state.
 
 
+stable_name='bullseye'
+interactive=0
+
+
 function confirm_cmd {
 	local cmd="$*"
-	if [ -n "$interactive" ]; then
+	if [ $interactive -eq 1 ]; then
 		echo -e "About to execute command...\n    # $cmd"
 		read -p 'Proceed? [Y/n] '
 	fi
-	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+	if [ $interactive -eq 0 ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		eval $cmd
 	fi
 }
 
-stable_name='bullseye'
+
 echo "Ted's Debian Setup Script"
 echo '========================='
 echo
@@ -96,8 +100,13 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 		# Interactive mode?
 		echo 'Do you want to run the script in full interactive mode, which will ask for'
 		read -p 'confirmation for every command that may alter your system? [y/N] '
-		if [ "${REPLY,}" != 'y' ]; then
+		if [ "${REPLY,}" == 'y' ]; then
 			interactive=1
+		fi
+
+
+		if [ -n "$( ls )" ]; then
+			confirm_cmd 'ls -l'
 		fi
 
 
@@ -112,8 +121,8 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				old_root_fs=$(grep @rootfs /etc/fstab)
 				new_root_fs=$(echo $old_root_fs | sed 's/@rootfs/@/')
 				confirm_cmd "sed -i \"s|$old_root_fs|$new_root_fs|\" /etc/fstab"
-				grub-install ${dev:0:$((${#dev}-1))}
-				update-grub
+				confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
+				confirm_cmd 'update-grub'
 				touch fixed_btrfs
 				echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 				echo

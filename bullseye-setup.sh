@@ -67,8 +67,20 @@ while getopts ':hi' opt; do
 done
 
 
-if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
-	if [ ! -a fixed_btrfs ] ; then
+# Interactive mode?
+if [ -z "$interactive" ]; then
+	echo
+	echo 'Do you want to run the script in full interactive mode, which will ask for'
+	read -p 'confirmation for every command that may alter your system? [y/N] '
+	echo
+	if [ "${REPLY,}" == 'y' ]; then
+		interactive=1
+	fi
+fi
+
+
+if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
+	if [ ! -f fixed_btrfs ] ; then
 		echo 'This script automates some common settings that I use for'
 		echo 'every Debian installation while still allowing for some changes'
 		echo 'through interactive questions.'
@@ -94,14 +106,6 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 			exit
 		fi
 		echo
-
-
-		# Interactive mode?
-		echo 'Do you want to run the script in full interactive mode, which will ask for'
-		read -p 'confirmation for every command that may alter your system? [y/N] '
-		if [ "${REPLY,}" == 'y' ]; then
-			interactive=1
-		fi
 
 
 		# Move @rootfs btrfs subvolume to @ for timeshift
@@ -143,7 +147,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 				echo
 			fi
 		fi
-		if [ -n "$fixed_btrfs" ] || [ -a fixed_btrfs ]; then
+		if [ -n "$fixed_btrfs" ] || [ -f fixed_btrfs ]; then
 			echo
 			echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
 			echo 'When it is finished rebooting, please re-run this same script and it will'
@@ -156,7 +160,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 
 
 	# Remove old home directories in top level of btrfs @home partition
-	if [ -a fixed_btrfs ]; then
+	if [ -f fixed_btrfs ]; then
 		read -p 'Remove old copies of user directories? [Y/n] '
 		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 			dev=$(grep /home /etc/mtab | cut -d' ' -f1)
@@ -537,7 +541,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 		echo
 		echo 'Please enter the name of the nvidia-driver package you'
 		read -p 'want to install: '
-		# dpkg --add-architecture i386
+		confirm_cmd dpkg --add-architecture i386
 		confirm_cmd "apt-get -y install $REPLY"
 		echo
 	fi
@@ -553,7 +557,7 @@ if [ ! -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 	read -p 'Press ENTER to reboot...'
 	systemctl reboot
 
-elif [ -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
+elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	echo 'Proceeding with Part 2 of the setup script...'
 	echo
@@ -621,7 +625,7 @@ elif [ -a deb_setup_part_1 ] && [ ! -a deb_setup_part_2 ]; then
 	touch deb_setup_part_2
 
 
-elif [ -a deb_setup_part_1 ] && [ -a deb_setup_part_2 ]; then
+elif [ -f deb_setup_part_1 ] && [ -f deb_setup_part_2 ]; then
 	echo
 	echo "Ted's Debian Setup Script has finished.  If you want to run it again,"
 	echo 'please delete the temp files "fixed_btrfs", "deb_setup_part_1", and'

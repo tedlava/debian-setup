@@ -25,6 +25,7 @@ function confirm_cmd {
 }
 
 
+echo
 echo "Ted's Debian Setup Script"
 echo '========================='
 echo
@@ -80,7 +81,7 @@ fi
 
 
 if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
-	if [ ! -f fixed_btrfs ] ; then
+	if [ ! -f fixed_root ] && [ ! -f fixed_home ]; then
 		echo 'This script automates some common settings that I use for'
 		echo 'every Debian installation while still allowing for some changes'
 		echo 'through interactive questions.'
@@ -122,7 +123,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 				confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 				confirm_cmd 'update-grub'
 				fixed_btrfs=1
-				touch fixed_btrfs
+				touch fixed_root
 				echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 				echo
 			fi
@@ -136,7 +137,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 				confirm_cmd "mount $dev /mnt"
 				user_dirs=( $(ls /mnt) )
 				confirm_cmd "btrfs subvolume create /mnt/@home"
-				touch fixed_btrfs # Creating this here so it gets copied to the new @home subvolume
+				touch fixed_home # Creating this here so it gets copied to the new @home subvolume
 				for dir in ${user_dirs[@]}; do
 					confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
 				done
@@ -147,7 +148,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 				echo
 			fi
 		fi
-		if [ -n "$fixed_btrfs" ] || [ -f fixed_btrfs ]; then
+		if [ -n "$fixed_btrfs" ] || [ -f fixed_root ] || [ -f fixed_home ]; then
 			echo
 			echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
 			echo 'When it is finished rebooting, please re-run this same script and it will'
@@ -160,7 +161,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 
 	# Remove old home directories in top level of btrfs @home partition
-	if [ -f fixed_btrfs ]; then
+	if [ -f fixed_home ]; then
 		read -p 'Remove old copies of user directories? [Y/n] '
 		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 			dev=$(grep /home /etc/mtab | cut -d' ' -f1)
@@ -628,7 +629,7 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 elif [ -f deb_setup_part_1 ] && [ -f deb_setup_part_2 ]; then
 	echo
 	echo "Ted's Debian Setup Script has finished.  If you want to run it again,"
-	echo 'please delete the temp files "fixed_btrfs", "deb_setup_part_1", and'
-	echo '"deb_setup_part_2", and then re-run the script.'
+	echo 'please delete the temp files "fixed_root", "fixed_home", "deb_setup_part_1",'
+	echo 'and "deb_setup_part_2" (if they exist), and then re-run the script.'
 	echo
 fi

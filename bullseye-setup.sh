@@ -16,7 +16,7 @@ home="$(getent passwd $SUDO_USER | cut -d: -f6)"
 function confirm_cmd {
 	local cmd="$*"
 	if [ -n $interactive ]; then
-		echo -e "About to execute command...\n    # $cmd"
+		echo -e "\nAbout to execute command...\n    # $cmd"
 		read -p 'Proceed? [Y/n] '
 	fi
 	if [ -z $interactive ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
@@ -304,7 +304,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	fi
 	read -p 'intel-microcode? [Y/n] '
 	if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-		firmware='$firmware intel-microcode'
+		firmware="$firmware intel-microcode"
 	fi
 	read -p 'amd64-microcode? [y/N] '
 	if [ "${REPLY,}" == 'y' ]; then

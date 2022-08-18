@@ -12,6 +12,13 @@
 
 stable_name='bullseye'
 home="$(getent passwd $SUDO_USER | cut -d: -f6)"
+extension_urls=(
+	https://extensions.gnome.org/extension/906/sound-output-device-chooser/
+	https://extensions.gnome.org/extension/72/recent-items/
+	https://extensions.gnome.org/extension/779/clipboard-indicator/
+	https://extensions.gnome.org/extension/120/system-monitor/
+)
+
 
 function confirm_cmd {
 	local cmd="$*"
@@ -139,7 +146,9 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 				confirm_cmd "btrfs subvolume create /mnt/@home"
 				touch fixed_home # Creating this here so it gets copied to the new @home subvolume
 				for dir in ${user_dirs[@]}; do
-					confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
+					if [ "$dir" != '@home' ]; then
+						confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
+					fi
 				done
 				confirm_cmd 'umount /mnt'
 				confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
@@ -162,7 +171,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 	# Remove old home directories in top level of btrfs @home partition
 	if [ -f fixed_home ]; then
-		read -p 'Remove old copies of user directories? [Y/n] '
+		read -p 'Check for and remove old copies of user directories (siblings to @home)? [Y/n] '
 		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 			dev=$(grep /home /etc/mtab | cut -d' ' -f1)
 			echo "Detected your /home partition is on device: $dev"
@@ -174,6 +183,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 				fi
 			done
 			confirm_cmd 'umount /mnt'
+			rm fixed_home
 		fi
 	fi
 
@@ -188,11 +198,11 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 
 
-	# Add non-free and contrib to sources.list
+	# Add contrib and non-free to sources.list
 	echo
-	read -p 'Add non-free and contrib repositories to your /etc/apt/sources.list? [Y/n] '
+	read -p 'Add contrib and non-free repositories to your /etc/apt/sources.list? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "sed -i 's/^\(deb.*$stable_name.*main\)$/\1 non-free contrib/' /etc/apt/sources.list"
+		confirm_cmd "sed -i 's/^\(deb.*$stable_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
 	fi
 
 
@@ -268,7 +278,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 	# Backports
 	echo
-	read -p 'Do you want to enable backports? [y/N] '
+	read -p 'Do you want to enable backports? (newer kernel for newer hardware) [y/N] '
 	if [ "${REPLY,}" == 'y' ]; then
 		confirm_cmd "echo -e \"\\n# Backports\\ndeb http://deb.debian.org/debian ${stable_name}-backports main contrib non-free\" >> /etc/apt/sources.list"
 		confirm_cmd 'apt-get update'
@@ -382,25 +392,23 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo 'Installing Gnome extensions...'
 	echo
 	confirm_cmd 'apt-get -y install gir1.2-gtop-2.0'
-	extensions=(
-		https://extensions.gnome.org/extension/72/recent-items/
-		https://extensions.gnome.org/extension/906/sound-output-device-chooser/
-		https://extensions.gnome.org/extension/120/system-monitor/
-	)
-	for i in "${extensions[@]}"; do
-		EXTENSION_ID=$(curl -s $i | grep -oP 'data-uuid="\K[^"]+')
-		VERSION_TAG=$(curl -Lfs "https://extensions.gnome.org/extension-query/?search=$EXTENSION_ID" | jq '.extensions[0] | .shell_version_map | map(.pk) | max')
-		confirm_cmd 'wget -O ${EXTENSION_ID}.zip "https://extensions.gnome.org/download-extension/${EXTENSION_ID}.shell-extension.zip?version_tag=$VERSION_TAG"'
-		confirm_cmd "gnome-extensions install --force ${EXTENSION_ID}.zip"
-		if ! gnome-extensions list | grep --quiet ${EXTENSION_ID}; then
-			confirm_cmd "busctl --user call org.gnome.Shell.Extensions /org/gnome/Shell/Extensions org.gnome.Shell.Extensions InstallRemoteExtension s ${EXTENSION_ID}"
+	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
+	base_url='https://extensions.gnome.org'
+	confirm_cmd 'temp=$(mktemp -d)'
+	for extension in "${extension_urls[@]}"; do
+		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
+		info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
+		download_url="$base_url$(curl "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
+		confirm_cmd "curl -L '$download_url' > '$temp/$ext_uuid.zip'"
+		ext_dir="$home/.local/share/gnome-shell/extensions/$ext_uuid"
+		confirm_cmd "unzip '$temp/$ext_uuid.zip' -d '$ext_dir'"
+		# Move all indicators to the right of the system-monitor indicator on the panel
+		if [ -z $(echo "$ext_uuid" | grep 'system-monitor') ]; then
+			confirm_cmd "sed 's/\(Main.panel.addToStatusArea([^,]*,[^,]*\)\(, [0-9]\)\?);/\1, 2);/' $ext_dir/extension.js"
 		fi
-		confirm_cmd "gnome-extensions enable ${EXTENSION_ID}"
-		confirm_cmd "rm ${EXTENSION_ID}.zip"
+		confirm_cmd "gnome-extensions enable ${ext_uuid}"
 	done
-	# Move system-monitor extension to the left of the status area
-	confirm_cmd "sed -i \"s/Main.panel._addToPanelBox('system-monitor', tray, 1, panel);/Main.panel._addToPanelBox('system-monitor', tray, 0, panel);/\" $home/.local/share/gnome-shell/extensions/system-monitor@paradoxxx.zero.gmail.com/extension.js"
-	echo
+	confirm_cmd "rm -rfv '$temp' # Where the extension .zip files were downloaded to..."
 
 
 	# Install other system utilities

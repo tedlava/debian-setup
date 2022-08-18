@@ -48,7 +48,7 @@ if [ `id -u` -ne 0 ]; then
 fi
 
 
-while getopts ':hi' opt; do
+while getopts ':hie' opt; do
 	case $opt in
 	h)
 		echo
@@ -64,6 +64,12 @@ while getopts ':hi' opt; do
 		echo 'executing it, then go for it!'
 		echo
 		interactive=1
+		;;
+	h)
+		echo
+		echo 'Skip to Gnome extensions!'
+		echo
+		skip_to_ext=1
 		;;
 	\?)
 		echo
@@ -88,303 +94,305 @@ fi
 
 
 if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
-	if [ ! -f fixed_root ] && [ ! -f fixed_home ]; then
-		echo 'This script automates some common settings that I use for'
-		echo 'every Debian installation while still allowing for some changes'
-		echo 'through interactive questions.'
-		echo
-		echo 'The script may require a few reboots, you will be prompted each'
-		echo 'time.  After the script reboots your system, please re-run the'
-		echo 'same script again and it should resume automatically.'
-
-
-		# Query user for requirements before proceeding
-		echo
-		echo 'Requirements:'
-		echo "    - Debian ${stable_name^} is installed, / and /home partitions set up as btrfs"
-		echo '    - Have patched fonts saved & unzipped in ~/fonts directory (default: Hack)'
-		echo '    - Have a stable Internet connection to download packages'
-		echo '    - Run "sudo dmesg" and look for RED text to know what firmware you need'
-		echo
-		read -p 'Have all of the above been completed? [y/N] '
-		if [ "${REPLY,}" != 'y' ]; then
+	if [ -n "$skip_to_ext" ]; then
+		if [ ! -f fixed_root ] && [ ! -f fixed_home ]; then
+			echo 'This script automates some common settings that I use for'
+			echo 'every Debian installation while still allowing for some changes'
+			echo 'through interactive questions.'
 			echo
-			echo 'Please do those first, then run this script again!'
+			echo 'The script may require a few reboots, you will be prompted each'
+			echo 'time.  After the script reboots your system, please re-run the'
+			echo 'same script again and it should resume automatically.'
+
+
+			# Query user for requirements before proceeding
 			echo
-			exit
-		fi
-		echo
-
-
-		# Move @rootfs btrfs subvolume to @ for timeshift
-		if [ -n "$(grep @rootfs /etc/fstab)" ]; then
-			read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
-			if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-				dev=$(grep '\s/\s' /etc/mtab | cut -d' ' -f1)
-				echo "Detected your / partition is on device: $dev"
-				confirm_cmd "mount $dev /mnt"
-				confirm_cmd 'mv /mnt/@rootfs /mnt/@'
-				confirm_cmd 'umount /mnt'
-				confirm_cmd 'sed -i "s/@rootfs/@/" /etc/fstab'
-				echo 'Reinstalling grub and updating grub...'
-				confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
-				confirm_cmd 'update-grub'
-				fixed_btrfs=1
-				touch fixed_root
-				echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
+			echo 'Requirements:'
+			echo "    - Debian ${stable_name^} is installed, / and /home partitions set up as btrfs"
+			echo '    - Have patched fonts saved & unzipped in ~/fonts directory (default: Hack)'
+			echo '    - Have a stable Internet connection to download packages'
+			echo '    - Run "sudo dmesg" and look for RED text to know what firmware you need'
+			echo
+			read -p 'Have all of the above been completed? [y/N] '
+			if [ "${REPLY,}" != 'y' ]; then
 				echo
+				echo 'Please do those first, then run this script again!'
+				echo
+				exit
+			fi
+			echo
+
+
+			# Move @rootfs btrfs subvolume to @ for timeshift
+			if [ -n "$(grep @rootfs /etc/fstab)" ]; then
+				read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
+				if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+					dev=$(grep '\s/\s' /etc/mtab | cut -d' ' -f1)
+					echo "Detected your / partition is on device: $dev"
+					confirm_cmd "mount $dev /mnt"
+					confirm_cmd 'mv /mnt/@rootfs /mnt/@'
+					confirm_cmd 'umount /mnt'
+					confirm_cmd 'sed -i "s/@rootfs/@/" /etc/fstab'
+					echo 'Reinstalling grub and updating grub...'
+					confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
+					confirm_cmd 'update-grub'
+					fixed_btrfs=1
+					touch fixed_root
+					echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
+					echo
+				fi
+			fi
+			# Create @home subvolume if not present, and move all user directories to it
+			if [ -z "$(grep @home /etc/fstab)" ]; then
+				read -p 'Move /home directory into an @home btrfs subvolume for timeshift? [Y/n] '
+				if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+					dev=$(grep /home /etc/mtab | cut -d' ' -f1)
+					echo "Detected your /home partition is on device: $dev"
+					confirm_cmd "mount $dev /mnt"
+					user_dirs=( $(ls /mnt) )
+					confirm_cmd "btrfs subvolume create /mnt/@home"
+					touch fixed_home # Creating this here so it gets copied to the new @home subvolume
+					for dir in ${user_dirs[@]}; do
+						if [ "$dir" != '@home' ]; then
+							confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
+						fi
+					done
+					confirm_cmd 'umount /mnt'
+					confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
+					fixed_btrfs=1
+					echo '@home btrfs subvolume was created and all user directories were copied to it.'
+					echo
+				fi
+			fi
+			if [ -n "$fixed_btrfs" ] || [ -f fixed_root ] || [ -f fixed_home ]; then
+				echo
+				echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
+				echo 'When it is finished rebooting, please re-run this same script and it will'
+				echo 'resume from where it left off.'
+				echo
+				read -p 'Press ENTER to reboot...'
+				systemctl reboot
 			fi
 		fi
-		# Create @home subvolume if not present, and move all user directories to it
-		if [ -z "$(grep @home /etc/fstab)" ]; then
-			read -p 'Move /home directory into an @home btrfs subvolume for timeshift? [Y/n] '
+
+
+		# Remove old home directories in top level of btrfs @home partition
+		if [ -f fixed_home ]; then
+			read -p 'Check for and remove old copies of user directories (siblings to @home)? [Y/n] '
 			if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 				dev=$(grep /home /etc/mtab | cut -d' ' -f1)
 				echo "Detected your /home partition is on device: $dev"
 				confirm_cmd "mount $dev /mnt"
 				user_dirs=( $(ls /mnt) )
-				confirm_cmd "btrfs subvolume create /mnt/@home"
-				touch fixed_home # Creating this here so it gets copied to the new @home subvolume
 				for dir in ${user_dirs[@]}; do
 					if [ "$dir" != '@home' ]; then
-						confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
+						confirm_cmd "rm -rf /mnt/$dir"
 					fi
 				done
 				confirm_cmd 'umount /mnt'
-				confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
-				fixed_btrfs=1
-				echo '@home btrfs subvolume was created and all user directories were copied to it.'
-				echo
+				rm fixed_home
 			fi
 		fi
-		if [ -n "$fixed_btrfs" ] || [ -f fixed_root ] || [ -f fixed_home ]; then
-			echo
-			echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
-			echo 'When it is finished rebooting, please re-run this same script and it will'
-			echo 'resume from where it left off.'
-			echo
-			read -p 'Press ENTER to reboot...'
-			systemctl reboot
-		fi
-	fi
 
 
-	# Remove old home directories in top level of btrfs @home partition
-	if [ -f fixed_home ]; then
-		read -p 'Check for and remove old copies of user directories (siblings to @home)? [Y/n] '
+		# Remove old configuration in .dotfiles
+		echo
+		read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
 		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-			dev=$(grep /home /etc/mtab | cut -d' ' -f1)
-			echo "Detected your /home partition is on device: $dev"
-			confirm_cmd "mount $dev /mnt"
-			user_dirs=( $(ls /mnt) )
-			for dir in ${user_dirs[@]}; do
-				if [ "$dir" != '@home' ]; then
-					confirm_cmd "rm -rf /mnt/$dir"
-				fi
-			done
-			confirm_cmd 'umount /mnt'
-			rm fixed_home
+			confirm_cmd "rm -rf $home/.*"
+			confirm_cmd "rsync -avu /etc/skel/ $home/"
 		fi
-	fi
+		echo
 
 
-	# Remove old configuration in .dotfiles
-	echo
-	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "rm -rf $home/.*"
-		confirm_cmd "rsync -avu /etc/skel/ $home/"
-	fi
-	echo
+		# Add contrib and non-free to sources.list
+		echo
+		read -p 'Add contrib and non-free repositories to your /etc/apt/sources.list? [Y/n] '
+		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+			confirm_cmd "sed -i 's/^\(deb.*$stable_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
+		fi
 
 
-	# Add contrib and non-free to sources.list
-	echo
-	read -p 'Add contrib and non-free repositories to your /etc/apt/sources.list? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "sed -i 's/^\(deb.*$stable_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
-	fi
-
-
-	# Update/upgrade for base packages first
-	echo
-	echo 'Updating apt cache...'
-	echo
-	confirm_cmd 'apt-get update'
-	echo
-	read -p 'Upgrade packages? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd 'apt-get -y upgrade'
-	fi
-	echo
-
-
-	# Install basic utilities
-	echo
-	echo 'Installing rsync, git, curl, timeshift, and gufw...'
-	echo
-	confirm_cmd 'apt-get -y install rsync git curl timeshift gufw'
-	echo
-
-
-	# Inform user to take a snapshot with Timeshift, must use GUI
-	echo
-	echo 'Timeshift must be set up through the GUI before system snapshots can'
-	echo 'be taken to rollback a bad update or configuration or installation'
-	echo 'of a bad package.  Only use timeshift to snapshot the @ subvolume.'
-	echo 'Check the boxes to add monthly and weekly snapshots as well.  All'
-	echo 'other default settings should be sufficient.  Take an initial snapshot'
-	echo "and give it a title like \"Debian ${stable_name^} installed\", just in case you"
-	echo 'screw something up in the rest of the installation... ;)  After it is'
-	echo 'done snapshotting the system, you may close the timeshift window.'
-	echo
-	read -p 'Press ENTER to open timeshift...'
-	confirm_cmd 'timeshift-launcher'
-	echo
-
-
-	# Inform user to turn on firewall with Gufw, must use GUI
-	echo
-	echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
-	echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
-	echo 'through SSH.  Make sure the firewall is turned on before closing the window.'
-	echo
-	read -p 'Press ENTER to open gufw...'
-	confirm_cmd 'gufw'
-
-
-	# SSD
-	echo
-	read -p 'Did you install Debian to an SSD? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		echo -e "\nTrimming to recover some disk space..."
-		confirm_cmd 'fstrim -v /'
-		confirm_cmd 'fstrim -v /home'
-		echo 'Changing swappiness for SSD...'
-		confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
-		echo 'It is also highly recommended that you modify your web browser settings'
-		echo 'to prevent unnecessary writing to your SSD to extend its life.'
-	fi
-	echo
-
-
-	# Purge unwanted packages
-	echo
-	echo 'Removing unwanted packages from the base installation...'
-	confirm_cmd 'apt-get -y purge evolution'
-	confirm_cmd 'apt-get -y autopurge'
-	echo
-
-
-	# Backports
-	echo
-	read -p 'Do you want to enable backports? (newer kernel for newer hardware) [y/N] '
-	if [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "echo -e \"\\n# Backports\\ndeb http://deb.debian.org/debian ${stable_name}-backports main contrib non-free\" >> /etc/apt/sources.list"
+		# Update/upgrade for base packages first
+		echo
+		echo 'Updating apt cache...'
+		echo
 		confirm_cmd 'apt-get update'
 		echo
-		read -p 'Do you want to install the latest kernel from backports? [y/N] '
-		if [ "${REPLY,}" == 'y' ]; then
-			backports=" -t ${stable_name}-backports "
-			confirm_cmd "apt-get -y $backports install linux-image-amd64"
-		else
-			backports=''
+		read -p 'Upgrade packages? [Y/n] '
+		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+			confirm_cmd 'apt-get -y upgrade'
 		fi
-	fi
-	echo
+		echo
 
 
-	# Kernel headers
-	echo
-	read -p 'Do you want to install the Linux headers? (required for NVIDIA drivers) [y/N] '
-	if [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "apt-get -y $backports install linux-headers-amd64"
-	fi
-	echo
+		# Install basic utilities
+		echo
+		echo 'Installing rsync, git, curl, timeshift, and gufw...'
+		echo
+		confirm_cmd 'apt-get -y install rsync git curl timeshift gufw'
+		echo
 
 
-	# Firmware
-	echo
-	echo 'What firmware packages do you need?'
-	echo
-	firmware=''
-	read -p 'firmware-misc-nonfree? [Y/n] '
-	if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-		firmware="$firmware firmware-misc-nonfree"
-	fi
-	read -p 'intel-microcode? [Y/n] '
-	if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-		firmware="$firmware intel-microcode"
-	fi
-	read -p 'amd64-microcode? [y/N] '
-	if [ "${REPLY,}" == 'y' ]; then
-		firmware="$firmware amd64-microcode"
-	fi
-	read -p 'firmware-realtek? [y/N] '
-	if [ "${REPLY,}" == 'y' ]; then
-		firmware="$firmware firmware-realtek"
-	fi
-	read -p 'firmware-atheros? [y/N] '
-	if [ "${REPLY,}" == 'y' ]; then
-		firmware="$firmware firmware-atheros"
-	fi
-	read -p 'firmware-iwlwifi? [y/N] '
-	if [ "${REPLY,}" == 'y' ]; then
-		firmware="$firmware firmware-iwlwifi"
-	fi
-	echo 'Please enter the package names (as they appear in the Debian repositories) of'
-	echo 'any other firmware not listed above that you would like to install now'
-	echo '(separated by spaces).'
-	echo
-	read -p 'Input extra firmware package names here, ENTER when finished: '
-	if [ -n "$REPLY" ]; then
-		firmware="$firmware $REPLY"
-	fi
-
-	if [ "$firmware" != '' ]; then
-		confirm_cmd "apt-get -y $backports install $firmware"
-	fi
-	echo
+		# Inform user to take a snapshot with Timeshift, must use GUI
+		echo
+		echo 'Timeshift must be set up through the GUI before system snapshots can'
+		echo 'be taken to rollback a bad update or configuration or installation'
+		echo 'of a bad package.  Only use timeshift to snapshot the @ subvolume.'
+		echo 'Check the boxes to add monthly and weekly snapshots as well.  All'
+		echo 'other default settings should be sufficient.  Take an initial snapshot'
+		echo "and give it a title like \"Debian ${stable_name^} installed\", just in case you"
+		echo 'screw something up in the rest of the installation... ;)  After it is'
+		echo 'done snapshotting the system, you may close the timeshift window.'
+		echo
+		read -p 'Press ENTER to open timeshift...'
+		confirm_cmd 'timeshift-launcher'
+		echo
 
 
-	# GDM auto-suspend disabled
-	# Can this be done more efficiently? I don't like the output of "No protocol specified"
-	echo
-	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
-	echo 'Will still auto-suspend if on battery power...'
-	echo
-	confirm_cmd "sudo -u Debian-gdm dbus-launch gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
-	echo
+		# Inform user to turn on firewall with Gufw, must use GUI
+		echo
+		echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
+		echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
+		echo 'through SSH.  Make sure the firewall is turned on before closing the window.'
+		echo
+		read -p 'Press ENTER to open gufw...'
+		confirm_cmd 'gufw'
 
 
-	# TLP for better battery life on laptops
-	echo
-	read -p 'Do you want to install TLP for better battery life on laptops? [Y/n] '
-	if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "apt-get -y $backports install tlp tlp-rdw"
+		# SSD
+		echo
+		read -p 'Did you install Debian to an SSD? [Y/n] '
+		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+			echo -e "\nTrimming to recover some disk space..."
+			confirm_cmd 'fstrim -v /'
+			confirm_cmd 'fstrim -v /home'
+			echo 'Changing swappiness for SSD...'
+			confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
+			echo 'It is also highly recommended that you modify your web browser settings'
+			echo 'to prevent unnecessary writing to your SSD to extend its life.'
+		fi
+		echo
+
+
+		# Purge unwanted packages
+		echo
+		echo 'Removing unwanted packages from the base installation...'
+		confirm_cmd 'apt-get -y purge evolution'
+		confirm_cmd 'apt-get -y autopurge'
+		echo
+
+
+		# Backports
+		echo
+		read -p 'Do you want to enable backports? (newer kernel for newer hardware) [y/N] '
+		if [ "${REPLY,}" == 'y' ]; then
+			confirm_cmd "echo -e \"\\n# Backports\\ndeb http://deb.debian.org/debian ${stable_name}-backports main contrib non-free\" >> /etc/apt/sources.list"
+			confirm_cmd 'apt-get update'
+			echo
+			read -p 'Do you want to install the latest kernel from backports? [y/N] '
+			if [ "${REPLY,}" == 'y' ]; then
+				backports=" -t ${stable_name}-backports "
+				confirm_cmd "apt-get -y $backports install linux-image-amd64"
+			else
+				backports=''
+			fi
+		fi
+		echo
+
+
+		# Kernel headers
+		echo
+		read -p 'Do you want to install the Linux headers? (required for NVIDIA drivers) [y/N] '
+		if [ "${REPLY,}" == 'y' ]; then
+			confirm_cmd "apt-get -y $backports install linux-headers-amd64"
+		fi
+		echo
+
+
+		# Firmware
+		echo
+		echo 'What firmware packages do you need?'
+		echo
+		firmware=''
+		read -p 'firmware-misc-nonfree? [Y/n] '
+		if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
+			firmware="$firmware firmware-misc-nonfree"
+		fi
+		read -p 'intel-microcode? [Y/n] '
+		if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
+			firmware="$firmware intel-microcode"
+		fi
+		read -p 'amd64-microcode? [y/N] '
+		if [ "${REPLY,}" == 'y' ]; then
+			firmware="$firmware amd64-microcode"
+		fi
+		read -p 'firmware-realtek? [y/N] '
+		if [ "${REPLY,}" == 'y' ]; then
+			firmware="$firmware firmware-realtek"
+		fi
+		read -p 'firmware-atheros? [y/N] '
+		if [ "${REPLY,}" == 'y' ]; then
+			firmware="$firmware firmware-atheros"
+		fi
+		read -p 'firmware-iwlwifi? [y/N] '
+		if [ "${REPLY,}" == 'y' ]; then
+			firmware="$firmware firmware-iwlwifi"
+		fi
+		echo 'Please enter the package names (as they appear in the Debian repositories) of'
+		echo 'any other firmware not listed above that you would like to install now'
+		echo '(separated by spaces).'
+		echo
+		read -p 'Input extra firmware package names here, ENTER when finished: '
+		if [ -n "$REPLY" ]; then
+			firmware="$firmware $REPLY"
+		fi
+
+		if [ "$firmware" != '' ]; then
+			confirm_cmd "apt-get -y $backports install $firmware"
+		fi
+		echo
+
+
+		# GDM auto-suspend disabled
+		# Can this be done more efficiently? I don't like the output of "No protocol specified"
+		echo
+		echo 'Setting up gdm to stay on when plugged in, but not logged in.'
+		echo 'Will still auto-suspend if on battery power...'
+		echo
+		confirm_cmd "sudo -u Debian-gdm dbus-launch gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
+		echo
+
+
+		# TLP for better battery life on laptops
+		echo
+		read -p 'Do you want to install TLP for better battery life on laptops? [Y/n] '
+		if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
+			confirm_cmd "apt-get -y $backports install tlp tlp-rdw"
+		fi
+		echo
+
+
+		# Plymouth graphical boot up
+		echo
+		echo 'Installing Plymouth for graphical boot...'
+		echo
+		confirm_cmd 'apt-get -y install plymouth'
+		echo
+		echo 'Do you want to add any extra parameters to /etc/default/grub'
+		echo 'GRUB_CMDLINE_LINUX_DEFAULT ? "splash" will already be added.'
+		echo '   For example, pci=noaer'
+		echo
+		read -p 'Input your parameters here, ENTER when finished: '
+		if [ "$REPLY" != '' ]; then
+			grub=" $REPLY"
+		fi
+		# confirm_cmd "sed 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="'"'"quiet splash$grub"'"'"/' /etc/default/grub"
+		confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash$grub\"/' /etc/default/grub"
+		echo
+		confirm_cmd 'update-grub'
+		echo
 	fi
-	echo
-
-
-	# Plymouth graphical boot up
-	echo
-	echo 'Installing Plymouth for graphical boot...'
-	echo
-	confirm_cmd 'apt-get -y install plymouth'
-	echo
-	echo 'Do you want to add any extra parameters to /etc/default/grub'
-	echo 'GRUB_CMDLINE_LINUX_DEFAULT ? "splash" will already be added.'
-	echo '   For example, pci=noaer'
-	echo
-	read -p 'Input your parameters here, ENTER when finished: '
-	if [ "$REPLY" != '' ]; then
-		grub=" $REPLY"
-	fi
-	# confirm_cmd "sed 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="'"'"quiet splash$grub"'"'"/' /etc/default/grub"
-	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash$grub\"/' /etc/default/grub"
-	echo
-	confirm_cmd 'update-grub'
-	echo
 
 
 	# Install Gnome extensions
@@ -394,20 +402,24 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	confirm_cmd 'apt-get -y install gir1.2-gtop-2.0'
 	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
 	base_url='https://extensions.gnome.org'
-	confirm_cmd 'temp=$(mktemp -d)'
+	confirm_cmd 'temp=$(sudo -u $SUDO_USER mktemp -d)'
+	trap "rm -rfv $temp" EXIT
 	for extension in "${extension_urls[@]}"; do
 		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
+		# confirm_cmd "busctl --user call org.gnome.Shell.Extensions /org/gnome/Shell/Extensions org.gnome.Shell.Extensions InstallRemoteExtension s ${ext_uuid}"
 		info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
 		download_url="$base_url$(curl "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
 		confirm_cmd "curl -L '$download_url' > '$temp/$ext_uuid.zip'"
 		ext_dir="$home/.local/share/gnome-shell/extensions/$ext_uuid"
-		confirm_cmd "unzip '$temp/$ext_uuid.zip' -d '$ext_dir'"
+		# confirm_cmd "sudo -u $SUDO_USER unzip '$temp/$ext_uuid.zip' -d '$ext_dir'"
+		confirm_cmd "sudo -u $SUDO_USER gnome-extensions install $temp/$ext_uuid.zip"
 		# Move all indicators to the right of the system-monitor indicator on the panel
 		if [ -z $(echo "$ext_uuid" | grep 'system-monitor') ]; then
-			confirm_cmd "sed 's/\(Main.panel.addToStatusArea([^,]*,[^,]*\)\(, [0-9]\)\?);/\1, 2);/' $ext_dir/extension.js"
+			confirm_cmd "sed -i 's/\(Main.panel.addToStatusArea([^,]*,[^,]*\)\(, [0-9]\)\?);/\1, 2);/' $ext_dir/extension.js"
 		fi
-		confirm_cmd "gnome-extensions enable ${ext_uuid}"
+		# confirm_cmd "sudo -u $SUDO_USER gnome-extensions enable ${ext_uuid}"
 	done
+	trap '' EXIT
 	confirm_cmd "rm -rfv '$temp' # Where the extension .zip files were downloaded to..."
 
 

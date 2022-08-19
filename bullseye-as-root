@@ -12,8 +12,10 @@ function confirm_cmd {
 	if [ -n $interactive ]; then
 		echo -e "\nAbout to execute command as root...\n    # $cmd"
 		read -p 'Proceed? [Y/n] '
-	fi
-	if [ -z $interactive ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+			eval $cmd
+		fi
+	else
 		echo -e "\nExecuting command as root...\n    # $cmd\n"
 		eval $cmd
 	fi

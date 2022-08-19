@@ -31,8 +31,10 @@ function confirm_cmd {
 	if [ -n $interactive ]; then
 		echo -e "\nAbout to execute command...\n    $ $cmd"
 		read -p 'Proceed? [Y/n] '
-	fi
-	if [ -z $interactive ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+			eval $cmd
+		fi
+	else
 		echo -e "\nExecuting command...\n    $ $cmd\n"
 		eval $cmd
 	fi
@@ -131,16 +133,6 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 			touch reqs_confirmed
 			echo
 		fi
-
-
-		# Remove old configuration in .dotfiles
-		echo
-		read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
-		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-			confirm_cmd "rm -rf $HOME/.*"
-			confirm_cmd "rsync -avu /etc/skel/ $HOME/"
-		fi
-		echo
 
 
 		# Check for Wayland

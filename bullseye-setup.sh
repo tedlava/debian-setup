@@ -243,6 +243,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	fi
 	read -p 'Press ENTER to reboot...'
 	systemctl reboot
+	exit
 
 elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo

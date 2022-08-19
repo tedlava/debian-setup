@@ -10,8 +10,14 @@
 # since I now have an easy way of restoring my Debian back to it's ideal state.
 
 
-stable_name='bullseye'
-home="$(getent passwd $SUDO_USER | cut -d: -f6)"
+# Change to script directory to use files as flag variables for saving the 
+# current state of the script
+script_rel_dir=$(dirname "${BASH_SOURCE[0]}")
+cd $script_rel_dir
+script_dir=$(pwd)
+
+
+release_name='bullseye'
 extension_urls=(
 	https://extensions.gnome.org/extension/906/sound-output-device-chooser/
 	https://extensions.gnome.org/extension/72/recent-items/
@@ -23,10 +29,11 @@ extension_urls=(
 function confirm_cmd {
 	local cmd="$*"
 	if [ -n $interactive ]; then
-		echo -e "\nAbout to execute command...\n    # $cmd"
+		echo -e "\nAbout to execute command...\n    $ $cmd"
 		read -p 'Proceed? [Y/n] '
 	fi
 	if [ -z $interactive ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		echo -e "\nExecuting command...\n    $ $cmd\n"
 		eval $cmd
 	fi
 }
@@ -36,13 +43,15 @@ echo
 echo "Ted's Debian Setup Script"
 echo '========================='
 echo
-echo "    Release: ${stable_name^} (stable)"
+echo "    Release: ${release_name^} (stable)"
 echo
 
 
-if [ `id -u` -ne 0 ]; then
+if [ $(id -u) -eq 0 ]; then
 	echo
-	echo 'Please run this shell script with sudo or as root.'
+	echo 'Please run this shell script as a normal user (with sudo privileges).'
+	echo "Some commands (such as gnome-extensions) need to connect to the user's"
+	echo "Gnome environment and won't work if run as root."
 	echo
 	exit
 fi
@@ -58,14 +67,12 @@ while getopts ':hie' opt; do
 		;;
 	i)
 		echo
-		echo 'Full interactive mode!  You will be prompted before running EVERY SINGLE'
-		echo 'command!  This is primarily for debugging and not how this script is intended'
-		echo 'to be run, but if you want to verify every step along the way before actually'
-		echo 'executing it, then go for it!'
+		echo 'Full interactive mode!  You will be prompted for confirmation before'
+		echo 'running EVERY SINGLE command!'
 		echo
 		interactive=1
 		;;
-	h)
+	e)
 		echo
 		echo 'Skip to Gnome extensions!'
 		echo
@@ -94,11 +101,12 @@ fi
 
 
 if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
-	if [ -n "$skip_to_ext" ]; then
-		if [ ! -f fixed_root ] && [ ! -f fixed_home ]; then
+	if [ -z "$skip_to_ext" ]; then
+		if [ ! -f reqs_confirmed ]; then
 			echo 'This script automates some common settings that I use for'
 			echo 'every Debian installation while still allowing for some changes'
-			echo 'through interactive questions.'
+			echo 'through interactive questions.  You will be asked to enter your'
+			echo 'password for sudo a few times.'
 			echo
 			echo 'The script may require a few reboots, you will be prompted each'
 			echo 'time.  After the script reboots your system, please re-run the'
@@ -108,7 +116,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 			# Query user for requirements before proceeding
 			echo
 			echo 'Requirements:'
-			echo "    - Debian ${stable_name^} is installed, / and /home partitions set up as btrfs"
+			echo "    - Debian ${release_name^} is installed, / and /home partitions set up as btrfs"
 			echo '    - Have patched fonts saved & unzipped in ~/fonts directory (default: Hack)'
 			echo '    - Have a stable Internet connection to download packages'
 			echo '    - Run "sudo dmesg" and look for RED text to know what firmware you need'
@@ -120,78 +128,8 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 				echo
 				exit
 			fi
+			touch reqs_confirmed
 			echo
-
-
-			# Move @rootfs btrfs subvolume to @ for timeshift
-			if [ -n "$(grep @rootfs /etc/fstab)" ]; then
-				read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
-				if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-					dev=$(grep '\s/\s' /etc/mtab | cut -d' ' -f1)
-					echo "Detected your / partition is on device: $dev"
-					confirm_cmd "mount $dev /mnt"
-					confirm_cmd 'mv /mnt/@rootfs /mnt/@'
-					confirm_cmd 'umount /mnt'
-					confirm_cmd 'sed -i "s/@rootfs/@/" /etc/fstab'
-					echo 'Reinstalling grub and updating grub...'
-					confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
-					confirm_cmd 'update-grub'
-					fixed_btrfs=1
-					touch fixed_root
-					echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
-					echo
-				fi
-			fi
-			# Create @home subvolume if not present, and move all user directories to it
-			if [ -z "$(grep @home /etc/fstab)" ]; then
-				read -p 'Move /home directory into an @home btrfs subvolume for timeshift? [Y/n] '
-				if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-					dev=$(grep /home /etc/mtab | cut -d' ' -f1)
-					echo "Detected your /home partition is on device: $dev"
-					confirm_cmd "mount $dev /mnt"
-					user_dirs=( $(ls /mnt) )
-					confirm_cmd "btrfs subvolume create /mnt/@home"
-					touch fixed_home # Creating this here so it gets copied to the new @home subvolume
-					for dir in ${user_dirs[@]}; do
-						if [ "$dir" != '@home' ]; then
-							confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
-						fi
-					done
-					confirm_cmd 'umount /mnt'
-					confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
-					fixed_btrfs=1
-					echo '@home btrfs subvolume was created and all user directories were copied to it.'
-					echo
-				fi
-			fi
-			if [ -n "$fixed_btrfs" ] || [ -f fixed_root ] || [ -f fixed_home ]; then
-				echo
-				echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
-				echo 'When it is finished rebooting, please re-run this same script and it will'
-				echo 'resume from where it left off.'
-				echo
-				read -p 'Press ENTER to reboot...'
-				systemctl reboot
-			fi
-		fi
-
-
-		# Remove old home directories in top level of btrfs @home partition
-		if [ -f fixed_home ]; then
-			read -p 'Check for and remove old copies of user directories (siblings to @home)? [Y/n] '
-			if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-				dev=$(grep /home /etc/mtab | cut -d' ' -f1)
-				echo "Detected your /home partition is on device: $dev"
-				confirm_cmd "mount $dev /mnt"
-				user_dirs=( $(ls /mnt) )
-				for dir in ${user_dirs[@]}; do
-					if [ "$dir" != '@home' ]; then
-						confirm_cmd "rm -rf /mnt/$dir"
-					fi
-				done
-				confirm_cmd 'umount /mnt'
-				rm fixed_home
-			fi
 		fi
 
 
@@ -199,199 +137,20 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		echo
 		read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
 		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-			confirm_cmd "rm -rf $home/.*"
-			confirm_cmd "rsync -avu /etc/skel/ $home/"
+			confirm_cmd "rm -rf $HOME/.*"
+			confirm_cmd "rsync -avu /etc/skel/ $HOME/"
 		fi
 		echo
 
 
-		# Add contrib and non-free to sources.list
-		echo
-		read -p 'Add contrib and non-free repositories to your /etc/apt/sources.list? [Y/n] '
-		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-			confirm_cmd "sed -i 's/^\(deb.*$stable_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
+		# Check for Wayland
+		if [ -n "$WAYLAND_DISPLAY" ]; then
+			wayland=1
 		fi
 
 
-		# Update/upgrade for base packages first
-		echo
-		echo 'Updating apt cache...'
-		echo
-		confirm_cmd 'apt-get update'
-		echo
-		read -p 'Upgrade packages? [Y/n] '
-		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-			confirm_cmd 'apt-get -y upgrade'
-		fi
-		echo
-
-
-		# Install basic utilities
-		echo
-		echo 'Installing rsync, git, curl, timeshift, and gufw...'
-		echo
-		confirm_cmd 'apt-get -y install rsync git curl timeshift gufw'
-		echo
-
-
-		# Inform user to take a snapshot with Timeshift, must use GUI
-		echo
-		echo 'Timeshift must be set up through the GUI before system snapshots can'
-		echo 'be taken to rollback a bad update or configuration or installation'
-		echo 'of a bad package.  Only use timeshift to snapshot the @ subvolume.'
-		echo 'Check the boxes to add monthly and weekly snapshots as well.  All'
-		echo 'other default settings should be sufficient.  Take an initial snapshot'
-		echo "and give it a title like \"Debian ${stable_name^} installed\", just in case you"
-		echo 'screw something up in the rest of the installation... ;)  After it is'
-		echo 'done snapshotting the system, you may close the timeshift window.'
-		echo
-		read -p 'Press ENTER to open timeshift...'
-		confirm_cmd 'timeshift-launcher'
-		echo
-
-
-		# Inform user to turn on firewall with Gufw, must use GUI
-		echo
-		echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
-		echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
-		echo 'through SSH.  Make sure the firewall is turned on before closing the window.'
-		echo
-		read -p 'Press ENTER to open gufw...'
-		confirm_cmd 'gufw'
-
-
-		# SSD
-		echo
-		read -p 'Did you install Debian to an SSD? [Y/n] '
-		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-			echo -e "\nTrimming to recover some disk space..."
-			confirm_cmd 'fstrim -v /'
-			confirm_cmd 'fstrim -v /home'
-			echo 'Changing swappiness for SSD...'
-			confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
-			echo 'It is also highly recommended that you modify your web browser settings'
-			echo 'to prevent unnecessary writing to your SSD to extend its life.'
-		fi
-		echo
-
-
-		# Purge unwanted packages
-		echo
-		echo 'Removing unwanted packages from the base installation...'
-		confirm_cmd 'apt-get -y purge evolution'
-		confirm_cmd 'apt-get -y autopurge'
-		echo
-
-
-		# Backports
-		echo
-		read -p 'Do you want to enable backports? (newer kernel for newer hardware) [y/N] '
-		if [ "${REPLY,}" == 'y' ]; then
-			confirm_cmd "echo -e \"\\n# Backports\\ndeb http://deb.debian.org/debian ${stable_name}-backports main contrib non-free\" >> /etc/apt/sources.list"
-			confirm_cmd 'apt-get update'
-			echo
-			read -p 'Do you want to install the latest kernel from backports? [y/N] '
-			if [ "${REPLY,}" == 'y' ]; then
-				backports=" -t ${stable_name}-backports "
-				confirm_cmd "apt-get -y $backports install linux-image-amd64"
-			else
-				backports=''
-			fi
-		fi
-		echo
-
-
-		# Kernel headers
-		echo
-		read -p 'Do you want to install the Linux headers? (required for NVIDIA drivers) [y/N] '
-		if [ "${REPLY,}" == 'y' ]; then
-			confirm_cmd "apt-get -y $backports install linux-headers-amd64"
-		fi
-		echo
-
-
-		# Firmware
-		echo
-		echo 'What firmware packages do you need?'
-		echo
-		firmware=''
-		read -p 'firmware-misc-nonfree? [Y/n] '
-		if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-			firmware="$firmware firmware-misc-nonfree"
-		fi
-		read -p 'intel-microcode? [Y/n] '
-		if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-			firmware="$firmware intel-microcode"
-		fi
-		read -p 'amd64-microcode? [y/N] '
-		if [ "${REPLY,}" == 'y' ]; then
-			firmware="$firmware amd64-microcode"
-		fi
-		read -p 'firmware-realtek? [y/N] '
-		if [ "${REPLY,}" == 'y' ]; then
-			firmware="$firmware firmware-realtek"
-		fi
-		read -p 'firmware-atheros? [y/N] '
-		if [ "${REPLY,}" == 'y' ]; then
-			firmware="$firmware firmware-atheros"
-		fi
-		read -p 'firmware-iwlwifi? [y/N] '
-		if [ "${REPLY,}" == 'y' ]; then
-			firmware="$firmware firmware-iwlwifi"
-		fi
-		echo 'Please enter the package names (as they appear in the Debian repositories) of'
-		echo 'any other firmware not listed above that you would like to install now'
-		echo '(separated by spaces).'
-		echo
-		read -p 'Input extra firmware package names here, ENTER when finished: '
-		if [ -n "$REPLY" ]; then
-			firmware="$firmware $REPLY"
-		fi
-
-		if [ "$firmware" != '' ]; then
-			confirm_cmd "apt-get -y $backports install $firmware"
-		fi
-		echo
-
-
-		# GDM auto-suspend disabled
-		# Can this be done more efficiently? I don't like the output of "No protocol specified"
-		echo
-		echo 'Setting up gdm to stay on when plugged in, but not logged in.'
-		echo 'Will still auto-suspend if on battery power...'
-		echo
-		confirm_cmd "sudo -u Debian-gdm dbus-launch gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
-		echo
-
-
-		# TLP for better battery life on laptops
-		echo
-		read -p 'Do you want to install TLP for better battery life on laptops? [Y/n] '
-		if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-			confirm_cmd "apt-get -y $backports install tlp tlp-rdw"
-		fi
-		echo
-
-
-		# Plymouth graphical boot up
-		echo
-		echo 'Installing Plymouth for graphical boot...'
-		echo
-		confirm_cmd 'apt-get -y install plymouth'
-		echo
-		echo 'Do you want to add any extra parameters to /etc/default/grub'
-		echo 'GRUB_CMDLINE_LINUX_DEFAULT ? "splash" will already be added.'
-		echo '   For example, pci=noaer'
-		echo
-		read -p 'Input your parameters here, ENTER when finished: '
-		if [ "$REPLY" != '' ]; then
-			grub=" $REPLY"
-		fi
-		# confirm_cmd "sed 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="'"'"quiet splash$grub"'"'"/' /etc/default/grub"
-		confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash$grub\"/' /etc/default/grub"
-		echo
-		confirm_cmd 'update-grub'
-		echo
+		# Run commands as root (with sudo)
+		sudo release_name="$release_name" home="$HOME" interactive="$interactive" wayland="$wayland" bash bullseye-as-root
 	fi
 
 
@@ -399,10 +158,9 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	echo 'Installing Gnome extensions...'
 	echo
-	confirm_cmd 'apt-get -y install gir1.2-gtop-2.0'
 	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
 	base_url='https://extensions.gnome.org'
-	confirm_cmd 'temp=$(sudo -u $SUDO_USER mktemp -d)'
+	confirm_cmd 'temp=$(mktemp -d)'
 	trap "rm -rfv $temp" EXIT
 	for extension in "${extension_urls[@]}"; do
 		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
@@ -410,72 +168,25 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
 		download_url="$base_url$(curl "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
 		confirm_cmd "curl -L '$download_url' > '$temp/$ext_uuid.zip'"
-		ext_dir="$home/.local/share/gnome-shell/extensions/$ext_uuid"
-		# confirm_cmd "sudo -u $SUDO_USER unzip '$temp/$ext_uuid.zip' -d '$ext_dir'"
-		confirm_cmd "sudo -u $SUDO_USER gnome-extensions install $temp/$ext_uuid.zip"
+		ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
+		# confirm_cmd "unzip '$temp/$ext_uuid.zip' -d '$ext_dir'"
+		confirm_cmd "gnome-extensions install $temp/$ext_uuid.zip"
 		# Move all indicators to the right of the system-monitor indicator on the panel
 		if [ -z $(echo "$ext_uuid" | grep 'system-monitor') ]; then
 			confirm_cmd "sed -i 's/\(Main.panel.addToStatusArea([^,]*,[^,]*\)\(, [0-9]\)\?);/\1, 2);/' $ext_dir/extension.js"
 		fi
-		# confirm_cmd "sudo -u $SUDO_USER gnome-extensions enable ${ext_uuid}"
+		# confirm_cmd "gnome-extensions enable ${ext_uuid}"
 	done
 	trap '' EXIT
 	confirm_cmd "rm -rfv '$temp' # Where the extension .zip files were downloaded to..."
-
-
-	# Install other system utilities
-	echo
-	echo 'Installing flatpak, vlc, and codecs...'
-	echo
-	confirm_cmd 'apt-get -y install flatpak gnome-software-plugin-flatpak vlc libavcodec-extra ipython3 catfish'
-	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
-	echo
-
-
-	# DVD
-	echo
-	read -p 'Does this computer have a DVD drive, internal or external? [y/N] '
-	if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd 'apt-get -y install libdvd-pkg'
-		confirm_cmd 'dpkg-reconfigure libdvd-pkg'
-	fi
-	echo
-
-
-	# Install DropBox
-	echo
-	read -p 'Install DropBox? (free account limits sync to 3 computers) [Y/n] '
-	if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd 'apt-get -y install nautilus-dropbox'
-	fi
-	echo
-
-
-	# Install Windscribe VPN
-	echo
-	read -p 'Install Windscribe? [Y/n] '
-	if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $home/windscribe.deb"
-		confirm_cmd "apt-get -y install $home/windscribe.deb"
-		confirm_cmd "rm $home/windscribe.deb"
-	fi
-	echo
 
 
 	# Set up fonts
 	echo
 	echo 'Setting up links to detect fonts...'
 	echo
-	confirm_cmd "sudo -u $SUDO_USER ln -s $home/fonts $home/.local/share/fonts"
+	confirm_cmd "ln -s $HOME/fonts $HOME/.local/share/fonts"
 	confirm_cmd 'fc-cache -fv'
-	echo
-
-
-	# Install apps via apt
-	echo
-	echo 'Installing gimp, inkscape, gnucash, wine, and neovim dependencies...'
-	echo
-	confirm_cmd 'apt-get -y install python3-neovim xclip gimp gimp-data-extras inkscape inkscape-open-symbols gnucash python3-gnucash wine'
 	echo
 
 
@@ -498,74 +209,32 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 
 
-	# Install Neovim
-	echo
-	echo 'Installing Neovim...'
-	echo
-	# Clone neovim-config first
-	confirm_cmd "sudo -u $SUDO_USER mkdir $home/dotfiles"
-	confirm_cmd "sudo -u $SUDO_USER git -C $home/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
-	confirm_cmd "sudo -u $SUDO_USER mkdir $home/.config/nvim"
-	confirm_cmd "sudo -u $SUDO_USER ln -s $home/dotfiles/neovim-config/init.vim $home/.config/nvim/"
-
-	# Check all available versions in release, if greater than 0.4, install from apt, else download and install from github latest release!
-	nvim_ver=$(apt list neovim -a 2>/dev/null | grep neovim | cut -d' ' -f2 | cut -c1-3 | sort | tail -n1)
-
-	if [ $nvim_ver '>' '0.4' ]; then
-		echo
-		confirm_cmd 'apt-get -y install neovim'
-		echo
-	else
-		echo
-		echo 'Neovim version is too old in apt, downloading from github...'
-		echo
-		confirm_cmd "curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'\"' -f2) -o $home/nvim-github-latest-release.deb"
-		confirm_cmd "apt-get -y install $home/nvim-github-latest-release.deb"
-		confirm_cmd "rm $home/nvim-github-latest-release.deb"
-	fi
-
-	# Install vim-plug
+	# Set up Neovim
+	# Clone neovim-config from GitHub
+	confirm_cmd "mkdir $HOME/dotfiles"
+	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
+	confirm_cmd "mkdir $HOME/.config/nvim"
+	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
 	echo
 	echo 'Installing vim-plug into Neovim...'
 	echo
-	confirm_cmd "sudo -u $SUDO_USER sh -c 'curl -fLo \"${XDG_DATA_HOME:-$home/.local/share}\"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'"
+	confirm_cmd "sh -c 'curl -fLo \"${XDG_DATA_HOME:-$HOME/.local/share}\"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'"
 	echo
 	echo 'About to install Neovim plugins.  When Neovim is finished, please exit'
 	echo 'Neovim by typing ":qa" and then pressing ENTER.'
-	echo '*** Do NOT close the terminal window! ***'
+	echo
+	echo '    *** Do NOT close the terminal window! ***'
 	echo
 	read -p 'Press ENTER to proceed with Neovim plugin installation. '
-	confirm_cmd "sudo -u $SUDO_USER nvim -c PlugInstall"
+	confirm_cmd "nvim -c PlugInstall"
 	echo
 
 	# Load Nautilus mime types for Neovim
 	echo
 	echo 'Loading Nautilus mime types (open all text files with Neovim)...'
 	echo
-	confirm_cmd "rsync -avu mimeapps.list $home/.config/"
+	confirm_cmd "rsync -avu mimeapps.list $HOME/.config/"
 	echo
-
-
-	# NVIDIA drivers
-	if [ "$(lspci | grep -i nvidia)" != '' ]; then
-		echo
-		echo 'Found nvidia graphics card...'
-		echo
-		confirm_cmd 'apt-get -y install nvidia-detect'
-		echo
-		echo 'Here is a list of possible nvidia drivers:'
-		echo
-		confirm_cmd 'apt list nvidia-*driver 2>/dev/null'
-		echo
-		echo 'Here is what nvidia-detect recommends:'
-		confirm_cmd 'nvidia-detect'
-		echo
-		echo 'Please enter the name of the nvidia-driver package you'
-		read -p 'want to install: '
-		confirm_cmd dpkg --add-architecture i386
-		confirm_cmd "apt-get -y install $REPLY"
-		echo
-	fi
 
 
 	# Reboot
@@ -575,6 +244,11 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo 're-run this same script again and it will automatically start part 2.'
 	echo
 	touch deb_setup_part_1
+	if [ -n "$wayland" ]; then
+		echo
+		echo '    *** Please switch to "Gnome on Xorg" when you login next time!'
+		echo
+	fi
 	read -p 'Press ENTER to reboot...'
 	systemctl reboot
 
@@ -582,33 +256,43 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	echo 'Proceeding with Part 2 of the setup script...'
 	echo
+	echo 'Enabling recently installed Gnome extensions...'
+	echo
+	for extension in "${extension_urls[@]}"; do
+		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
+		confirm_cmd "gnome-extensions enable ${ext_uuid}"
+	done
+
+
+	# Install Flatpak apps
+	echo
 	echo 'Do you want install the following apps via Flatpak?'
 	flatpaks=''
-	read -p '    - Google Chrome? [Y/n] '
+	read -p '    Google Chrome? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		flatpaks="$flatpaks com.google.Chrome"
 	fi
-	read -p '    - Xournalpp drawing app? [Y/n] '
+	read -p '    Xournalpp drawing app? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		flatpaks="$flatpaks com.github.xournalpp.xournalpp"
 	fi
-	read -p '    - Foliate ebook reader? [Y/n] '
+	read -p '    Foliate ebook reader? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		flatpaks="$flatpaks com.github.johnfactotum.Foliate"
 	fi
-	read -p '    - Kdenlive video editor? [Y/n] '
+	read -p '    Kdenlive video editor? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		flatpaks="$flatpaks org.kde.kdenlive"
 	fi
-	read -p '    - RetroArch game console emulator? [Y/n] '
+	read -p '    RetroArch game console emulator? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		flatpaks="$flatpaks org.libretro.RetroArch"
 	fi
-	read -p '    - StepMania dance step game? [Y/n] '
+	read -p '    StepMania dance step game? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		flatpaks="$flatpaks com.stepmania.StepMania"
 	fi
-	read -p '    - Jellyfin media player? [Y/n] '
+	read -p '    Jellyfin media player? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		flatpaks="$flatpaks com.github.iwalton3.jellyfin-media-player"
 	fi
@@ -618,15 +302,14 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	fi
 	echo
 
-	confirm_cmd "sudo -u $SUDO_USER mkdir -p $home/dotfiles/var"
-	confirm_cmd "ln -s $home/dotfiles/var $home/.var"
+	confirm_cmd "mkdir -p $HOME/dotfiles/var"
+	confirm_cmd "ln -s $HOME/dotfiles/var $HOME/.var"
 
 
 	# Settings to fix after this script...
 	echo
 	echo 'There are a few items that need to be setup through a GUI, or at least that'
-	echo "I haven't figured out how to do them through a bash script (often because I"
-	echo "can't find the appropriate gsettings yet)..."
+	echo "I haven't figured out how to do them through a bash script yet..."
 	echo
 	echo '    - Set user picture'
 	echo '    - Connect to online accounts'
@@ -636,7 +319,7 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo '          - about:config >> media.webrtc.hw.h264.enabled = true'
 	echo '                (for HW acceleration during video conferencing)'
 	echo '          - Set up Firefox Sync, customize toolbar, restore synced tabs, etc.'
-	echo '          - Open Settings: DRM enabled, DDG search and remove Bing'
+	echo '          - Open Settings: DRM enabled, search with DuckDuckGo, and remove Bing'
 	echo '          * For SSD:'
 	echo '                - about:config >> browser.cache.disk.enable = false'
 	echo "                - about:config >> browser.sessionstore.interval = 15000000 # add three 0's"
@@ -649,7 +332,7 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 elif [ -f deb_setup_part_1 ] && [ -f deb_setup_part_2 ]; then
 	echo
 	echo "Ted's Debian Setup Script has finished.  If you want to run it again,"
-	echo 'please delete the temp files "fixed_root", "fixed_home", "deb_setup_part_1",'
-	echo 'and "deb_setup_part_2" (if they exist), and then re-run the script.'
+	echo 'please delete the temp files "reqs_confirmed", "deb_setup_part_1", and'
+	echo '"deb_setup_part_2", and then re-run the script.'
 	echo
 fi

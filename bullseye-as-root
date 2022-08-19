@@ -22,6 +22,20 @@ function confirm_cmd {
 }
 
 
+# Remove old configuration in .dotfiles
+if [ ! -f dotfiles_removed ]; then
+	echo
+	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
+	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		confirm_cmd "rm -rf $home/.*"
+		confirm_cmd "sudo -u $SUDO_USER rsync -avu /etc/skel/ $home/"
+		touch dotfiles_removed
+		reboot=1
+	fi
+	echo
+fi
+
+
 # Move @rootfs btrfs subvolume to @ for timeshift
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 	read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
@@ -35,11 +49,13 @@ if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 		echo 'Reinstalling grub and updating grub...'
 		confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 		confirm_cmd 'update-grub'
-		fixed_btrfs=1
+		reboot=1
 		echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 		echo
 	fi
 fi
+
+
 # Create @home subvolume if not present, and move all user directories to it
 if [ -z "$(grep @home /etc/fstab)" ]; then
 	read -p 'Move /home directory into an @home btrfs subvolume for timeshift? [Y/n] '
@@ -56,16 +72,17 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 		done
 		confirm_cmd 'umount /mnt'
 		confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
-		fixed_btrfs=1
+		reboot=1
 		echo '@home btrfs subvolume was created and all user directories were copied to it.'
 		echo
 	fi
 fi
-if [ -n "$fixed_btrfs" ]; then
+
+
+if [ -n "$reboot" ]; then
 	echo
-	echo 'Btrfs partitions have been modified.  The script needs to reboot your system.'
-	echo 'When it is finished rebooting, please re-run the same script and it will'
-	echo 'resume from where it left off.'
+	echo 'The script needs to reboot your system.  When it is finished rebooting,'
+	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
 	if [ -n "$wayland" ]; then
 		echo

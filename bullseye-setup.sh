@@ -152,25 +152,19 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
 	base_url='https://extensions.gnome.org'
-	confirm_cmd 'temp=$(mktemp -d)'
-	trap "rm -rfv $temp" EXIT
+	confirm_cmd "mkdir $script_dir/downloads # To hold all files for offline reinstallation, if need be"
 	for extension in "${extension_urls[@]}"; do
 		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
-		# confirm_cmd "busctl --user call org.gnome.Shell.Extensions /org/gnome/Shell/Extensions org.gnome.Shell.Extensions InstallRemoteExtension s ${ext_uuid}"
 		info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
 		download_url="$base_url$(curl "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
-		confirm_cmd "curl -L '$download_url' > '$temp/$ext_uuid.zip'"
+		confirm_cmd "curl -L '$download_url' > '$script_dir/downloads/$ext_uuid.zip'"
 		ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
-		# confirm_cmd "unzip '$temp/$ext_uuid.zip' -d '$ext_dir'"
-		confirm_cmd "gnome-extensions install $temp/$ext_uuid.zip"
+		confirm_cmd "gnome-extensions install $script_dir/downloads/$ext_uuid.zip"
 		# Move all indicators to the right of the system-monitor indicator on the panel
 		if [ -z $(echo "$ext_uuid" | grep 'system-monitor') ]; then
 			confirm_cmd "sed -i 's/\(Main.panel.addToStatusArea([^,]*,[^,]*\)\(, [0-9]\)\?);/\1, 2);/' $ext_dir/extension.js"
 		fi
-		# confirm_cmd "gnome-extensions enable ${ext_uuid}"
 	done
-	trap '' EXIT
-	confirm_cmd "rm -rfv '$temp' # Where the extension .zip files were downloaded to..."
 
 
 	# Set up fonts
@@ -187,17 +181,24 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo 'Applying gsettings.txt to Gnome...'
 	echo
 	file='gsettings.txt'
-	while read -r schema key val; do
-		confirm_cmd "gsettings set $schema $key \"$val\""
-	done < "$file"
-	echo
-	
+	if [ -n "$interactive" ]; then
+		echo -e "Load all settings from gsettings.txt using:\n    $ gsettings set \$schema \$key \"\$val\""
+		read -p 'Proceed? [Y/n] '
+	fi
+	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		while read -r schema key val; do # confirm_cmd in while loop won't work since it also uses 'read'
+			echo -e "\nExecuting command...\n    $ gsettings set $schema $key \"$val\"\n"
+			gsettings set $schema $key "$val"
+		done < "$file"
+		echo
+	fi
+
 
 	# Load dconf settings
 	echo
-	echo 'Applying dconf_settings.txt to Gnome...'
+	echo 'Applying dconf-settings.txt to Gnome...'
 	echo
-	confirm_cmd 'dconf load / < dconf_settings.txt'
+	confirm_cmd 'dconf load / < dconf-settings.txt'
 	echo
 
 
@@ -297,6 +298,15 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 	confirm_cmd "mkdir -p $HOME/dotfiles/var"
 	confirm_cmd "ln -s $HOME/dotfiles/var $HOME/.var"
+
+
+	echo
+	echo 'All 3rd-party .deb packages and Gnome extension .zip files were saved to the'
+	read -p "$script_dir/downloads directory.  Delete this directory? [Y/n] "
+	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		confirm_cmd "rm -rfv $script_dir/downloads"
+	fi
+	echo
 
 
 	# Settings to fix after this script...

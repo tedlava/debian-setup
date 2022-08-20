@@ -7,6 +7,11 @@ if [ -z "$release_name" ] || [ -z "$home" ] || [ -z "$interactive" ] || [ $(id -
 fi
 
 
+script_rel_dir=$(dirname "${BASH_SOURCE[0]}")
+cd $script_rel_dir
+script_dir=$(pwd)
+
+
 function confirm_cmd {
 	local cmd="$*"
 	if [ -n $interactive ]; then
@@ -334,9 +339,8 @@ echo
 echo
 read -p 'Install Windscribe? [Y/n] '
 if [ "$REPLY" == '' ] || [ "${REPLY,}" == 'y' ]; then
-	confirm_cmd "curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $home/windscribe.deb"
-	confirm_cmd "apt-get -y install $home/windscribe.deb"
-	confirm_cmd "rm $home/windscribe.deb"
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/downloads/windscribe.deb"
+	confirm_cmd "apt-get -y install $script_dir/downloads/windscribe.deb"
 fi
 echo
 
@@ -365,9 +369,8 @@ else
 	echo
 	echo 'Neovim version is too old in apt, downloading from github...'
 	echo
-	confirm_cmd "curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'\"' -f2) -o $home/nvim-github-latest-release.deb"
-	confirm_cmd "apt-get -y install $home/nvim-github-latest-release.deb"
-	confirm_cmd "rm $home/nvim-github-latest-release.deb"
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'"' -f2) -o $script_dir/downloads/nvim-github-latest-release.deb"
+	confirm_cmd "apt-get -y install $script_dir/downloads/nvim-github-latest-release.deb"
 fi
 
 

@@ -141,6 +141,10 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		fi
 
 
+		# Create temporary downloads directory
+		confirm_cmd "mkdir $script_dir/downloads # To hold all files for offline reinstallation, if need be"
+
+
 		# Run commands as root (with sudo)
 		sudo release_name="$release_name" home="$HOME" interactive="$interactive" wayland="$wayland" bash bullseye-as-root
 	fi
@@ -152,7 +156,6 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
 	base_url='https://extensions.gnome.org'
-	confirm_cmd "mkdir $script_dir/downloads # To hold all files for offline reinstallation, if need be"
 	for extension in "${extension_urls[@]}"; do
 		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
 		info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"

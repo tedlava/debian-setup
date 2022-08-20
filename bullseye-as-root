@@ -34,7 +34,7 @@ if [ ! -f dotfiles_removed ]; then
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		confirm_cmd "rm -rf $home/.*"
 		confirm_cmd "sudo -u $SUDO_USER rsync -avu /etc/skel/ $home/"
-		touch dotfiles_removed
+		sudo -u $SUDO_USER touch dotfiles_removed
 		reboot=1
 	fi
 	echo
@@ -394,4 +394,3 @@ if [ "$(lspci | grep -i nvidia)" != '' ]; then
 	confirm_cmd "apt-get -y install $REPLY"
 	echo
 fi
-

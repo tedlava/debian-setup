@@ -353,7 +353,7 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 elif [ -f deb_setup_part_1 ] && [ -f deb_setup_part_2 ]; then
 	echo
 	echo "Ted's Debian Setup Script has finished.  If you want to run it again,"
-	echo 'please delete the temp files "reqs_confirmed", "deb_setup_part_1", and'
-	echo '"deb_setup_part_2", and then re-run the script.'
+	echo 'please delete the temp files "reqs_confirmed", "dotfiles_removed",'
+	echo '"deb_setup_part_1", and "deb_setup_part_2", and then re-run the script.'
 	echo
 fi

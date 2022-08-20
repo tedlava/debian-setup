@@ -216,8 +216,10 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	confirm_cmd "sh -c 'curl -fLo \"${XDG_DATA_HOME:-$HOME/.local/share}\"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'"
 	echo
-	echo 'About to install Neovim plugins.  When Neovim is finished, please exit'
-	echo 'Neovim by typing ":qa" and then pressing ENTER.'
+	echo 'About to install Neovim plugins.  During initial start up of Neovim, there will'
+	echo "LOTS of errors due to settings for plugins that aren't installed yet.  Just type"
+	echo 'SPACE to page through all the errors so that Neovim can finish installing them'
+	echo 'When Neovim is finished, please exit Neovim by typing ":qa" and pressing ENTER.'
 	echo
 	echo '    *** Do NOT close the terminal window! ***'
 	echo
@@ -225,12 +227,25 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	confirm_cmd "nvim -c PlugInstall"
 	echo
 
+
 	# Load Nautilus mime types for Neovim
 	echo
 	echo 'Loading Nautilus mime types (open all text files with Neovim)...'
 	echo
 	confirm_cmd "rsync -avu mimeapps.list $HOME/.config/"
 	echo
+
+
+	# Load patched monospace font
+	echo
+	read -p 'Load patched monospace font? [Y/n] '
+	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		echo
+		echo '*** WARNING ***'
+		echo '    There may be some temporary distortion on open terminals, like this one!'
+		echo
+		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'"
+	fi
 
 
 	# Reboot

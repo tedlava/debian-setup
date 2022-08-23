@@ -305,11 +305,11 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo 'Proceeding with Part 2 of the setup script...'
 	echo
 
-	if [ "$flatpaks" != '' ]; then
+	if [ -n "${flatpaks[*]}" ]; then
 		echo
 		echo 'Installing Flatpak applications...'
 		echo
-		confirm_cmd "flatpak -y install $flatpaks"
+		confirm_cmd "flatpak -y install ${flatpaks[@]}"
 		if [ ! -d $HOME/dotfiles/var ]; then
 			confirm_cmd "mkdir -p $HOME/dotfiles/var"
 		fi

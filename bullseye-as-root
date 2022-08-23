@@ -147,7 +147,6 @@ fi
 if [ -n "$extra_repos" ]; then
 	echo
 	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
-	echo
 	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
 	echo
 fi
@@ -156,7 +155,6 @@ fi
 # Update/upgrade for base packages first
 echo
 echo 'Updating apt cache and upgrading current packages...'
-echo
 confirm_cmd 'apt-get update'
 confirm_cmd 'apt-get -y upgrade'
 echo
@@ -165,7 +163,6 @@ echo
 # Install basic utilities
 echo
 echo 'Installing rsync, git, curl, timeshift, and gufw...'
-echo
 confirm_cmd 'apt-get -y install rsync git curl timeshift gufw'
 echo
 
@@ -200,7 +197,6 @@ confirm_cmd 'gufw'
 if [ -n "$ssd" ]; then
 	echo
 	echo 'SSD setup...'
-	echo
 	confirm_cmd 'fstrim -v /'
 	confirm_cmd 'fstrim -v /home'
 	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
@@ -219,9 +215,10 @@ echo
 # Backports
 if [ -n "${backports_installs[*]}" ]; then
 	echo
+	echo "Including $release_name-backports in your sources.list..."
 	confirm_cmd "echo -e \"\\n# Backports\\ndeb http://deb.debian.org/debian ${release_name}-backports main contrib non-free\" >> /etc/apt/sources.list"
 	confirm_cmd 'apt-get update'
-	confirm_cmd "apt-get -yt ${release_name}-backports install ${backports_installs[@]}"
+	confirm_cmd "apt-get -yt $release_name-backports install ${backports_installs[@]}"
 	echo
 fi
 
@@ -231,20 +228,23 @@ if [ -n "$gdm_inhibit_ac" ]; then
 	echo
 	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
 	echo 'Will still auto-suspend if on battery power...'
-	echo
 	confirm_cmd "sudo -u Debian-gdm dbus-launch gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
 	echo
 fi
 
 
-# Install i386 (32-bit) libraries?  Useful for playing Windows games via wine
-confirm_cmd dpkg --add-architecture i386
+# Install i386 (32-bit) libraries?  Useful for playing Windows games on wine
+if [ -n "$(contains apt_installs wine)" ]; then
+	echo
+	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
+	confirm_cmd dpkg --add-architecture i386
+	echo
+fi
 
 
 if [ -n "${apt_installs[*]}" ]; then
 	echo
 	echo 'Installing apt packages...'
-	echo
 	confirm_cmd "apt-get -y install ${apt_installs[@]}"
 	echo
 fi
@@ -253,9 +253,7 @@ fi
 if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ]; then
 	echo
 	echo 'Setting up grub...'
-	echo
 	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
-	echo
 	confirm_cmd 'update-grub'
 	echo
 fi
@@ -265,7 +263,6 @@ fi
 if [ -n "$(contains apt_installs flatpak)" ]; then
 	echo
 	echo 'Adding flathub repo...'
-	echo
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
 	echo
 fi
@@ -275,7 +272,6 @@ fi
 if [ -n "$(contains apt_installs libdvd-pkg)" ]; then
 	echo
 	echo 'Setting up packages to watch DVD movies...'
-	echo
 	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
 	echo
 fi
@@ -285,7 +281,6 @@ fi
 if [ -n "$install_windscribe" ]; then
 	echo
 	echo 'Installing Windscribe VPN...'
-	echo
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/downloads/windscribe.deb"
 	confirm_cmd "apt-get -y install $script_dir/downloads/windscribe.deb"
 	echo
@@ -296,7 +291,6 @@ fi
 if [ -z "$(contains apt_installs neovim)" ]; then
 	echo
 	echo 'Installing Neovim from the latest release on GitHub...'
-	echo
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'"' -f2) -o $script_dir/downloads/nvim-github-latest-release.deb"
 	confirm_cmd "apt-get -y install $script_dir/downloads/nvim-github-latest-release.deb"
 	echo

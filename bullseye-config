@@ -60,6 +60,7 @@ apt_installs=(
 	gir1.2-gtop-2.0 # Required for the system-monitor Gnome extension
 	libdvd-pkg # Uncomment to watch DVD movies with internal/external DVD drive
 	# nautilus-dropbox
+	# neovim # For bullseye, comment out to install latest release from GitHub!
 	python3-neovim
 	xclip # For clipboard sharing with Neovim
 	gimp
@@ -69,7 +70,6 @@ apt_installs=(
 	gnucash
 	python3-gnucash
 	wine
-	# neovim # For bullseye, comment out to download/install latest release!
 	# nvidia-driver
 	# nvidia-legacy-390xx-driver
 )

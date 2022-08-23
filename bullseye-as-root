@@ -242,10 +242,39 @@ if [ -n "$(contains apt_installs wine)" ]; then
 fi
 
 
+# Install Neovim from GitHub if NOT included in apt_installs array
+if [ -z "$(contains apt_installs neovim)" ]; then
+	echo
+	echo 'Installing Neovim from the latest release on GitHub...'
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'"' -f2) -o $script_dir/downloads/nvim-github-latest-release.deb"
+	confirm_cmd "apt-get -y install $script_dir/downloads/nvim-github-latest-release.deb"
+	echo
+fi
+
+
+# Install Windscribe VPN
+if [ -n "$install_windscribe" ]; then
+	echo
+	echo 'Installing Windscribe VPN...'
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/downloads/windscribe.deb"
+	confirm_cmd "apt-get -y install $script_dir/downloads/windscribe.deb"
+	echo
+fi
+
+
 if [ -n "${apt_installs[*]}" ]; then
 	echo
 	echo 'Installing apt packages...'
 	confirm_cmd "apt-get -y install ${apt_installs[@]}"
+	echo
+fi
+
+
+# DVD
+if [ -n "$(contains apt_installs libdvd-pkg)" ]; then
+	echo
+	echo 'Setting up packages to watch DVD movies...'
+	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
 	echo
 fi
 
@@ -264,35 +293,6 @@ if [ -n "$(contains apt_installs flatpak)" ]; then
 	echo
 	echo 'Adding flathub repo...'
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
-	echo
-fi
-
-
-# DVD
-if [ -n "$(contains apt_installs libdvd-pkg)" ]; then
-	echo
-	echo 'Setting up packages to watch DVD movies...'
-	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
-	echo
-fi
-
-
-# Install Windscribe VPN
-if [ -n "$install_windscribe" ]; then
-	echo
-	echo 'Installing Windscribe VPN...'
-	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/downloads/windscribe.deb"
-	confirm_cmd "apt-get -y install $script_dir/downloads/windscribe.deb"
-	echo
-fi
-
-
-# Install Neovim from GitHub if not included in apt_installs array
-if [ -z "$(contains apt_installs neovim)" ]; then
-	echo
-	echo 'Installing Neovim from the latest release on GitHub...'
-	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'"' -f2) -o $script_dir/downloads/nvim-github-latest-release.deb"
-	confirm_cmd "apt-get -y install $script_dir/downloads/nvim-github-latest-release.deb"
 	echo
 fi
 

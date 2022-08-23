@@ -243,7 +243,9 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	echo 'Setting up Neovim config (init.vim)...'
 	echo
-	confirm_cmd "mkdir $HOME/dotfiles"
+	if [ ! -d "$HOME/dotfiles" ]; then
+		confirm_cmd "mkdir $HOME/dotfiles"
+	fi
 	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
 	confirm_cmd "mkdir $HOME/.config/nvim"
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
@@ -308,7 +310,9 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		echo 'Installing Flatpak applications...'
 		echo
 		confirm_cmd "flatpak -y install $flatpaks"
-		confirm_cmd "mkdir -p $HOME/dotfiles/var"
+		if [ ! -d $HOME/dotfiles/var ]; then
+			confirm_cmd "mkdir -p $HOME/dotfiles/var"
+		fi
 		confirm_cmd "ln -s $HOME/dotfiles/var $HOME/.var"
 		echo
 	fi

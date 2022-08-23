@@ -334,18 +334,18 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	echo '    - Set user picture'
 	echo '    - Connect to online accounts'
-	echo '    - Run "sudo dmesg" again and look for RED text, which may require more'
-	echo '          firmware than what is installed through this script'
+	echo '    - Run "sudo dmesg" and look for RED text, which may require more firmware'
+	echo '          than what was installed through this script'
 	echo '    - Set up Firefox:'
 	echo '          - about:config >> media.webrtc.hw.h264.enabled = true'
 	echo '                (for HW acceleration during video conferencing)'
 	echo '          - Set up Firefox Sync, customize toolbar, restore synced tabs, etc.'
-	echo '          - Open Settings: DRM enabled, search with DuckDuckGo, and remove Bing'
+	echo '          - Open Settings: DRM enabled, search with DuckDuckGo, remove Bing'
 	echo '          * For SSD:'
 	echo '                - about:config >> browser.cache.disk.enable = false'
-	echo "                - about:config >> browser.sessionstore.interval = 15000000 # add three 0's"
-	echo '                      (this setting is for how often Firefox saves sessions to disk in case'
-	echo "                      of a browser crash, which isn't really necessary with Firefox Sync)"
+	echo '                - about:config >> browser.sessionstore.interval = 15000000'
+	echo "          (add three 0's; this setting is how often Firefox saves sessions to"
+	echo '          disk in case of a browser crash, not really needed with Firefox Sync)'
 	echo
 	touch deb_setup_part_2
 

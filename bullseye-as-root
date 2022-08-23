@@ -296,3 +296,7 @@ if [ -z "$(contains apt_installs neovim)" ]; then
 	echo
 fi
 
+
+echo
+echo 'Cleaning up apt...'
+confirm_cmd 'apt autopurge && apt autoclean'

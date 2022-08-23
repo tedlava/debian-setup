@@ -3,27 +3,34 @@
 # The purpose of this script is to automate the post-installation configuration
 # to achieve my personal ideal setup.  Since I have several computers, I often
 # find myself repeating these steps many times, since I have a tendency to
-# experiment a little too much and have a bad habit of distro-hopping! However,
-# I always have a tendency to come back to Debian, so there's also a chance
-# that I might make this awesome script and then never end up using it all!  Of
-# course, this might make it even easier to experiment with all the distros
-# since I now have an easy way of restoring my Debian back to it's ideal state.
+# experiment a little too much and have a bad habit of distro-hopping!  However,
+# if I ever learn to kick the distro-hopping habit/hobby, there's a chance
+# that I might make this awesome script and then never end up using it again!
+# Of course, this might make it even easier to experiment with all the distros
+# since I now have an easy way of restoring my Debian back to it's ideal state,
+# so it also might make my distro-hopping even worse...  WTF...
 
 
-# Change to script directory to use files as flag variables for saving the 
+# Change to script directory to use files as flag variables for saving the
 # current state of the script
 script_rel_dir=$(dirname "${BASH_SOURCE[0]}")
 cd $script_rel_dir
 script_dir=$(pwd)
 
 
-release_name='bullseye'
-extension_urls=(
-	https://extensions.gnome.org/extension/906/sound-output-device-chooser/
-	https://extensions.gnome.org/extension/72/recent-items/
-	https://extensions.gnome.org/extension/779/clipboard-indicator/
-	https://extensions.gnome.org/extension/120/system-monitor/
-)
+release_name=$(echo $1 | cut -d'-' -f1)
+
+
+# Load variables from config file and paths for gsettings and dconf configs
+if [ -f "$HOME/Setup/$release_name-config" ]; then
+	source $HOME/Setup/$release_name-config
+	gsettings_path="$HOME/Setup/$release_name-gsettings.txt"
+	dconf_settings_path="$HOME/Setup/$release_name-dconf.txt"
+else
+	source $script_dir/$release_name-config
+	gsettings_path="$script_dir/$release_name-gsettings.txt"
+	dconf_settings_path="$script_dir/$release_name-dconf.txt"
+fi
 
 
 function confirm_cmd {
@@ -41,11 +48,21 @@ function confirm_cmd {
 }
 
 
+function contains {
+	local -n array=$1
+	for i in "${array[@]}"; do
+		if [ "$i" == "$2" ]; then
+			echo $i
+		fi
+	done
+}
+
+
 echo
 echo "Ted's Debian Setup Script"
 echo '========================='
 echo
-echo "    Release: ${release_name^} (stable)"
+echo "    Release: ${release_name^}"
 echo
 
 
@@ -108,7 +125,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 			echo 'This script automates some common settings that I use for'
 			echo 'every Debian installation while still allowing for some changes'
 			echo 'through interactive questions.  You will be asked to enter your'
-			echo 'password for sudo a few times.'
+			echo 'password to sudo.'
 			echo
 			echo 'The script may require a few reboots, you will be prompted each'
 			echo 'time.  After the script reboots your system, please re-run the'
@@ -118,10 +135,11 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 			# Query user for requirements before proceeding
 			echo
 			echo 'Requirements:'
-			echo "    - Debian ${release_name^} is installed, / and /home partitions set up as btrfs"
-			echo '    - Have patched fonts saved & unzipped in ~/fonts directory (default: Hack)'
+			echo "    - Debian ${release_name^} installed, / and /home partitions set up as btrfs"
+			echo '    - Have patched fonts saved and unzipped in ~/fonts directory (default: Hack)'
 			echo '    - Have a stable Internet connection to download packages'
-			echo '    - Run "sudo dmesg" and look for RED text to know what firmware you need'
+			echo "    - Copied the files \"$release_name-config\", \"$release_name-gsettings.txt\", \"$release_name-dconf.txt\""
+			echo '          to a ~/Setup directory and customized them for this specific computer'
 			echo
 			read -p 'Have all of the above been completed? [y/N] '
 			if [ "${REPLY,}" != 'y' ]; then
@@ -146,7 +164,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 
 		# Run commands as root (with sudo)
-		sudo release_name="$release_name" home="$HOME" interactive="$interactive" wayland="$wayland" bash bullseye-as-root
+		sudo interactive="$interactive" wayland="$wayland" bash "$release_name"-as-root
 	fi
 
 
@@ -168,6 +186,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 			confirm_cmd "sed -i 's/\(Main.panel.addToStatusArea([^,]*,[^,]*\)\(, [0-9]\)\?);/\1, 2);/' $ext_dir/extension.js"
 		fi
 	done
+	echo
 
 
 	# Set up fonts
@@ -181,9 +200,8 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 	# Load gsettings
 	echo
-	echo 'Applying gsettings.txt to Gnome...'
+	echo "Applying $release_name-gsettings.txt to Gnome..."
 	echo
-	file='gsettings.txt'
 	if [ -n "$interactive" ]; then
 		echo -e "Load all settings from gsettings.txt using:\n    $ gsettings set \$schema \$key \"\$val\""
 		read -p 'Proceed? [Y/n] '
@@ -192,21 +210,34 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		while read -r schema key val; do # confirm_cmd in while loop won't work since it also uses 'read'
 			echo -e "\nExecuting command...\n    $ gsettings set $schema $key \"$val\"\n"
 			gsettings set $schema $key "$val"
-		done < "$file"
-		echo
+		done < "$gsettings_path"
 	fi
+	echo
 
 
 	# Load dconf settings
 	echo
-	echo 'Applying dconf-settings.txt to Gnome...'
+	echo "Applying $release_name-dconf.txt to Gnome..."
 	echo
-	confirm_cmd 'dconf load / < dconf-settings.txt'
+	confirm_cmd "dconf load / < $dconf_settings_path"
 	echo
+
+
+	# Ignore suspend on closing lid tweak
+	if [ -n "$ignore_lid_switch" ]; then
+		echo
+		echo 'Applying tweak to ignore suspend on lid closing...'
+		echo
+		confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
+		echo
+	fi
 
 
 	# Set up Neovim
 	# Clone neovim-config from GitHub
+	echo
+	echo 'Setting up Neovim config (init.vim)...'
+	echo
 	confirm_cmd "mkdir $HOME/dotfiles"
 	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
 	confirm_cmd "mkdir $HOME/.config/nvim"
@@ -218,7 +249,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	echo 'About to install Neovim plugins.  During initial start up of Neovim, there will'
 	echo "LOTS of errors due to settings for plugins that aren't installed yet.  Just type"
-	echo 'SPACE to page through all the errors so that Neovim can finish installing them'
+	echo 'SPACE to page through all the errors so that Neovim can finish installing them.'
 	echo 'When Neovim is finished, please exit Neovim by typing ":qa" and pressing ENTER.'
 	echo
 	echo '    *** Do NOT close the terminal window! ***'
@@ -237,14 +268,12 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 
 	# Load patched monospace font
-	echo
-	read -p 'Load patched monospace font? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+	if [ -n "$patched_font" ]; then
 		echo
 		echo '*** WARNING ***'
 		echo '    There may be some temporary distortion on open terminals, like this one!'
 		echo
-		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name 'Hack Nerd Font 10'"
+		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font'"
 	fi
 
 
@@ -268,54 +297,16 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	echo 'Proceeding with Part 2 of the setup script...'
 	echo
-	echo 'Enabling recently installed Gnome extensions...'
-	echo
-	for extension in "${extension_urls[@]}"; do
-		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
-		confirm_cmd "gnome-extensions enable ${ext_uuid}"
-	done
-
-
-	# Install Flatpak apps
-	echo
-	echo 'Do you want install the following apps via Flatpak?'
-	flatpaks=''
-	read -p '    Google Chrome? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		flatpaks="$flatpaks com.google.Chrome"
-	fi
-	read -p '    Xournalpp drawing app? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		flatpaks="$flatpaks com.github.xournalpp.xournalpp"
-	fi
-	read -p '    Foliate ebook reader? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		flatpaks="$flatpaks com.github.johnfactotum.Foliate"
-	fi
-	read -p '    Kdenlive video editor? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		flatpaks="$flatpaks org.kde.kdenlive"
-	fi
-	read -p '    RetroArch game console emulator? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		flatpaks="$flatpaks org.libretro.RetroArch"
-	fi
-	read -p '    StepMania dance step game? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		flatpaks="$flatpaks com.stepmania.StepMania"
-	fi
-	read -p '    Jellyfin media player? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		flatpaks="$flatpaks com.github.iwalton3.jellyfin-media-player"
-	fi
 
 	if [ "$flatpaks" != '' ]; then
+		echo
+		echo 'Installing Flatpak applications...'
+		echo
 		confirm_cmd "flatpak -y install $flatpaks"
+		confirm_cmd "mkdir -p $HOME/dotfiles/var"
+		confirm_cmd "ln -s $HOME/dotfiles/var $HOME/.var"
+		echo
 	fi
-	echo
-
-	confirm_cmd "mkdir -p $HOME/dotfiles/var"
-	confirm_cmd "ln -s $HOME/dotfiles/var $HOME/.var"
 
 
 	echo
@@ -354,6 +345,7 @@ elif [ -f deb_setup_part_1 ] && [ -f deb_setup_part_2 ]; then
 	echo
 	echo "Ted's Debian Setup Script has finished.  If you want to run it again,"
 	echo 'please delete the temp files "reqs_confirmed", "dotfiles_removed",'
-	echo '"deb_setup_part_1", and "deb_setup_part_2", and then re-run the script.'
+	echo '"moved_user_dirs", "deb_setup_part_1", and "deb_setup_part_2", and then'
+	echo 're-run the script.'
 	echo
 fi

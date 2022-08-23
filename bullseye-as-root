@@ -1,16 +1,14 @@
 #!/usr/bin/bash
 
 
-release_name=$(echo $0 | cut -d'-' -f1 | cut -d'/' -f2)
-home="$(getent passwd $SUDO_USER | cut -d: -f6)"
-
-
-if [ -z "$interactive" ] || [ $(id -u) -ne 1 ]; then
+if [ -z "$home" ] || [ $(id -u) -ne 0 ]; then
+	echo "$interactive"
 	echo 'Please do not run this script by itself.  It must be run from another script.'
 	exit
 fi
 
 
+release_name=$(echo $0 | cut -d'-' -f1 | cut -d'/' -f2)
 script_rel_dir=$(dirname "${BASH_SOURCE[0]}")
 cd $script_rel_dir
 script_dir=$(pwd)

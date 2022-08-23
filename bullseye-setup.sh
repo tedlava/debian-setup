@@ -164,7 +164,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 
 		# Run commands as root (with sudo)
-		sudo interactive="$interactive" wayland="$wayland" bash "$release_name"-as-root
+		sudo home="$HOME" interactive="$interactive" wayland="$wayland" bash "$release_name"-as-root
 	fi
 
 

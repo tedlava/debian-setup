@@ -18,7 +18,7 @@ cd $script_rel_dir
 script_dir=$(pwd)
 
 
-release_name=$(echo $0 | cut -d'-' -f1)
+release_name=$(echo $0 | cut -d'-' -f1 | cut -d'/' -f2)
 
 
 # Load variables from config file and paths for gsettings and dconf configs

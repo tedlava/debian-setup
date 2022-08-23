@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 
-release_name=$(echo $0 | cut -d'-' -f1)
+release_name=$(echo $0 | cut -d'-' -f1 | cut -d'/' -f2)
 home="$(getent passwd $SUDO_USER | cut -d: -f6)"
 
 

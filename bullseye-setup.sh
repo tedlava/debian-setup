@@ -160,7 +160,12 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 
 		# Create temporary downloads directory
-		confirm_cmd "mkdir $script_dir/downloads # To hold all files for offline reinstallation, if need be"
+		if [ ! -d $script_dir/downloads ]; then
+			echo
+			echo 'Create temporary downloads directory to hold packages...'
+			echo
+			confirm_cmd "mkdir $script_dir/downloads"
+		fi
 
 
 		# Run commands as root (with sudo)

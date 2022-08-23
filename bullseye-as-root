@@ -2,7 +2,7 @@
 
 
 if [ -z "$home" ] || [ $(id -u) -ne 0 ]; then
-	echo "$interactive"
+	echo
 	echo 'Please do not run this script by itself.  It must be run from another script.'
 	exit
 fi
@@ -53,7 +53,7 @@ if [ ! -f dotfiles_removed ]; then
 	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		confirm_cmd "rm -rf $home/.*"
-		confirm_cmd "sudo -u $SUDO_USER rsync -avu /etc/skel/ $home/"
+		confirm_cmd "sudo -u $SUDO_USER cp -av /etc/skel/. $home/"
 		sudo -u $SUDO_USER touch dotfiles_removed
 		reboot=1
 	fi
@@ -162,8 +162,8 @@ echo
 
 # Install basic utilities
 echo
-echo 'Installing rsync, git, curl, timeshift, and gufw...'
-confirm_cmd 'apt-get -y install rsync git curl timeshift gufw'
+echo 'Installing git, curl, and timeshift...'
+confirm_cmd 'apt-get -y install git curl timeshift'
 echo
 
 
@@ -181,16 +181,6 @@ echo
 read -p 'Press ENTER to open timeshift...'
 confirm_cmd 'timeshift-launcher'
 echo
-
-
-# Inform user to turn on firewall with Gufw, must use GUI
-echo
-echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
-echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
-echo 'through SSH.  Make sure the firewall is turned on before closing the window.'
-echo
-read -p 'Press ENTER to open gufw...'
-confirm_cmd 'gufw'
 
 
 # SSD
@@ -293,6 +283,19 @@ if [ -n "$(contains apt_installs flatpak)" ]; then
 	echo
 	echo 'Adding flathub repo...'
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
+	echo
+fi
+
+
+# Inform user to turn on firewall with Gufw, must use GUI
+if [ -n "$(contains apt_installs gufw)" ]; then
+	echo
+	echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
+	echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
+	echo 'through SSH.  Make sure the firewall is turned on before closing the window.'
+	echo
+	read -p 'Press ENTER to open gufw...'
+	confirm_cmd 'gufw'
 	echo
 fi
 

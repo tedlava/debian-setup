@@ -8,8 +8,14 @@
 # merge errors in case you do a git pull later for a newer version.
 
 
+GRUB_CMDLINE_LINUX_DEFAULT='quiet splash' # To be copied into /etc/default/grub, parms like "pci=noaer" go here
 extra_repos=1 # Add contrib and non-free to sources.list
 # ssd=1 # Uncomment if installed to an SSD
+gdm_inhibit_ac=1 # Inhibit suspend if on AC power but not logged (for servers and SSH access)
+ignore_lid_switch=1 # Ignore suspend on closing lid tweak
+install_windscribe=1 # VPN with slick Linux GUI!
+load_mimetypes=1 # Load Nautilus mime types for Neovim
+patched_font='Hack Nerd Font 10'
 
 
 apt_purges=(
@@ -30,12 +36,6 @@ backports_installs=(
 )
 
 
-# Inhibit suspend if plugged into AC power but not logged in, which is useful
-# for anything running like a server or even just SSH.  If on battery power,
-# computer will still suspend if not logged in.
-gdm_inhibit_ac=1
-
-
 # If your system requires a backported kernel, you may want to install your
 # firmware packages from backports as well.  Just comment out all the needed
 # packages from the array below, and uncomment them in the backports_installs
@@ -53,6 +53,8 @@ apt_installs=(
 	plymouth # Graphical boot
 	flatpak
 	gnome-software-plugin-flatpak
+	rsync
+	gufw
 	vlc
 	libavcodec-extra
 	ipython3
@@ -74,16 +76,6 @@ apt_installs=(
 	# nvidia-legacy-390xx-driver
 )
 
-
-# Add any extra grub parameters that are necessary for this computer to boot
-# 	For example, pci=noaer'
-# If you are NOT installing plymouth above, please remove 'splash' from below
-GRUB_CMDLINE_LINUX_DEFAULT='quiet splash'
-
-ignore_lid_switch=1 # Ignore suspend on closing lid tweak
-install_windscribe=1 # VPN with slick Linux GUI!
-load_mimetypes=1 # Load Nautilus mime types for Neovim
-patched_font='Hack Nerd Font 10'
 
 flatpaks=(
 	com.google.Chrome

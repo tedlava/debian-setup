@@ -270,7 +270,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	echo 'Loading Nautilus mime types (open all text files with Neovim)...'
 	echo
-	confirm_cmd "rsync -avu mimeapps.list $HOME/.config/"
+	confirm_cmd "cp -av mimeapps.list $HOME/.config/"
 	echo
 
 
@@ -341,11 +341,13 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo '                (for HW acceleration during video conferencing)'
 	echo '          - Set up Firefox Sync, customize toolbar, restore synced tabs, etc.'
 	echo '          - Open Settings: DRM enabled, search with DuckDuckGo, remove Bing'
-	echo '          * For SSD:'
-	echo '                - about:config >> browser.cache.disk.enable = false'
-	echo '                - about:config >> browser.sessionstore.interval = 15000000'
-	echo "          (add three 0's; this setting is how often Firefox saves sessions to"
-	echo '          disk in case of a browser crash, not really needed with Firefox Sync)'
+	if [ -n "$ssd" ]; then
+		echo '          * For SSD:'
+		echo '                - about:config >> browser.cache.disk.enable = false'
+		echo '                - about:config >> browser.sessionstore.interval = 15000000'
+		echo "          (add three 0's; this setting is how often Firefox saves sessions to"
+		echo '          disk in case of a browser crash, not really needed with Firefox Sync)'
+	fi
 	echo
 	touch deb_setup_part_2
 

@@ -145,15 +145,6 @@ if [ ! -f moved_user_dirs ]; then
 fi
 
 
-# Add contrib and non-free to sources.list
-if [ -n "$extra_repos" ]; then
-	echo
-	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
-	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
-	echo
-fi
-
-
 # Update/upgrade for base packages first
 echo
 echo 'Updating apt cache and upgrading current packages...'
@@ -204,14 +195,19 @@ confirm_cmd 'apt-get -y autopurge'
 echo
 
 
-# Backports
-if [ -n "${backports_installs[*]}" ]; then
+# Add contrib and non-free to sources.list
+if [ -n "$extra_repos" ]; then
 	echo
-	echo "Including $release_name-backports in your sources.list..."
-	confirm_cmd "echo -e \"\\n# Backports\\ndeb http://deb.debian.org/debian ${release_name}-backports main contrib non-free\" >> /etc/apt/sources.list"
-	confirm_cmd 'apt-get update'
-	confirm_cmd "apt-get -yt $release_name-backports install ${backports_installs[@]}"
+	# TODO Add sid repositories!  Remove security and updates repositories!
+	while read line; do
+		repo="$(echo "$line" | cut -d' ' -f1,3 | grep -v [#-])"
+		if [ -n "$repo" ]; then
+			break
+		fi
+	done < /etc/apt/sources.list
 	echo
+	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
+	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
 fi
 
 
@@ -230,16 +226,6 @@ if [ -n "$(contains apt_installs wine)" ]; then
 	echo
 	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
 	confirm_cmd dpkg --add-architecture i386
-	echo
-fi
-
-
-# Install Neovim from GitHub if NOT included in apt_installs array
-if [ -z "$(contains apt_installs neovim)" ]; then
-	echo
-	echo 'Installing Neovim from the latest release on GitHub...'
-	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L https://github.com/neovim/neovim/releases/latest | grep 'href=\".*\.deb\"' | cut -d'"' -f2) -o $script_dir/downloads/nvim-github-latest-release.deb"
-	confirm_cmd "apt-get -y install $script_dir/downloads/nvim-github-latest-release.deb"
 	echo
 fi
 

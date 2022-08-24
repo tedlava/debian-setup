@@ -23,23 +23,6 @@ apt_purges=(
 )
 
 
-# Backports repo will NOT be enabled if the following array is empty
-backports_installs=(
-	# linux-image-amd64 # Usually only needed for newer hardware
-	# linux-headers-amd64 # required for NVIDIA drivers
-	# firmware-misc-nonfree
-	# intel-microcode
-	# amd64-microcode
-	# firmware-realtek
-	# firmware-atheros
-	# firmware-iwlwifi
-)
-
-
-# If your system requires a backported kernel, you may want to install your
-# firmware packages from backports as well.  Just comment out all the needed
-# packages from the array below, and uncomment them in the backports_installs
-# array above.
 apt_installs=(
 	# linux-headers-amd64 # required for NVIDIA drivers
 	firmware-misc-nonfree
@@ -62,7 +45,7 @@ apt_installs=(
 	gir1.2-gtop-2.0 # Required for the system-monitor Gnome extension
 	libdvd-pkg # Uncomment to watch DVD movies with internal/external DVD drive
 	# nautilus-dropbox
-	# neovim # For bullseye, comment out to install latest release from GitHub!
+	neovim # For bullseye, comment out to install latest release from GitHub!
 	python3-neovim
 	xclip # For clipboard sharing with Neovim
 	gimp
@@ -92,6 +75,7 @@ extension_urls=(
 	https://extensions.gnome.org/extension/906/sound-output-device-chooser/
 	https://extensions.gnome.org/extension/72/recent-items/
 	https://extensions.gnome.org/extension/779/clipboard-indicator/
-	https://extensions.gnome.org/extension/120/system-monitor/
+	# https://extensions.gnome.org/extension/120/system-monitor/
+	https://extensions.gnome.org/extension/3010/system-monitor-next/
 )
 

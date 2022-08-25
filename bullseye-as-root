@@ -145,6 +145,14 @@ if [ ! -f moved_user_dirs ]; then
 fi
 
 
+# Purge unwanted packages
+echo
+echo 'Removing unwanted packages from the base installation...'
+confirm_cmd "apt-get -y purge ${apt_purges[@]}"
+confirm_cmd 'apt-get -y autopurge'
+echo
+
+
 # Add contrib and non-free to sources.list
 if [ -n "$extra_repos" ]; then
 	echo
@@ -193,14 +201,6 @@ if [ -n "$ssd" ]; then
 	confirm_cmd 'fstrim -v /home'
 	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
 fi
-echo
-
-
-# Purge unwanted packages
-echo
-echo 'Removing unwanted packages from the base installation...'
-confirm_cmd "apt-get -y purge ${apt_purges[@]}"
-confirm_cmd 'apt-get -y autopurge'
 echo
 
 

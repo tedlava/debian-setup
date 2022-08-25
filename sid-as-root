@@ -145,6 +145,14 @@ if [ ! -f moved_user_dirs ]; then
 fi
 
 
+# Purge unwanted packages
+echo
+echo 'Removing unwanted packages from the base installation...'
+confirm_cmd "apt-get -y purge ${apt_purges[@]}"
+confirm_cmd 'apt-get -y autopurge'
+echo
+
+
 # Update/upgrade for base packages first
 echo
 echo 'Updating apt cache and upgrading current packages...'
@@ -187,28 +195,33 @@ fi
 echo
 
 
-# Purge unwanted packages
+# Switch to new repositories
 echo
-echo 'Removing unwanted packages from the base installation...'
-confirm_cmd "apt-get -y purge ${apt_purges[@]}"
-confirm_cmd 'apt-get -y autopurge'
-echo
+while read line; do
+	old_release="$(echo "$line" | grep '^deb ' | cut -d' ' -f3 | grep -v [#-])"
+	if [ -n "$old_release" ]; then
+		break
+	fi
+done < /etc/apt/sources.list
+grep "^deb.* $old_release .*" /etc/apt/sources.list > sources.list
+sed -i "s/$old_release/$release_name/" sources.list
+mv -v sources.list /etc/apt/sources.list
 
 
 # Add contrib and non-free to sources.list
 if [ -n "$extra_repos" ]; then
 	echo
-	# TODO Add sid repositories!  Remove security and updates repositories!
-	while read line; do
-		repo="$(echo "$line" | cut -d' ' -f1,3 | grep -v [#-])"
-		if [ -n "$repo" ]; then
-			break
-		fi
-	done < /etc/apt/sources.list
-	echo
 	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
 	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
 fi
+
+
+# Update/upgrade to new release
+echo
+echo "Updating apt cache from $release_name repositories and dist-upgrading to $release_name..."
+confirm_cmd 'apt-get update'
+confirm_cmd 'apt-get -y dist-upgrade'
+echo
 
 
 # Inhibit suspend if on AC power but not logged in

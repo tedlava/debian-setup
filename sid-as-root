@@ -120,7 +120,7 @@ if [ -n "$reboot" ]; then
 	fi
 	read -p 'Press ENTER to reboot...'
 	systemctl reboot
-	exit
+	sleep 5
 fi
 
 
@@ -145,83 +145,105 @@ if [ ! -f moved_user_dirs ]; then
 fi
 
 
-# Purge unwanted packages
-echo
-echo 'Removing unwanted packages from the base installation...'
-confirm_cmd "apt-get -y purge ${apt_purges[@]}"
-confirm_cmd 'apt-get -y autopurge'
-echo
+# Upgrade to new release
+if [ ! -f "upgraded_to_$release_name" ]; then
 
-
-# Update/upgrade for base packages first
-echo
-echo 'Updating apt cache and upgrading current packages...'
-confirm_cmd 'apt-get update'
-confirm_cmd 'apt-get -y upgrade'
-echo
-
-
-# Install basic utilities
-echo
-echo 'Installing git, curl, and timeshift...'
-confirm_cmd 'apt-get -y install git curl timeshift'
-echo
-
-
-# Inform user to take a snapshot with Timeshift, must use GUI
-echo
-echo 'Timeshift must be set up through the GUI before system snapshots can'
-echo 'be taken to rollback a bad update or configuration or installation'
-echo 'of a bad package.  Only use timeshift to snapshot the @ subvolume.'
-echo 'Check the boxes to add monthly and weekly snapshots as well.  All'
-echo 'other default settings should be sufficient.  Take an initial snapshot'
-echo "and give it a title like \"Debian ${release_name^} installed\", just in case you"
-echo 'screw something up in the rest of the installation... ;)  After it is'
-echo 'done snapshotting the system, you may close the timeshift window.'
-echo
-read -p 'Press ENTER to open timeshift...'
-confirm_cmd 'timeshift-launcher'
-echo
-
-
-# SSD
-if [ -n "$ssd" ]; then
+	# Purge unwanted packages
 	echo
-	echo 'SSD setup...'
-	confirm_cmd 'fstrim -v /'
-	confirm_cmd 'fstrim -v /home'
-	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
-fi
-echo
+	echo 'Removing unwanted packages from the base installation...'
+	confirm_cmd "apt-get -y purge ${apt_purges[@]}"
+	confirm_cmd 'apt-get -y autopurge'
+	echo
 
 
-# Switch to new repositories
-echo
-while read line; do
-	old_release="$(echo "$line" | grep '^deb ' | cut -d' ' -f3 | grep -v [#-])"
-	if [ -n "$old_release" ]; then
-		break
+	# Update/upgrade for stable packages first
+	echo
+	echo 'Updating apt cache and upgrading current packages...'
+	confirm_cmd 'apt-get update'
+	confirm_cmd 'apt-get -y upgrade'
+	echo
+
+
+	# Install basic utilities
+	echo
+	echo 'Installing git, curl, timeshift, and apt-listbugs...'
+	confirm_cmd 'apt-get -y install git curl timeshift apt-listbugs'
+	echo
+
+
+	# Inform user to take a snapshot with Timeshift, must use GUI
+	echo
+	echo 'Timeshift must be set up through the GUI before system snapshots can'
+	echo 'be taken to rollback a bad update or configuration or installation'
+	echo 'of a bad package.  Only use timeshift to snapshot the @ subvolume.'
+	echo 'Check the boxes to add monthly and weekly snapshots as well.  All'
+	echo 'other default settings should be sufficient.  Take an initial snapshot'
+	echo "and give it a title like \"Debian ${release_name^} installed\", just in case you"
+	echo 'screw something up in the rest of the installation... ;)  After it is'
+	echo 'done snapshotting the system, you may close the timeshift window.'
+	echo
+	read -p 'Press ENTER to open timeshift...'
+	confirm_cmd 'timeshift-launcher'
+	echo
+
+
+	# SSD
+	if [ -n "$ssd" ]; then
+		echo
+		echo 'SSD setup...'
+		confirm_cmd 'fstrim -v /'
+		confirm_cmd 'fstrim -v /home'
+		confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
 	fi
-done < /etc/apt/sources.list
-grep "^deb.* $old_release .*" /etc/apt/sources.list > sources.list
-sed -i "s/$old_release/$release_name/" sources.list
-mv -v sources.list /etc/apt/sources.list
-
-
-# Add contrib and non-free to sources.list
-if [ -n "$extra_repos" ]; then
 	echo
-	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
-	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
+
+
+	# Switch to new repositories
+	echo
+	echo "Switching to $release_name repositories in /etc/apt/sources.list ..."
+	echo
+	while read line; do
+		old_release="$(echo "$line" | grep '^deb ' | cut -d' ' -f3 | grep -v [#-])"
+		if [ -n "$old_release" ]; then
+			break
+		fi
+	done < /etc/apt/sources.list
+	confirm_cmd "grep '^deb.* $old_release .*' /etc/apt/sources.list > sources.list"
+	confirm_cmd "sed -i 's/$old_release/$release_name/' sources.list"
+	confirm_cmd 'mv -v sources.list /etc/apt/sources.list'
+
+
+	# Add contrib and non-free to sources.list
+	if [ -n "$extra_repos" ]; then
+		echo
+		echo 'Adding extra repositories (contrib, non-free) to sources.list...'
+		confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
+	fi
+
+
+	# Update/upgrade to new release
+	echo
+	echo "Updating apt cache from $old_release repositories and dist-upgrading to $release_name..."
+	confirm_cmd 'apt-get update'
+	confirm_cmd 'apt-get dist-upgrade'
+	sudo -u $SUDO_USER touch "upgraded_to_$release_name"
+	echo
+	echo 'The script needs to reboot your system.  When it is finished rebooting,'
+	echo 'please re-run the same script and it will resume from where it left off.'
+	echo
+	if [ -n "$wayland" ]; then
+		echo
+		echo '    *** Please switch to "Gnome on Xorg" when you login next time!'
+		echo
+	fi
+	read -p 'Press ENTER to reboot...'
+	systemctl reboot
+	sleep 5
 fi
 
 
-# Update/upgrade to new release
-echo
-echo "Updating apt cache from $release_name repositories and dist-upgrading to $release_name..."
-confirm_cmd 'apt-get update'
-confirm_cmd 'apt-get -y dist-upgrade'
-echo
+# Create timeshift snapshot after booting into new release for the first time
+confirm_cmd "timeshift --create --comments 'Debian ${release_name^} installed' --yes"
 
 
 # Inhibit suspend if on AC power but not logged in

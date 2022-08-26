@@ -120,7 +120,7 @@ if [ -n "$reboot" ]; then
 	fi
 	read -p 'Press ENTER to reboot...'
 	systemctl reboot
-	exit
+	sleep 5
 fi
 
 

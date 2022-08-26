@@ -171,6 +171,15 @@ if [ ! -f "upgraded_to_$release_name" ]; then
 	echo
 
 
+	# Get stable release name first
+	while read line; do
+		old_release="$(echo "$line" | grep '^deb ' | cut -d' ' -f3 | grep -v [#-])"
+		if [ -n "$old_release" ]; then
+			break
+		fi
+	done < /etc/apt/sources.list
+	
+
 	# Inform user to take a snapshot with Timeshift, must use GUI
 	echo
 	echo 'Timeshift must be set up through the GUI before system snapshots can'
@@ -178,7 +187,7 @@ if [ ! -f "upgraded_to_$release_name" ]; then
 	echo 'of a bad package.  Only use timeshift to snapshot the @ subvolume.'
 	echo 'Check the boxes to add monthly and weekly snapshots as well.  All'
 	echo 'other default settings should be sufficient.  Take an initial snapshot'
-	echo "and give it a title like \"Debian ${release_name^} installed\", just in case you"
+	echo "and give it a title like \"Debian ${old_release^} installed\", just in case you"
 	echo 'screw something up in the rest of the installation... ;)  After it is'
 	echo 'done snapshotting the system, you may close the timeshift window.'
 	echo
@@ -202,12 +211,6 @@ if [ ! -f "upgraded_to_$release_name" ]; then
 	echo
 	echo "Switching to $release_name repositories in /etc/apt/sources.list ..."
 	echo
-	while read line; do
-		old_release="$(echo "$line" | grep '^deb ' | cut -d' ' -f3 | grep -v [#-])"
-		if [ -n "$old_release" ]; then
-			break
-		fi
-	done < /etc/apt/sources.list
 	confirm_cmd "grep '^deb.* $old_release .*' /etc/apt/sources.list > sources.list"
 	confirm_cmd "sed -i 's/$old_release/$release_name/' sources.list"
 	confirm_cmd 'mv -v sources.list /etc/apt/sources.list'

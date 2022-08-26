@@ -169,8 +169,12 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 
 		# Disable suspend while on AC power
-		echo 'Disable suspend while on AC power...'
-		confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
+		if [ ! -f disable_ac_suspend ]; then
+			echo
+			echo 'Disable suspend while on AC power...'
+			confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
+			touch disable_ac_suspend
+		fi
 
 
 		# Run commands as root (with sudo)

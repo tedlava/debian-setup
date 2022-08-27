@@ -290,7 +290,7 @@ fi
 if [ -n "${apt_installs[*]}" ]; then
 	echo
 	echo 'Installing apt packages...'
-	confirm_cmd "apt-get -y install ${apt_installs[@]}"
+	confirm_cmd "apt-listbugs -y apt-get -y install ${apt_installs[@]}" # TODO Double check apt-listbugs syntax
 	echo
 fi
 

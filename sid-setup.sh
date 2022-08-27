@@ -286,9 +286,8 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 	# Reboot
 	echo
-	echo 'Part 1 of the setup script is complete!  The system needs to reboot.  At the'
-	echo 'login screen, please switch to "Gnome on Xorg" (bottom-right gear icon) then'
-	echo 're-run this same script again and it will automatically start part 2.'
+	echo 'The script needs to reboot your system.  When it is finished rebooting,'
+	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
 	touch deb_setup_part_1
 	if [ -n "$wayland" ]; then
@@ -301,10 +300,6 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	sleep 5
 
 elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
-	echo
-	echo 'Proceeding with Part 2 of the setup script...'
-	echo
-
 	if [ -n "${flatpaks[*]}" ]; then
 		echo
 		echo 'Installing Flatpak applications...'

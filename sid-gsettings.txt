@@ -18,6 +18,7 @@ org.gnome.gedit.preferences.editor background-pattern 'grid'
 org.gnome.gedit.preferences.editor scheme 'oblivion'
 org.gnome.gedit.preferences.editor display-right-margin true
 org.gnome.gedit.preferences.editor insert-spaces true
+org.gnome.desktop.interface color-scheme 'prefer-dark'
 org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
 org.gnome.desktop.interface clock-show-weekday true
 org.gnome.desktop.interface clock-show-seconds true

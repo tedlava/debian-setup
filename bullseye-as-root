@@ -124,6 +124,15 @@ if [ -n "$reboot" ]; then
 fi
 
 
+# Disable suspend while on AC power
+if [ ! -f disable_ac_suspend ]; then
+	echo
+	echo 'Disable suspend while on AC power...'
+	confirm_cmd "sudo -u $SUDO_USER gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
+	sudo -u $SUDO_USER touch disable_ac_suspend
+fi
+
+
 # Remove old home directories in top level of btrfs @home partition
 if [ ! -f moved_user_dirs ]; then
 	echo

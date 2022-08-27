@@ -125,11 +125,11 @@ fi
 
 
 # Disable suspend while on AC power
-if [ ! -f disable_ac_suspend ]; then
+if [ ! -f disabled_ac_suspend ]; then
 	echo
 	echo 'Disable suspend while on AC power...'
 	confirm_cmd "sudo -u $SUDO_USER gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
-	sudo -u $SUDO_USER touch disable_ac_suspend
+	sudo -u $SUDO_USER touch disabled_ac_suspend
 fi
 
 

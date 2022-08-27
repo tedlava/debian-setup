@@ -135,7 +135,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 			# Query user for requirements before proceeding
 			echo
 			echo 'Requirements:'
-			echo "    - Debian ${release_name^} installed, / and /home partitions set up as btrfs"
+			echo "    - Debian Stable installed, / and /home partitions set up as btrfs"
 			echo '    - Have patched fonts saved and unzipped in ~/fonts directory (default: Hack)'
 			echo '    - Have a stable Internet connection to download packages'
 			echo "    - Copied the files \"$release_name-config\", \"$release_name-gsettings.txt\", \"$release_name-dconf.txt\""

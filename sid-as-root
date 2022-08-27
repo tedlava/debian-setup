@@ -337,4 +337,4 @@ fi
 
 echo
 echo 'Cleaning up apt...'
-confirm_cmd 'apt autopurge && apt autoclean'
+confirm_cmd 'apt -y autopurge && apt -y autoclean'

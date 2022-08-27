@@ -35,7 +35,7 @@ fi
 
 function confirm_cmd {
 	local cmd="$*"
-	if [ -n $interactive ]; then
+	if [ -n "$interactive" ]; then
 		echo -e "\nAbout to execute command...\n    $ $cmd"
 		read -p 'Proceed? [Y/n] '
 		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
@@ -254,9 +254,9 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 	confirm_cmd "sh -c 'curl -fLo \"${XDG_DATA_HOME:-$HOME/.local/share}\"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'"
 	echo
-	echo 'About to install Neovim plugins.  During initial start up of Neovim, there will'
-	echo "LOTS of errors due to settings for plugins that aren't installed yet.  Just type"
-	echo 'SPACE to page through all the errors so that Neovim can finish installing them.'
+	echo 'About to install Neovim plugins.  During initial start up of Neovim, there may'
+	echo "be errors due to settings for plugins that aren't installed yet.  Just type"
+	echo 'SPACE to page through the errors so that Neovim can finish installing them.'
 	echo 'When Neovim is finished, please exit Neovim by typing ":qa" and pressing ENTER.'
 	echo
 	echo '    *** Do NOT close the terminal window! ***'

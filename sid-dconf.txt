@@ -9,7 +9,7 @@ name='Launch Catfish'
 [org/gnome/shell/extensions/clipboard-indicator]
 disable-down-arrow=true
 
-[org/gnome/shell/extensions/system-monitor-next]
+[org/gnome/shell/extensions/system-monitor]
 compact-display=true
 cpu-refresh-time=5000
 cpu-show-text=false

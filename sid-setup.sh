@@ -274,16 +274,6 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 
 
-	# Load patched monospace font
-	if [ -n "$patched_font" ]; then
-		echo
-		echo '*** WARNING ***'
-		echo '    There may be some temporary distortion on open terminals, like this one!'
-		echo
-		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font'"
-	fi
-
-
 	# Reboot
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
@@ -296,8 +286,13 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		echo
 	fi
 	read -p 'Press ENTER to reboot...'
+	# Load patched monospace font immediately before reboot since it makes the terminal difficult to read
+	if [ -n "$patched_font" ]; then
+		gsettings set org.gnome.desktop.interface monospace-font-name "$patched_font"
+	fi
 	systemctl reboot
 	sleep 5
+
 
 elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	if [ -n "${flatpaks[*]}" ]; then

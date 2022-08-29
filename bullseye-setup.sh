@@ -317,6 +317,10 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 
 
+	# Create timeshift snapshot after setup script is complete
+	confirm_cmd "sudo timeshift --create --comments 'Debian ${release_name^} setup script completed' --yes"
+
+
 	# Settings to fix after this script...
 	echo
 	echo 'There are a few items that need to be setup through a GUI, or at least that'

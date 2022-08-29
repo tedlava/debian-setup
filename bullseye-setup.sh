@@ -288,7 +288,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	read -p 'Press ENTER to reboot...'
 	# Load patched monospace font immediately before reboot since it makes the terminal difficult to read
 	if [ -n "$patched_font" ]; then
-		gsettings set org.gnome.desktop.interface monospace-font-name "$patched_font"
+		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font'"
 	fi
 	systemctl reboot
 	sleep 5

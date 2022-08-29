@@ -76,7 +76,6 @@ extension_urls=(
 	https://extensions.gnome.org/extension/906/sound-output-device-chooser/
 	https://extensions.gnome.org/extension/72/recent-items/
 	https://extensions.gnome.org/extension/779/clipboard-indicator/
-	# https://extensions.gnome.org/extension/120/system-monitor/
-	https://extensions.gnome.org/extension/3010/system-monitor-next/
+	https://extensions.gnome.org/extension/3010/system-monitor-next/ # For sid
 )
 

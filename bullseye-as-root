@@ -26,7 +26,7 @@ fi
 
 function confirm_cmd {
 	local cmd="$*"
-	if [ -n $interactive ]; then
+	if [ -n "$interactive" ]; then
 		echo -e "\nAbout to execute command as root...\n    # $cmd"
 		read -p 'Proceed? [Y/n] '
 		if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then

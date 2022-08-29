@@ -182,7 +182,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	for extension in "${extension_urls[@]}"; do
 		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
 		info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
-		download_url="$base_url$(curl "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
+		download_url="$base_url$(curl -s "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
 		confirm_cmd "curl -L '$download_url' > '$script_dir/downloads/$ext_uuid.zip'"
 		ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
 		confirm_cmd "gnome-extensions install $script_dir/downloads/$ext_uuid.zip"
@@ -295,6 +295,17 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 
 elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
+	# Enable Gnome extensions
+	echo
+	echo 'Enabling recently installed Gnome extensions...'
+	echo
+	for extension in "${extension_urls[@]}"; do
+		ext_uuid=$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')
+		confirm_cmd "gnome-extensions enable ${ext_uuid}"
+	done
+
+
+	# Install flatpaks
 	if [ -n "${flatpaks[*]}" ]; then
 		echo
 		echo 'Installing Flatpak applications...'
@@ -308,6 +319,7 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	fi
 
 
+	# Remove downloads directory
 	echo
 	echo 'All 3rd-party .deb packages and Gnome extension .zip files were saved to the'
 	read -p "$script_dir/downloads directory.  Delete this directory? [Y/n] "
@@ -318,7 +330,10 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 
 
 	# Create timeshift snapshot after setup script is complete
+	echo
+	echo 'Create a timeshift snapshot in case you screw up this awesome setup...'
 	confirm_cmd "sudo timeshift --create --comments 'Debian ${release_name^} setup script completed' --yes"
+	echo
 
 
 	# Settings to fix after this script...

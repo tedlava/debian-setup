@@ -148,6 +148,14 @@ if [ ! -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part
 				echo
 				exit
 			fi
+
+			# Create status directory
+			if [ ! -d "$status_dir" ]; then
+				echo
+				echo "Create status directory to hold script's state between reboots..."
+				confirm_cmd "mkdir $status_dir"
+			fi
+
 			touch "$status_dir/reqs_confirmed"
 			echo
 		fi
@@ -156,14 +164,6 @@ if [ ! -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part
 		# Check for Wayland
 		if [ -n "$WAYLAND_DISPLAY" ]; then
 			wayland=1
-		fi
-
-
-		# Create status directory
-		if [ ! -d "$status_dir" ]; then
-			echo
-			echo "Create status directory to hold script's state between reboots..."
-			confirm_cmd "mkdir $status_dir"
 		fi
 
 

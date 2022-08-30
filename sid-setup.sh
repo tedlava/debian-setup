@@ -66,7 +66,7 @@ echo "    Release: ${release_name^}"
 echo
 
 
-if [ $(id -u) -eq 0 ]; then
+if [ "$(id -u)" -eq 0 ]; then
 	echo
 	echo 'Please run this shell script as a normal user (with sudo privileges).'
 	echo "Some commands (such as gnome-extensions) need to connect to the user's"
@@ -318,7 +318,7 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		echo 'Installing Flatpak applications...'
 		echo
 		confirm_cmd "flatpak -y install ${flatpaks[@]}"
-		if [ ! -d $HOME/dotfiles/var ]; then
+		if [ ! -d "$HOME/dotfiles/var" ]; then
 			confirm_cmd "mkdir -p $HOME/dotfiles/var"
 		fi
 		confirm_cmd "ln -s $HOME/dotfiles/var $HOME/.var"

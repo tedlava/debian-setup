@@ -161,12 +161,10 @@ if [ ! -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part
 		fi
 
 
-		# Check for Wayland
-		if [ -n "$WAYLAND_DISPLAY" ]; then
+		# If NOT installing NVIDIA driver, check for Wayland (nvidia-driver package will disable Wayland, at least for now)
+		if [ -z "$(echo "${apt_installs[@]}" | grep nvidia)" && -n "$WAYLAND_DISPLAY" ]; then
 			wayland=1
 		fi
-
-
 
 
 		# Create temporary downloads directory

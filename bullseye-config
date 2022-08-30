@@ -44,6 +44,8 @@ backports_installs=(
 # array above.
 apt_installs=(
 	# linux-headers-amd64 # required for NVIDIA drivers
+	# nvidia-driver
+	# nvidia-legacy-390xx-driver
 	firmware-misc-nonfree
 	intel-microcode
 	# amd64-microcode
@@ -74,8 +76,6 @@ apt_installs=(
 	gnucash
 	python3-gnucash
 	wine
-	# nvidia-driver
-	# nvidia-legacy-390xx-driver
 )
 
 

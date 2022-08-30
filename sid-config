@@ -27,12 +27,15 @@ apt_purges=(
 
 apt_installs=(
 	# linux-headers-amd64 # required for NVIDIA drivers
+	# nvidia-driver
+	# nvidia-legacy-390xx-driver
 	firmware-misc-nonfree
 	intel-microcode
 	# amd64-microcode
 	# firmware-realtek
 	# firmware-atheros
 	# firmware-iwlwifi
+	apt-listbugs
 	tlp # Newer version in backports for newer kernels
 	tlp-rdw # Newer version in backports for newer kernels
 	plymouth # Graphical boot
@@ -57,8 +60,6 @@ apt_installs=(
 	gnucash
 	python3-gnucash
 	wine
-	# nvidia-driver
-	# nvidia-legacy-390xx-driver
 )
 
 

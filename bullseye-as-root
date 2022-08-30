@@ -49,20 +49,6 @@ function contains {
 }
 
 
-# Remove old configuration in .dotfiles
-if [ ! -f "$status_dir/dotfiles_removed" ]; then
-	echo
-	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "rm -rf $home/.*"
-		confirm_cmd "sudo -u $SUDO_USER cp -av /etc/skel/. $home/"
-		sudo -u $SUDO_USER touch "$status_dir/dotfiles_removed"
-		reboot=1
-	fi
-	echo
-fi
-
-
 # Move @rootfs btrfs subvolume to @ for timeshift
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 	echo
@@ -154,12 +140,18 @@ if [ ! -f "$status_dir/moved_user_dirs" ]; then
 fi
 
 
-# Purge unwanted packages
-echo
-echo 'Removing unwanted packages from the base installation...'
-confirm_cmd "apt-get -y purge ${apt_purges[@]}"
-confirm_cmd 'apt-get -y autopurge'
-echo
+# Remove old configuration in .dotfiles
+if [ ! -f "$status_dir/dotfiles_removed" ]; then
+	echo
+	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
+	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		confirm_cmd "rm -rf $home/.*"
+		confirm_cmd "sudo -u $SUDO_USER cp -av /etc/skel/. $home/"
+		sudo -u $SUDO_USER touch "$status_dir/dotfiles_removed"
+		reboot=1
+	fi
+	echo
+fi
 
 
 # Add contrib and non-free to sources.list
@@ -169,6 +161,14 @@ if [ -n "$extra_repos" ]; then
 	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)$/\1 contrib non-free/' /etc/apt/sources.list"
 	echo
 fi
+
+
+# Purge unwanted packages
+echo
+echo 'Removing unwanted packages from the base installation...'
+confirm_cmd "apt-get -y purge ${apt_purges[@]}"
+confirm_cmd 'apt-get -y autopurge'
+echo
 
 
 # Update/upgrade for base packages first

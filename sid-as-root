@@ -49,20 +49,6 @@ function contains {
 }
 
 
-# Remove old configuration in .dotfiles
-if [ ! -f "$status_dir/dotfiles_removed" ]; then
-	echo
-	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "rm -rf $home/.*"
-		confirm_cmd "sudo -u $SUDO_USER cp -av /etc/skel/. $home/"
-		sudo -u $SUDO_USER touch "$status_dir/dotfiles_removed"
-		reboot=1
-	fi
-	echo
-fi
-
-
 # Move @rootfs btrfs subvolume to @ for timeshift
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 	echo
@@ -154,6 +140,20 @@ if [ ! -f "$status_dir/moved_user_dirs" ]; then
 fi
 
 
+# Remove old configuration in .dotfiles
+if [ ! -f "$status_dir/dotfiles_removed" ]; then
+	echo
+	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
+	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		confirm_cmd "rm -rf $home/.*"
+		confirm_cmd "sudo -u $SUDO_USER cp -av /etc/skel/. $home/"
+		sudo -u $SUDO_USER touch "$status_dir/dotfiles_removed"
+		reboot=1
+	fi
+	echo
+fi
+
+
 # Upgrade to new release
 if [ ! -f "$status_dir/upgraded_to_$release_name" ]; then
 
@@ -175,8 +175,8 @@ if [ ! -f "$status_dir/upgraded_to_$release_name" ]; then
 
 	# Install basic utilities
 	echo
-	echo 'Installing git, curl, timeshift, and apt-listbugs...'
-	confirm_cmd 'apt-get -y install git curl timeshift apt-listbugs'
+	echo 'Installing git, curl, and timeshift...'
+	confirm_cmd 'apt-get -y install git curl timeshift'
 	echo
 
 
@@ -237,7 +237,7 @@ if [ ! -f "$status_dir/upgraded_to_$release_name" ]; then
 	echo
 	echo "Updating apt cache from $old_release repositories and dist-upgrading to $release_name..."
 	confirm_cmd 'apt-get update'
-	confirm_cmd 'apt-get dist-upgrade'
+	confirm_cmd 'apt-get -y dist-upgrade'
 	sudo -u $SUDO_USER touch "$status_dir/upgraded_to_$release_name"
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'

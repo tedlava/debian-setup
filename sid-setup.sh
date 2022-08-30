@@ -336,6 +336,11 @@ elif [ -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part
 	echo
 
 
+	# Final apt upgrade check (sometimes needed for nvidia)
+	echo 'Final check for apt upgrades and clean up...'
+	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
+
+
 	# Create timeshift snapshot after setup script is complete
 	echo
 	echo 'Create a timeshift snapshot in case you screw up this awesome setup...'

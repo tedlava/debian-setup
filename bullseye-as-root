@@ -319,7 +319,3 @@ if [ -n "$priv_firefox_launcher" ]; then
 	echo
 fi
 
-
-echo
-echo 'Cleaning up apt...'
-confirm_cmd 'apt -y autopurge && apt -y autoclean'

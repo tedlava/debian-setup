@@ -22,6 +22,9 @@ patched_font='Hack Nerd Font 9'
 # If using 1920x1080 screen resolution, highly recommend changing the default
 # terminal window size in *-dconf.txt to 100 cols by 50 rows
 
+# For minimize and maximize buttons on window title bars, add this line to *-gsettings.txt
+# org.gnome.desktop.wm.preferences button-layout 'appmenu:minimize,maximize,close'
+
 apt_purges=(
 	evolution
 )

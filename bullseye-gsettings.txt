@@ -25,6 +25,7 @@ org.gnome.desktop.interface clock-show-date true
 org.gnome.desktop.interface show-battery-percentage true
 org.gnome.mutter attach-modal-dialogs false
 org.gnome.nautilus.list-view use-tree-view true
+org.gnome.desktop.sound event-sounds false
 org.gnome.desktop.sound allow-volume-above-100-percent true
 org.gnome.desktop.datetime automatic-timezone true
 org.gnome.system.location enabled true

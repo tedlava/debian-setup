@@ -148,7 +148,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 				echo
 				exit
 			fi
-			touch reqs_confirmed
+			touch "$status_dir/reqs_confirmed"
 			echo
 		fi
 
@@ -159,11 +159,18 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		fi
 
 
+		# Create status directory
+		if [ ! -d "$status_dir" ]; then
+			echo
+			echo "Create status directory to hold script's state between reboots..."
+			confirm_cmd "mkdir $status_dir"
+		fi
+
+
 		# Create temporary downloads directory
-		if [ ! -d $script_dir/downloads ]; then
+		if [ ! -d "$script_dir/downloads" ]; then
 			echo
 			echo 'Create temporary downloads directory to hold packages...'
-			echo
 			confirm_cmd "mkdir $script_dir/downloads"
 		fi
 
@@ -279,7 +286,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
-	touch deb_setup_part_1
+	touch "$status_dir/deb_setup_part_1"
 	if [ -n "$wayland" ]; then
 		echo
 		echo '    *** Please switch to "Gnome on Xorg" when you login next time!'
@@ -358,14 +365,13 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 		echo '          disk in case of a browser crash, not really needed with Firefox Sync)'
 	fi
 	echo
-	touch deb_setup_part_2
+	touch "$status_dir/deb_setup_part_2"
 
 
 elif [ -f deb_setup_part_1 ] && [ -f deb_setup_part_2 ]; then
 	echo
 	echo "Ted's Debian Setup Script has finished.  If you want to run it again,"
-	echo 'please delete the temp files "reqs_confirmed", "dotfiles_removed",'
-	echo '"moved_user_dirs", "deb_setup_part_1", and "deb_setup_part_2", and then'
+	echo "please delete the status directory at \"$status_dir/\", and then"
 	echo 're-run the script.'
 	echo
 fi

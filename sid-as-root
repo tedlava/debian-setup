@@ -56,7 +56,7 @@ if [ ! -f dotfiles_removed ]; then
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		confirm_cmd "rm -rf $home/.*"
 		confirm_cmd "sudo -u $SUDO_USER cp -av /etc/skel/. $home/"
-		sudo -u $SUDO_USER touch dotfiles_removed
+		sudo -u $SUDO_USER touch "$status_dir/dotfiles_removed"
 		reboot=1
 	fi
 	echo
@@ -129,7 +129,7 @@ if [ ! -f disabled_ac_suspend ]; then
 	echo
 	echo 'Disable suspend while on AC power...'
 	confirm_cmd "sudo -u $SUDO_USER gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
-	sudo -u $SUDO_USER touch disabled_ac_suspend
+	sudo -u $SUDO_USER touch "$status_dir/disabled_ac_suspend"
 fi
 
 
@@ -148,7 +148,7 @@ if [ ! -f moved_user_dirs ]; then
 			fi
 		done
 		confirm_cmd 'umount /mnt'
-		sudo -u $SUDO_USER touch moved_user_dirs
+		sudo -u $SUDO_USER touch "$status_dir/moved_user_dirs"
 	fi
 	echo
 fi
@@ -238,7 +238,7 @@ if [ ! -f "upgraded_to_$release_name" ]; then
 	echo "Updating apt cache from $old_release repositories and dist-upgrading to $release_name..."
 	confirm_cmd 'apt-get update'
 	confirm_cmd 'apt-get dist-upgrade'
-	sudo -u $SUDO_USER touch "upgraded_to_$release_name"
+	sudo -u $SUDO_USER touch "$status_dir/upgraded_to_$release_name"
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'

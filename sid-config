@@ -8,6 +8,7 @@
 # merge errors in case you do a git pull later for a newer version.
 
 
+status_dir='status' # Holds script status between reboots, can be absolute path or relative (to script dir)
 GRUB_CMDLINE_LINUX_DEFAULT='quiet splash' # To be copied into /etc/default/grub, parms like "pci=noaer" go here
 extra_repos=1 # Add contrib and non-free to sources.list
 # ssd=1 # Uncomment if installed to an SSD

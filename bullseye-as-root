@@ -50,7 +50,7 @@ function contains {
 
 
 # Remove old configuration in .dotfiles
-if [ ! -f dotfiles_removed ]; then
+if [ ! -f "$status_dir/dotfiles_removed" ]; then
 	echo
 	read -p 'Do you want to delete all old .dotfiles from your home directory? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
@@ -125,7 +125,7 @@ fi
 
 
 # Disable suspend while on AC power
-if [ ! -f disabled_ac_suspend ]; then
+if [ ! -f "$status_dir/disabled_ac_suspend" ]; then
 	echo
 	echo 'Disable suspend while on AC power...'
 	confirm_cmd "sudo -u $SUDO_USER gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
@@ -134,7 +134,7 @@ fi
 
 
 # Remove old home directories in top level of btrfs @home partition
-if [ ! -f moved_user_dirs ]; then
+if [ ! -f "$status_dir/moved_user_dirs" ]; then
 	echo
 	read -p 'Check for and remove old copies of user directories (siblings to @home)? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
@@ -319,7 +319,3 @@ if [ -n "$priv_firefox_launcher" ]; then
 	echo
 fi
 
-
-echo
-echo 'Cleaning up apt...'
-confirm_cmd 'apt -y autopurge && apt -y autoclean'

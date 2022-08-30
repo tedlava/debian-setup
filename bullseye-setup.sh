@@ -119,9 +119,9 @@ if [ -z "$interactive" ]; then
 fi
 
 
-if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
+if [ ! -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part_2" ]; then
 	if [ -z "$skip_to_ext" ]; then
-		if [ ! -f reqs_confirmed ]; then
+		if [ ! -f "$status_dir/reqs_confirmed" ]; then
 			echo 'This script automates some common settings that I use for'
 			echo 'every Debian installation while still allowing for some changes'
 			echo 'through interactive questions.  You will be asked to enter your'
@@ -148,22 +148,22 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 				echo
 				exit
 			fi
+
+			# Create status directory
+			if [ ! -d "$status_dir" ]; then
+				echo
+				echo "Create status directory to hold script's state between reboots..."
+				confirm_cmd "mkdir $status_dir"
+			fi
+
 			touch "$status_dir/reqs_confirmed"
 			echo
 		fi
 
 
-		# Check for Wayland
-		if [ -n "$WAYLAND_DISPLAY" ]; then
+		# If NOT installing NVIDIA driver, check for Wayland (nvidia-driver package will disable Wayland, at least for now)
+		if [ -z "$(echo "${apt_installs[@]}" | grep nvidia)" && -n "$WAYLAND_DISPLAY" ]; then
 			wayland=1
-		fi
-
-
-		# Create status directory
-		if [ ! -d "$status_dir" ]; then
-			echo
-			echo "Create status directory to hold script's state between reboots..."
-			confirm_cmd "mkdir $status_dir"
 		fi
 
 
@@ -301,7 +301,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	sleep 5
 
 
-elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
+elif [ -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part_2" ]; then
 	# Enable Gnome extensions
 	echo
 	echo 'Enabling recently installed Gnome extensions...'
@@ -336,6 +336,11 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	echo
 
 
+	# Final apt upgrade check (sometimes needed for nvidia)
+	echo 'Final check for apt upgrades and clean up...'
+	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
+
+
 	# Create timeshift snapshot after setup script is complete
 	echo
 	echo 'Create a timeshift snapshot in case you screw up this awesome setup...'
@@ -368,7 +373,7 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	touch "$status_dir/deb_setup_part_2"
 
 
-elif [ -f deb_setup_part_1 ] && [ -f deb_setup_part_2 ]; then
+elif [ -f "$status_dir/deb_setup_part_1" ] && [ -f "$status_dir/deb_setup_part_2" ]; then
 	echo
 	echo "Ted's Debian Setup Script has finished.  If you want to run it again,"
 	echo "please delete the status directory at \"$status_dir/\", and then"

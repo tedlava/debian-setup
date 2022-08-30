@@ -119,9 +119,9 @@ if [ -z "$interactive" ]; then
 fi
 
 
-if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
+if [ ! -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part_2" ]; then
 	if [ -z "$skip_to_ext" ]; then
-		if [ ! -f reqs_confirmed ]; then
+		if [ ! -f "$status_dir/reqs_confirmed" ]; then
 			echo 'This script automates some common settings that I use for'
 			echo 'every Debian installation while still allowing for some changes'
 			echo 'through interactive questions.  You will be asked to enter your'
@@ -301,7 +301,7 @@ if [ ! -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	sleep 5
 
 
-elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
+elif [ -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part_2" ]; then
 	# Enable Gnome extensions
 	echo
 	echo 'Enabling recently installed Gnome extensions...'
@@ -368,7 +368,7 @@ elif [ -f deb_setup_part_1 ] && [ ! -f deb_setup_part_2 ]; then
 	touch "$status_dir/deb_setup_part_2"
 
 
-elif [ -f deb_setup_part_1 ] && [ -f deb_setup_part_2 ]; then
+elif [ -f "$status_dir/deb_setup_part_1" ] && [ -f "$status_dir/deb_setup_part_2" ]; then
 	echo
 	echo "Ted's Debian Setup Script has finished.  If you want to run it again,"
 	echo "please delete the status directory at \"$status_dir/\", and then"

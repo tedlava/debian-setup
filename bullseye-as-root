@@ -83,7 +83,7 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 			confirm_cmd "btrfs subvolume create /mnt/@home"
 		fi
 		for dir in ${user_dirs[@]}; do
-			if [ "$dir" != '@home' ]; then
+			if [ -z "$(echo "$dir" | grep timeshift)" ] && [ "$dir" != '@home' ]; then
 				confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
 			fi
 		done

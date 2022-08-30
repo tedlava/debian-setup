@@ -19,6 +19,8 @@ priv_firefox_launcher=1 # Add private window to context menu for Firefox-ESR lau
 load_mimetypes=1 # Load Nautilus mime types for Neovim
 patched_font='Hack Nerd Font 9'
 
+# If using 1920x1080 screen resolution, highly recommend changing the default
+# terminal window size in *-dconf.txt to 100 cols by 50 rows
 
 apt_purges=(
 	evolution

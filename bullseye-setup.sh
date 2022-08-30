@@ -239,7 +239,9 @@ if [ ! -f "$status_dir/deb_setup_part_1" ] && [ ! -f "$status_dir/deb_setup_part
 	if [ -n "$ignore_lid_switch" ]; then
 		echo
 		echo 'Applying tweak to ignore suspend on lid closing...'
-		echo
+		if [ ! -d "$HOME/.config/autostart" ]; then
+			confirm_cmd "mkdir $HOME/.config/autostart"
+		fi
 		confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
 		echo
 	fi

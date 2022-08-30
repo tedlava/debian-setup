@@ -79,7 +79,9 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 		echo "Detected your /home partition is on device: $dev"
 		confirm_cmd "mount $dev /mnt"
 		user_dirs=( $(ls /mnt) )
-		confirm_cmd "btrfs subvolume create /mnt/@home"
+		if [ ! -d /mnt/@home ]; then
+			confirm_cmd "btrfs subvolume create /mnt/@home"
+		fi
 		for dir in ${user_dirs[@]}; do
 			if [ "$dir" != '@home' ]; then
 				confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
@@ -107,15 +109,6 @@ if [ -n "$reboot" ]; then
 	read -p 'Press ENTER to reboot...'
 	systemctl reboot
 	sleep 5
-fi
-
-
-# Disable suspend while on AC power
-if [ ! -f "$status_dir/disabled_ac_suspend" ]; then
-	echo
-	echo 'Disable suspend while on AC power...'
-	confirm_cmd "sudo -u $SUDO_USER gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
-	sudo -u $SUDO_USER touch "$status_dir/disabled_ac_suspend"
 fi
 
 
@@ -151,6 +144,15 @@ if [ ! -f "$status_dir/dotfiles_removed" ]; then
 		reboot=1
 	fi
 	echo
+fi
+
+
+# Disable suspend while on AC power
+if [ ! -f "$status_dir/disabled_ac_suspend" ]; then
+	echo
+	echo 'Disable suspend while on AC power...'
+	confirm_cmd "sudo -u $SUDO_USER gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
+	sudo -u $SUDO_USER touch "$status_dir/disabled_ac_suspend"
 fi
 
 

@@ -122,7 +122,7 @@ if [ ! -f "$status_dir/moved_user_dirs" ]; then
 		confirm_cmd "mount $dev /mnt"
 		user_dirs=( $(ls /mnt) )
 		for dir in ${user_dirs[@]}; do
-			if [ "$dir" != '@home' ]; then
+			if [ -z "$(echo "$dir" | grep timeshift)" ] && [ "$dir" != '@home' ]; then
 				confirm_cmd "rm -rf /mnt/$dir"
 			fi
 		done

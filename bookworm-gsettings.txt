@@ -1,0 +1,37 @@
+org.gnome.desktop.privacy recent-files-max-age 30
+org.gnome.desktop.privacy remove-old-temp-files true
+org.gnome.desktop.privacy old-files-age uint32 7
+org.gnome.desktop.input-sources xkb-options ['lv3:rwin_switch']
+org.gnome.desktop.session idle-delay uint32 300
+org.gnome.desktop.calendar show-weekdate true
+org.gnome.settings-daemon.plugins.media-keys calculator ['<Primary><Alt>c']
+org.gnome.settings-daemon.plugins.media-keys home ['<Primary><Alt>h']
+org.gnome.settings-daemon.plugins.media-keys www ['<Primary><Alt>w']
+org.gnome.settings-daemon.plugins.power ambient-enabled false
+org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
+org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout 7200
+org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 900
+org.gnome.settings-daemon.plugins.power power-button-action 'interactive'
+org.gnome.shell favorite-apps ['firefox-esr.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop']
+org.gnome.shell enabled-extensions ['places-menu@gnome-shell-extensions.gcampax.github.com', 'sound-output-device-chooser@kgshank.net', 'RecentItems@bananenfisch.net', 'clipboard-indicator@tudmotu.com', 'system-monitor@paradoxxx.zero.gmail.com']
+org.gnome.desktop.wm.preferences action-middle-click-titlebar 'minimize'
+org.gnome.desktop.wm.preferences resize-with-right-button true
+org.gnome.desktop.wm.preferences button-layout 'appmenu:minimize,maximize,close'
+org.gnome.TextEditor highlight-current-line true
+org.gnome.TextEditor show-grid true
+org.gnome.TextEditor show-line-numbers true
+org.gnome.TextEditor show-right-margin true
+org.gnome.TextEditor restore-session false
+org.gnome.desktop.datetime automatic-timezone true
+org.gnome.desktop.interface color-scheme 'prefer-dark'
+org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+org.gnome.desktop.interface clock-show-weekday true
+org.gnome.desktop.interface clock-show-seconds true
+org.gnome.desktop.interface clock-show-date true
+org.gnome.desktop.interface show-battery-percentage true
+org.gnome.desktop.sound event-sounds false
+org.gnome.desktop.sound allow-volume-above-100-percent true
+org.gnome.evolution-data-server.calendar notify-with-tray true
+org.gnome.mutter attach-modal-dialogs false
+org.gnome.nautilus.list-view use-tree-view true
+org.gnome.system.location enabled true

@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+
+
+# Moves the Gnome extensions system-monitor or system-monitor-next to the
+# left of the other indicators.  Updates to extensions often moves them back to
+# their default positions, which looks ugly!  User should not install both
+# system-monitor and system-monitor-next simultaneously.
+
+
+ext_uuid=($(ls $HOME/.local/share/gnome-shell/extensions/ | grep system-monitor -))
+
+# $ext_uuid defaults to the first extension found with 'system-monitor' in its name
+if [ -n "$ext_uuid" ]; then
+	ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
+	if [ -n "$(grep "Main.panel._addToPanelBox('system-monitor', tray, 1, panel);" $ext_dir/extension.js)" ]; then
+		sed -i "s/Main.panel._addToPanelBox('system-monitor', tray, 1, panel);/Main.panel._addToPanelBox('system-monitor', tray, 0, panel);/" $ext_dir/extension.js
+		gnome-extensions disable $ext_uuid
+		gnome-extensions enable $ext_uuid
+	fi
+fi
+

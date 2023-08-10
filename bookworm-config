@@ -11,11 +11,15 @@
 # To disable a setting below, simply comment out the entire line
 status_dir='status' # Holds script status between reboots, can be absolute path or relative (to script dir)
 rm_dotfiles=1 # Remove all old .dotfiles (from prior Linux distributions)
-GRUB_CMDLINE_LINUX_DEFAULT='quiet splash pci=noaer' # To be copied into /etc/default/grub, parms like "pci=noaer" go here
+GRUB_CMDLINE_LINUX_DEFAULT='quiet splash i915.enable_psr=0 module_blacklist=hid_sensor_hub' # For /etc/default/grub, hardware parameters go here
+# "pci=noaer" to avoid errors on Toshiba
+# "i915.enable_psr=0" for smoother mouse movement on Framework
+# "module_blacklist=hid_sensor_hub" for brightness buttons on Framework
 extra_repos=1 # Add contrib and non-free to sources.list
-# ssd=1 # Uncomment if installed to an SSD
+ssd=1 # Uncomment if installed to an SSD
 gdm_inhibit_ac=1 # Inhibit suspend if on AC power but not logged (for servers and SSH access)
 ignore_lid_switch=1 # Ignore suspend on closing lid tweak
+move_system_monitor=1 # Move Gnome extension system-monitor to the left of all indicators
 install_google_chrome=1 # The native .deb version is better than the Flatpak
 install_windscribe=1 # VPN with slick Linux GUI!
 priv_firefox_launcher=1 # Add private window to context menu for Firefox-ESR launcher
@@ -40,13 +44,7 @@ apt_installs=(
 	# linux-headers-amd64 # required for NVIDIA drivers
 	# nvidia-driver
 	# nvidia-legacy-390xx-driver
-	# firmware-misc-nonfree # Installed by default in bookworm
-	# intel-microcode # Detected and installed by default in bookworm
-	# amd64-microcode
-	# firmware-realtek
-	# firmware-atheros
-	# firmware-iwlwifi
-	# apt-listbugs
+	# nvidia-driver-libs:i386 # For playing Windows games with wine and NVIDIA cards
 	tlp # Smarter power management and better battery life than power-profiles-daemon
 	tlp-rdw
 	# plymouth # Graphical boot, installed by default in bookworm
@@ -73,8 +71,10 @@ apt_installs=(
 	inkscape-open-symbols
 	gnucash
 	python3-gnucash
+	# audacity
+	# kdenlive # Beware the KDE dependencies!
+	# krita # Beware the KDE dependencies!
 	wine
-	# nvidia-driver-libs:i386 # For playing Windows games with wine
 	steam
 )
 
@@ -82,7 +82,6 @@ apt_installs=(
 flatpaks=(
 	com.github.xournalpp.xournalpp
 	com.github.johnfactotum.Foliate
-	# org.kde.kdenlive
 	org.libretro.RetroArch
 	com.stepmania.StepMania # DDR uses vim arrows! Just another reason why vim > emacs
 	com.github.iwalton3.jellyfin-media-player
@@ -93,6 +92,7 @@ extension_urls=(
 	# https://extensions.gnome.org/extension/906/sound-output-device-chooser/ # Not needed anymore in Gnome 43
 	https://extensions.gnome.org/extension/615/appindicator-support/
 	https://extensions.gnome.org/extension/779/clipboard-indicator/
+	https://extensions.gnome.org/extension/1319/gsconnect/
 	https://extensions.gnome.org/extension/4651/notification-banner-reloaded/
 	https://extensions.gnome.org/extension/72/recent-items/
 	https://extensions.gnome.org/extension/3010/system-monitor-next/

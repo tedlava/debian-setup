@@ -11,26 +11,25 @@
 # To disable a setting below, simply comment out the entire line
 status_dir='status' # Holds script status between reboots, can be absolute path or relative (to script dir)
 rm_dotfiles=1 # Remove all old .dotfiles (from prior Linux distributions)
-GRUB_CMDLINE_LINUX_DEFAULT='quiet splash i915.enable_psr=0 module_blacklist=hid_sensor_hub' # For /etc/default/grub, hardware parameters go here
-# "pci=noaer" to avoid errors on Toshiba
-# "i915.enable_psr=0" for smoother mouse movement on Framework
-# "module_blacklist=hid_sensor_hub" for brightness buttons on Framework
+GRUB_CMDLINE_LINUX_DEFAULT='quiet splash i915.enable_psr=0 module_blacklist=hid_sensor_hub'
+#     Above setting is for /etc/default/grub, boot-time hardware parameters go there
+#     "pci=noaer" to avoid errors on Toshiba
+#     "i915.enable_psr=0" for smoother mouse movement on Framework
+#     "module_blacklist=hid_sensor_hub" for brightness buttons on Framework
 extra_repos=1 # Add contrib and non-free to sources.list
 ssd=1 # Uncomment if installed to an SSD
-gdm_inhibit_ac=1 # Inhibit suspend if on AC power but not logged (for servers and SSH access)
+gdm_inhibit_ac=1 # Inhibit suspend if on AC power but not logged (for servers with SSH access)
+user_inhibit_ac=1 # Inhibit suspend when logged in and plugged into AC power
 ignore_lid_switch=1 # Ignore suspend on closing lid tweak
-move_system_monitor=1 # Move Gnome extension system-monitor to the left of all indicators
+install_neovim_gtk=1 # No binary packages yet, will build from source!
 install_google_chrome=1 # The native .deb version is better than the Flatpak
-install_windscribe=1 # VPN with slick Linux GUI!
+install_windscribe=1 # VPN with slick Linux GUI! Use my referral link (https://windscribe.com/yo/jltrv4cs) to get an extra GB when you sign up for a FREE account, total of 11GB free VPN data per month!  AND you can do their tweet4data program to get an extra 5GB per month too!!
 priv_firefox_launcher=1 # Add private window to context menu for Firefox-ESR launcher
-load_mimetypes=1 # Load Nautilus mime types for Neovim
+load_mimetypes=1 # Load Nautilus mime types for NeovimGtk
 patched_font='Hack Nerd Font 9' # Because only 1337 hax0rz use a font called Hack
-
-# If using 1920x1080 screen resolution, highly recommend changing the default
-# terminal window size in *-dconf.txt to 100 cols by 50 rows
-
-# For minimize and maximize buttons on window title bars, add this line to *-gsettings.txt
-# org.gnome.desktop.wm.preferences button-layout 'appmenu:minimize,maximize,close'
+move_system_monitor=1 # Move Gnome extension system-monitor to the right of all indicators (against screen edge)
+move_workspace_indicator=1 # Move Gnome extension workspace-indicator to the left panel box (just to the left of the app menu)
+remote_touchpad_port=16180 # Golden ratio port!  But you can use any port >= 1024 and <= 65535
 
 
 apt_purges=(
@@ -55,11 +54,12 @@ apt_installs=(
 	vlc # Totem often doesn't work; VLC can fix subtitle/audio timing or step frame-by-frame
 	catfish # Since we still cannot sort the search results in Nautilus...
 	gir1.2-gtop-2.0 # Required for the system-monitor Gnome extension
-	# libdvd-pkg # Uncomment to watch DVD movies with internal/external DVD drive
-	nautilus-dropbox
+	# libdvd-pkg # Uncomment to watch DVD movies with an internal/external DVD drive
+	nautilus-dropbox # Be careful how many computers you have connected to the same account
 	
 	# Developer packages
 	neovim
+	libgtk-4-dev # Dependency for compiling neovim-gtk, comment out if not using neovim-gtk
 	python3-venv
 	tree
 	ipython3
@@ -85,17 +85,27 @@ flatpaks=(
 	org.libretro.RetroArch
 	com.stepmania.StepMania # DDR uses vim arrows! Just another reason why vim > emacs
 	com.github.iwalton3.jellyfin-media-player
+	com.github.unrud.RemoteTouchpad
 )
 
 
-extension_urls=(
-	# https://extensions.gnome.org/extension/906/sound-output-device-chooser/ # Not needed anymore in Gnome 43
-	https://extensions.gnome.org/extension/615/appindicator-support/
+gnome_extensions=(
+	# URLs for Gnome extensions to download, install, and enable
 	https://extensions.gnome.org/extension/779/clipboard-indicator/
-	https://extensions.gnome.org/extension/1319/gsconnect/
 	https://extensions.gnome.org/extension/4651/notification-banner-reloaded/
 	https://extensions.gnome.org/extension/72/recent-items/
+	https://extensions.gnome.org/extension/355/status-area-horizontal-spacing/
 	https://extensions.gnome.org/extension/3010/system-monitor-next/
 	# https://extensions.gnome.org/extension/120/system-monitor/ # Not updated for bookworm yet...
+	https://extensions.gnome.org/extension/2890/tray-icons-reloaded/
+	https://extensions.gnome.org/extension/21/workspace-indicator/ # Pre-installed, but needs code adjustment for my preferred positioning on the top bar, so I'm downloading it instead
+	# https://extensions.gnome.org/extension/1319/gsconnect/
+	#     GSConnect is kinda cool, but some of the functionality does not work fully.
+	#     The gufw (firewall) instructions will show extra steps if gsconnect is uncommented.
+
+	# UUIDs for pre-installed Gnome extensions to enable only
+	apps-menu@gnome-shell-extensions.gcampax.github.com
+	drive-menu@gnome-shell-extensions.gcampax.github.com
+	places-menu@gnome-shell-extensions.gcampax.github.com
 )
 

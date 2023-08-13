@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+
+
+# Moves the Gnome extension workspace-indicator to the left panelbox, just to
+# the left of the appmenu.  Updates to extensions often moves them back to their
+# default positions, which looks ugly!  User should not install both
+# system-monitor and system-monitor-next simultaneously.
+
+
+ext_uuid='workspace-indicator@gnome-shell-extensions.gcampax.github.com'
+ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
+
+if [ -d "$ext_dir" ]; then
+	new_addToPanelBox="Main.panel._addToPanelBox('workspace-indicator', _indicator, 3, Main.panel._leftBox);"
+	if [ -z "$(grep "$new_addToPanelBox" $ext_dir/extension.js)" ]; then
+		sed -i "s/Main.panel.addToStatusArea('workspace-indicator', _indicator);/$new_addToPanelBox/" $ext_dir/extension.js
+		sleep 1
+		notify-send "workspace-indicator extension updated" "Please logout and login to reload it."
+	fi
+fi
+

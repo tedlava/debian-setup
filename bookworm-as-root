@@ -49,6 +49,32 @@ function contains {
 }
 
 
+# Inform user to turn on firewall with Gufw; always use protection!
+if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$status_dir/gufw_set_up" ]; then
+	echo
+	echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
+	echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
+	echo 'through SSH.'
+	echo
+	if [ -n "$(contains flatpaks RemoteTouchpad)" ]; then
+		echo 'Since you are installing the RemoteTouchpad flatpak, also add a rule'
+		echo "to allow all incoming requests for port $remote_touchpad_port as well."
+		echo
+	fi
+	if [ -n "$(contains gnome_extensions gsconnect)" ]; then
+		echo 'Since you are installing the GSConnect Gnome extension, also add a rule'
+		echo 'to allow all incoming requests for the KDE Connect app as well.'
+		echo
+	fi
+	echo 'Make sure the firewall is turned on before closing the window.'
+	echo
+	read -p 'Press ENTER to open gufw...'
+	confirm_cmd 'gufw'
+	touch "$status_dir/gufw_set_up"
+	echo
+fi
+
+
 # Move @rootfs btrfs subvolume to @ for timeshift
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 	echo
@@ -101,12 +127,6 @@ if [ -n "$reboot" ]; then
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
-	# Old versions of Wayland would not work well with screen-sharing for video conferencing, so I always prompted to switch to "Gnome on Xorg", however, it appears Wayland is doing better now (at least on Ubuntu), so this section is deprecated.
-	# if [ -n "$wayland" ]; then
-	# 	echo
-	# 	echo '    *** Please switch to "Gnome on Xorg" when you login next time!'
-	# 	echo
-	# fi
 	read -p 'Press ENTER to reboot...'
 	systemctl reboot
 	sleep 5
@@ -134,24 +154,6 @@ if [ ! -f "$status_dir/moved_user_dirs" ]; then
 fi
 
 
-# Upgrade to Sid/Testing from Stable
-# if [ ! -f "$status_dir/upgraded_to_$release_name" ]; then
-
-
-# Basic setup and take initial Timeshift snapshot
-
-# SSD
-if [ -n "$ssd" ] && [ ! -f "$status_dir/ssd_set_up" ]; then
-	echo
-	echo 'SSD setup...'
-	confirm_cmd 'fstrim -v /'
-	confirm_cmd 'fstrim -v /home'
-	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
-	touch "$status_dir/ssd_set_up"
-fi
-echo
-
-
 # Purge unwanted packages
 if [ -n "${apt_purges[*]}" ] && [ ! -f "$status_dir/apt_purged" ]; then
 	echo
@@ -161,6 +163,18 @@ if [ -n "${apt_purges[*]}" ] && [ ! -f "$status_dir/apt_purged" ]; then
 	touch "$status_dir/apt_purged"
 	echo
 fi
+
+
+# SSD trim after deleting stuff to reclaim unused blocks
+if [ -n "$ssd" ] && [ ! -f "$status_dir/ssd_set_up" ]; then
+	echo
+	echo 'SSD setup...'
+	confirm_cmd 'fstrim -v /'
+	confirm_cmd 'fstrim -v /home'
+	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
+	touch "$status_dir/ssd_set_up"
+fi
+echo
 
 
 # Add contrib and non-free to sources.list (this still works with or without non-free-firmware at the end of the repository list) 
@@ -174,6 +188,7 @@ fi
 
 
 # Update apt cache (with added repos) and upgrade
+# This step is unnecessary for network installs, but needed for live image installs
 if [ ! -f "$status_dir/apt_upgraded" ]; then
 	echo
 	echo 'Updating apt cache and upgrading current packages...'
@@ -194,16 +209,6 @@ if [ ! -f "$status_dir/basic_utils_installed" ]; then
 fi
 
 
-
-# Get stable release name first
-# while read line; do
-# 	old_release="$(echo "$line" | grep '^deb ' | cut -d' ' -f3 | grep -v [#-])"
-# 	if [ -n "$old_release" ]; then
-# 		break
-# 	fi
-# done < /etc/apt/sources.list
-	
-
 # Inform user to take a snapshot with Timeshift, must use GUI
 if [ ! -f "$status_dir/initial_snapshot" ]; then
 	echo
@@ -217,69 +222,38 @@ if [ ! -f "$status_dir/initial_snapshot" ]; then
 	echo
 	read -p 'Press ENTER to open timeshift...'
 	confirm_cmd 'timeshift-launcher'
-	echo
-
-
-	# Switch to new repositories
-	# echo
-	# echo "Switching to $release_name repositories in /etc/apt/sources.list ..."
-	# echo
-	# confirm_cmd "grep '^deb.* $old_release .*' /etc/apt/sources.list > sources.list"
-	# confirm_cmd "sed -i 's/$old_release/$release_name/' sources.list"
-	# confirm_cmd 'mv -v sources.list /etc/apt/sources.list'
-
-
-
-
-
-	# Update/upgrade to new release
-	# echo
-	# echo "Updating apt cache from $old_release repositories and dist-upgrading to $release_name..."
-	# confirm_cmd 'apt-get update'
-	# confirm_cmd 'apt-get -y dist-upgrade'
-	# sudo -u $SUDO_USER touch "$status_dir/upgraded_to_$release_name"
-	
-	
 	sudo -u $SUDO_USER touch "$status_dir/initial_snapshot"
 	echo
-	
-	# This reboot was required when switching from stable to sid/testing, which isn't necessary if staying in stable...
-	# echo 'The script needs to reboot your system.  When it is finished rebooting,'
-	# echo 'please re-run the same script and it will resume from where it left off.'
-	# echo
-	# Old versions of Wayland would not work well with screen-sharing for video conferencing, so I always prompted to switch to "Gnome on Xorg", however, it appears Wayland is doing better now (at least on Ubuntu), so this section is deprecated.
-	# if [ -n "$wayland" ]; then
-	# 	echo
-	# 	echo '    *** Please switch to "Gnome on Xorg" when you login next time!'
-	# 	echo
-	# fi
-	# read -p 'Press ENTER to reboot...'
-	# systemctl reboot
-	# sleep 5
 fi
 
 
-# Create timeshift snapshot after booting into sid/testing release for the first time
-# confirm_cmd "timeshift --create --comments 'Debian ${release_name^} installed' --yes"
-
-
-# Inhibit suspend if on AC power but not logged in
+# Inhibit suspend if on AC power but not logged in, useful for SSHing into a server
 if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$status_dir/gdm_inhibited" ]; then
 	echo
 	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
 	echo 'Will still auto-suspend if on battery power...'
 	confirm_cmd "sudo -u Debian-gdm dbus-launch gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
 	touch "$status_dir/gdm_inhibited"
+	reboot=1
 	echo
 fi
 
 
-# Install i386 (32-bit) libraries?  Useful for playing Windows games on wine
-if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$status_dir/i386_arch_added" ]; then
+# Download, compile, and install NeovimGtk from latest github source release
+if [ -n "$install_neovim_gtk" ] && [ ! -f "$status_dir/neovim_gtk_installed" ]; then
 	echo
-	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
-	confirm_cmd dpkg --add-architecture i386
-	touch "$status_dir/i386_arch_added"
+	echo 'Installing Rust as root to compile and install NeovimGtk system-wide...'
+	confirm_cmd "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo -i sh -s -- -y"
+	echo
+	echo 'Installing NeovimGtk from the latest source code release on GitHub...'
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep 'href=\".*\.zip\"' | cut -d'"' -f2) -o $script_dir/downloads/nvim-gtk-source.zip"
+	confirm_cmd "unzip -d $script_dir/downloads $script_dir/downloads/nvim-gtk-source.zip"
+	confirm_cmd "sudo -i make -C $script_dir/downloads/neovim-gtk-* install"
+	echo
+	echo 'Removing Rust installed as root...'
+	confirm_cmd 'sudo -i rustup self uninstall -y'
+	root=1
+	touch "$status_dir/neovim_gtk_installed"
 	echo
 fi
 
@@ -306,57 +280,13 @@ if [ -n "$install_windscribe" ] && [ ! -f "$status_dir/windscribe_installed" ]; 
 fi
 
 
-if [ -n "${apt_installs[*]}" ] && [ ! -f "$status_dir/apt_packages_installed" ]; then
-	echo
-	echo 'Installing apt packages...'
-	confirm_cmd "apt-get -y install ${apt_installs[@]}"
-	touch "$status_dir/apt_packages_installed"
-	echo
-fi
-
-
-# DVD
-if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$status_dir/dvd_set_up" ]; then
-	echo
-	echo 'Setting up packages to watch DVD movies...'
-	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
-	touch "$status_dir/dvd_set_up"
-	echo
-fi
-
-
 if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$status_dir/grub_set_up" ]; then
 	echo
 	echo 'Setting up grub...'
 	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
 	confirm_cmd 'update-grub'
+	reboot=1
 	touch "$status_dir/grub_set_up"
-	echo
-fi
-
-
-# Install Flatpak
-if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$status_dir/flatpak_repo_added" ]; then
-	echo
-	echo 'Adding flathub repo...'
-	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
-	touch "$status_dir/flatpak_repo_added"
-	echo
-fi
-
-
-# Inform user to turn on firewall with Gufw, must use GUI
-if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$status_dir/fw_set_up" ]; then
-	echo
-	echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
-	echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
-	echo 'through SSH.  If installing the GSConnect Gnome extension, also add a rule'
-	echo 'to allow all incoming requests for the KDE Connect app as well.  Make sure'
-	echo 'the firewall is turned on before closing the window.'
-	echo
-	read -p 'Press ENTER to open gufw...'
-	confirm_cmd 'gufw'
-	touch "$status_dir/fw_set_up"
 	echo
 fi
 
@@ -385,9 +315,64 @@ fi
 # Copy script into PATH to move system-monitor indicator
 if [ -n "$move_system_monitor" ] && [ ! -f "$status_dir/move_system_monitor_script_added" ]; then
 	echo
-	echo 'Copy script into PATH to move Gnome extension system-monitor to the left of all indicators...'
+	echo 'Copy script into PATH to move Gnome extension system-monitor to the right of all indicators...'
 	confirm_cmd "cp -av $script_dir/move-system-monitor /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/move-system-monitor"
 	touch "$status_dir/move_system_monitor_script_added"
 	echo
 fi
+
+
+# Copy script into PATH to move workspace-indicator
+if [ -n "$move_workspace_indicator" ] && [ ! -f "$status_dir/move_workspace_indicator_script_added" ]; then
+	echo
+	echo 'Copy script into PATH to move Gnome extension workspace-indicator to the left panel box...'
+	confirm_cmd "cp -av $script_dir/move-workspace-indicator /usr/local/bin/"
+	confirm_cmd "chmod +x /usr/local/bin/move-workspace-indicator"
+	touch "$status_dir/move_workspace_indicator_script_added"
+	echo
+fi
+
+
+# Add i386 (32-bit) libraries if playing Windows games on wine, needed before apt installs
+if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$status_dir/i386_arch_added" ]; then
+	echo
+	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
+	confirm_cmd dpkg --add-architecture i386
+	touch "$status_dir/i386_arch_added"
+	echo
+fi
+
+
+# Install all apt packages, this step will take a while...
+if [ -n "${apt_installs[*]}" ] && [ ! -f "$status_dir/apt_packages_installed" ]; then
+	echo
+	echo 'Installing apt packages...'
+	confirm_cmd "apt-get -y install ${apt_installs[@]}"
+	touch "$status_dir/apt_packages_installed"
+	echo
+fi
+
+
+# DVD
+if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$status_dir/dvd_set_up" ]; then
+	echo
+	echo 'Setting up packages to watch DVD movies...'
+	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
+	touch "$status_dir/dvd_set_up"
+	echo
+fi
+
+
+# Add Flatpak repository
+if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$status_dir/flatpak_repo_added" ]; then
+	echo
+	echo 'Adding flathub repo...'
+	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
+	touch "$status_dir/flatpak_repo_added"
+	reboot=1
+	echo
+fi
+
+
+# TODO reboot now??? Or is there a way to reboot later? To return the reboot status from this script to the previous one when it's finished? Maybe touch a file at "$status_dir/reboot" and then rm it immediately before rebooting?

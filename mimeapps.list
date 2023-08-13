@@ -2,22 +2,22 @@
 application/vnd.debian.binary-package=gnome-software-local-file.desktop;
 application/x-cd-image=gnome-disk-image-writer.desktop;
 x-scheme-handler/http=org.mozilla.firefox.desktop;
-text/html=nvim.desktop;org.mozilla.firefox.desktop;
+text/html=org.daa.NeovimGtk.desktop;org.mozilla.firefox.desktop;
 application/xhtml+xml=org.mozilla.firefox.desktop;
 x-scheme-handler/https=org.mozilla.firefox.desktop;
-text/x-python=nvim.desktop;
-text/plain=nvim.desktop;
-text/x-csrc=nvim.desktop;
-text/x-chdr=nvim.desktop;
-application/json=nvim.desktop;
+text/x-python=org.daa.NeovimGtk.desktop;
+text/plain=org.daa.NeovimGtk.desktop;
+text/x-csrc=org.daa.NeovimGtk.desktop;
+text/x-chdr=org.daa.NeovimGtk.desktop;
+application/json=org.daa.NeovimGtk.desktop;
 
 [Default Applications]
 x-scheme-handler/http=org.mozilla.firefox.desktop
 text/html=org.mozilla.firefox.desktop
 application/xhtml+xml=org.mozilla.firefox.desktop
 x-scheme-handler/https=org.mozilla.firefox.desktop
-text/x-python=nvim.desktop
-text/plain=nvim.desktop
-text/x-csrc=nvim.desktop
-text/x-chdr=nvim.desktop
-application/json=nvim.desktop
+text/x-python=org.daa.NeovimGtk.desktop
+text/plain=org.daa.NeovimGtk.desktop
+text/x-csrc=org.daa.NeovimGtk.desktop
+text/x-chdr=org.daa.NeovimGtk.desktop
+application/json=org.daa.NeovimGtk.desktop

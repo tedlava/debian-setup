@@ -1,5 +1,5 @@
 [org/gnome/settings-daemon/plugins/media-keys]
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/']
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0]
 binding='<Primary><Alt>t'
@@ -7,11 +7,16 @@ command='gnome-terminal'
 name='Launch terminal'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1]
+binding='<Primary><Alt>n'
+command='nvim-gtk'
+name='Launch NeovimGtk'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2]
 binding='<Super>f'
 command='catfish'
 name='Launch Catfish file search'
 
-[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2]
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3]
 binding='<Super>c'
 command='toggle-color-scheme'
 name='Toggle color scheme (light/dark)'
@@ -20,11 +25,13 @@ name='Toggle color scheme (light/dark)'
 disable-down-arrow=true
 
 [org/gnome/shell/extensions/notification-banner-reloaded]
-always-minimized=0
 anchor-horizontal=1
 anchor-vertical=1
 animation-direction=3
 animation-time=200
+
+[org/gnome/shell/extensions/status-area-horizontal-spacing]
+hpadding=0
 
 [org/gnome/shell/extensions/system-monitor]
 compact-display=true
@@ -40,7 +47,13 @@ show-tooltip=true
 thermal-display=true
 thermal-show-text=false
 
+[org/gnome/shell/extensions/trayIconsReloaded]
+icon-margin-horizontal=0
+icon-padding-horizontal=4
+tray-margin-left=0
+
 [org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9]
+audible-bell=false
 default-size-columns=100
 default-size-rows=50
 login-shell=true

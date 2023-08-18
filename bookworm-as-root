@@ -49,6 +49,17 @@ function contains {
 }
 
 
+if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/grub_set_up" ]; then
+	echo
+	echo 'Setting up grub...'
+	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
+	update_grub=1
+	touch "$script_dir/status/grub_set_up"
+	touch "$script_dir/status/reboot"
+	echo
+fi
+
+
 # Move @rootfs btrfs subvolume to @ for timeshift
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 	echo
@@ -62,11 +73,17 @@ if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 		confirm_cmd 'sed -i "s/@rootfs/@/" /etc/fstab'
 		echo 'Reinstalling grub and updating grub...'
 		confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
-		confirm_cmd 'update-grub'
+		update_grub=1
 		touch "$script_dir/status/reboot"
+		echo
 		echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 	fi
 	echo
+fi
+
+
+if [ -n "$update_grub" ];
+	confirm_cmd 'update-grub'
 fi
 
 
@@ -90,6 +107,7 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 		confirm_cmd 'umount /mnt'
 		confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
 		touch "$script_dir/status/reboot"
+		echo
 		echo '@home btrfs subvolume was created and all user directories were copied to it.'
 	fi
 	echo
@@ -130,6 +148,19 @@ if [ ! -f "$script_dir/status/moved_user_dirs" ]; then
 fi
 
 
+# Inhibit suspend if on AC power but not logged in, useful for SSHing into a server
+if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
+	echo
+	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
+	echo 'Will still auto-suspend if on battery power...'
+	confirm_cmd "sudo sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
+	confirm_cmd "sudo sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
+	touch "$script_dir/status/gdm_inhibited"
+	touch "$script_dir/status/reboot"
+	echo
+fi
+
+
 # Purge unwanted packages
 if [ -n "${apt_purges[*]}" ] && [ ! -f "$script_dir/status/apt_purged" ]; then
 	echo
@@ -151,30 +182,6 @@ if [ -n "$ssd" ] && [ ! -f "$script_dir/status/ssd_set_up" ]; then
 	touch "$script_dir/status/ssd_set_up"
 fi
 echo
-
-
-if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/grub_set_up" ]; then
-	echo
-	echo 'Setting up grub...'
-	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
-	confirm_cmd 'update-grub'
-	touch "$script_dir/status/grub_set_up"
-	touch "$script_dir/status/reboot"
-	echo
-fi
-
-
-# Inhibit suspend if on AC power but not logged in, useful for SSHing into a server
-if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
-	echo
-	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
-	echo 'Will still auto-suspend if on battery power...'
-	confirm_cmd "sudo sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
-	confirm_cmd "sudo sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
-	touch "$script_dir/status/gdm_inhibited"
-	touch "$script_dir/status/reboot"
-	echo
-fi
 
 
 # Add contrib and non-free to sources.list (this still works with or without non-free-firmware at the end of the repository list) 

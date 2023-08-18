@@ -17,7 +17,7 @@ GRUB_CMDLINE_LINUX_DEFAULT='quiet splash i915.enable_psr=0 module_blacklist=hid_
 #     "i915.enable_psr=0" for smoother mouse movement on Framework
 #     "module_blacklist=hid_sensor_hub" for brightness buttons on Framework
 extra_repos=1 # Add contrib and non-free to sources.list
-ssd=1 # Uncomment if installed to an SSD
+ssd=1 # Comment if installed to a spinning HDD
 gdm_inhibit_ac=1 # Inhibit suspend if on AC power but not logged (for servers with SSH access)
 user_inhibit_ac=1 # Inhibit suspend when logged in and plugged into AC power
 ignore_lid_switch=1 # Ignore suspend on closing lid tweak

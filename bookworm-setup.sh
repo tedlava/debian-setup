@@ -331,6 +331,28 @@ if [ ! -f "$script_dir/status/dconf_loaded" ]; then
 fi
 
 
+# Reboot
+if [ -f "$script_dir/status/reboot" ]; then
+	echo
+	echo 'The script needs to reboot your system.  When it is finished rebooting,'
+	echo 'please re-run the same script and it will resume from where it left off.'
+	echo
+	read -p 'Press ENTER to reboot...'
+	# Load patched monospace font immediately before reboot since it makes the terminal difficult to read
+	if [ -n "$patched_font" ] && [ ! -f "$script_dir/status/patched_font_installed" ]; then
+		echo
+		echo 'Setting new system monospace font, terminal text will become distorted'
+		echo 'then the reboot will happen immediately afterwards...'
+		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font $patched_font_size'"
+		touch "$script_dir/status/patched_font_installed"
+		echo
+	fi
+	rm "$script_dir/status/reboot"
+	systemctl reboot
+	sleep 5
+fi
+
+
 # Enable Gnome extensions
 if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_enabled" ]; then
 	echo
@@ -388,28 +410,6 @@ if [ -n "$(contains gnome_extensions workspace-indicator)" ] && [ -n "$move_work
 	touch "$script_dir/status/move_workspace_indicator_installed"
 	touch "$script_dir/status/reboot"
 	echo
-fi
-
-
-# Reboot
-if [ -f "$script_dir/status/reboot" ]; then
-	echo
-	echo 'The script needs to reboot your system.  When it is finished rebooting,'
-	echo 'please re-run the same script and it will resume from where it left off.'
-	echo
-	read -p 'Press ENTER to reboot...'
-	# Load patched monospace font immediately before reboot since it makes the terminal difficult to read
-	if [ -n "$patched_font" ] && [ ! -f "$script_dir/status/patched_font_installed" ]; then
-		echo
-		echo 'Setting new system monospace font, terminal text will become distorted'
-		echo 'then the reboot will happen immediately afterwards...'
-		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font $patched_font_size'"
-		touch "$script_dir/status/patched_font_installed"
-		echo
-	fi
-	rm "$script_dir/status/reboot"
-	systemctl reboot
-	sleep 5
 fi
 
 

@@ -171,7 +171,7 @@ fi
 # Inhibit suspend while on AC power
 if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/inhibited_user_ac_suspend" ]; then
 	echo
-	echo 'Disabling suspend while on AC power...'
+	echo "Disabling suspend while on AC power (so your system doesn't suspend while installing lots of packages)..."
 	confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
 	touch "$script_dir/status/inhibited_user_ac_suspend"
 	echo

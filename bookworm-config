@@ -74,7 +74,7 @@ apt_installs=(
 	# audacity
 	# kdenlive # Beware the KDE dependencies!
 	# krita # Beware the KDE dependencies!
-	wine
+	wine # Will add i386 architecture to apt for playing Win32 games
 	steam
 )
 
@@ -91,6 +91,7 @@ flatpaks=(
 
 gnome_extensions=(
 	# URLs for Gnome extensions to download, install, and enable
+	https://extensions.gnome.org/extension/517/caffeine/
 	https://extensions.gnome.org/extension/779/clipboard-indicator/
 	https://extensions.gnome.org/extension/4651/notification-banner-reloaded/
 	https://extensions.gnome.org/extension/72/recent-items/

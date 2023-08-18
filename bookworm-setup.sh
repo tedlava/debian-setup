@@ -25,7 +25,7 @@ release_name=$(echo $0 | cut -d'-' -f1 | cut -d'/' -f2)
 if [ -f "$HOME/Setup/$release_name-config" ]; then
 	settings_dir="$HOME/Setup"
 else
-	settings_dir="$script_dir/Setup"
+	settings_dir="$script_dir"
 fi
 source $settings_dir/$release_name-config
 
@@ -183,7 +183,12 @@ if [ ! -f "$status_dir/bash_set_up" ]; then
 	# This is SOOOOO ugly!  But part way through, it became more of a puzzle that I just wanted to solve, to see if it were possible to use a sed command to make this kind of modification...  Sorry!
 	echo
 	echo 'Copying any custom command line aliases from bash_aliases to ~/.bash_aliases...'
-	confirm_cmd "cp -av $settings_dir/bash_aliases $HOME/.bash_aliases"
+	if [ -f "$settings_dir/bash_aliases" ]; then
+		bash_aliases_path="$settings_dir/bash_aliases"
+	else
+		bash_aliases_path="$script_dir/bash_aliases"
+	fi
+	confirm_cmd "cp -av $bash_aliases_path $HOME/.bash_aliases"
 	echo
 	echo 'Setting up bash prompt to display git branch, if exists...'
 	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/ (\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
@@ -207,34 +212,19 @@ fi
 sudo home="$HOME" interactive="$interactive" bash "$release_name"-as-root
 
 
-# Change default apps (VLC instead of Videos/Totem)
-# I can't seem to find where these default applications are saved to change them programmatically,
-# so I'm resorting to the GUI...  If anybody knows where I can change this in gsettings or dconf, let me know!
-if [ -n "$(contains apt_installs vlc)" ] && [ ! -f "$status_dir/changed_default_apps" ]; then
-	echo
-	echo 'The default Gnome Videos player never seems to do very well.  Switch the default'
-	echo 'video player to VLC, then close the window to continue the setup script...'
-	echo
-	read -p 'Press ENTER to open Default Applications...'
-	confirm_cmd 'gnome-control-center default-apps'
-	touch "$status_dir/changed_default_apps"
-	echo
-fi
-
-
 # Set up Neovim
 if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$status_dir/neovim_installed" ]; then
 	# Clone neovim-config from GitHub
 	echo
 	echo 'Setting up Neovim config (init.vim)...'
-	echo
 	if [ ! -d "$HOME/dotfiles" ]; then
 		confirm_cmd "mkdir $HOME/dotfiles"
 	fi
 	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
 	confirm_cmd "mkdir $HOME/.config/nvim"
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
-	# TODO use $patched_font to change ginit.vm!!
+	confirm_cmd "sed -i 's/\(default_fontsize = \).*/\1$patched_font_size/' $HOME/dotfiles/neovim-config/ginit.vim"
+	confirm_cmd "sed -i 's/\(font = \).*/\1\"$patched_font\"/' $HOME/dotfiles/neovim-config/ginit.vim"
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/ginit.vim $HOME/.config/nvim/"
 	echo
 	echo 'Installing vim-plug into Neovim...'
@@ -247,14 +237,23 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$status_dir/neovim_instal
 	echo
 	read -p 'Press ENTER to proceed with Neovim plugin installation. '
 	confirm_cmd "nvim -c PlugInstall"
-	echo
-
-	# Load Nautilus mime types for Neovim
-	echo
-	echo 'Loading Nautilus mime types (open all text files with Neovim)...'
-	echo
-	confirm_cmd "cp -av mimeapps.list $HOME/.config/"
 	touch "$status_dir/neovim_installed"
+	echo
+fi
+
+
+# Load default applications mime types (double-click in Nautilus opens with your preferred app)
+# My default uses Neovim or NeovimGtk to open all text files and VLC for videos
+if [ ! -f "$status_dir/changed_default_apps" ]; then
+	echo
+	echo 'Loading default applications mime types...'
+	if [ -f "$settings_dir/mimeapps.list" ]; then
+		mimeapps_path="$settings_dir/mimeapps.list"
+	else
+		mimeapps_path="$script_dir/mimeapps.list"
+	fi
+	confirm_cmd "cp -av $mimeapps_path $HOME/.config/"
+	touch "$status_dir/changed_default_apps"
 	echo
 fi
 
@@ -263,7 +262,6 @@ fi
 if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$status_dir/extensions_installed" ]; then
 	echo
 	echo 'Installing Gnome extensions...'
-	echo
 	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
 	base_url='https://extensions.gnome.org'
 	for extension in "${extension_urls[@]}"; do
@@ -287,7 +285,6 @@ fi
 if [ ! -f "$status_dir/fonts_installed" ]; then
 	echo
 	echo 'Setting up links to detect fonts...'
-	echo
 	confirm_cmd "ln -s $HOME/fonts $HOME/.local/share/fonts"
 	confirm_cmd 'fc-cache -fv'
 	touch "$status_dir/fonts_installed"
@@ -299,18 +296,22 @@ fi
 if [ ! -f "$status_dir/gsettings_loaded" ]; then
 	echo
 	echo "Applying $release_name-gsettings.txt to Gnome..."
-	echo
 	# confirm_cmd in while loop won't work since it also uses 'read', so
 	# confirmation must be asked beforehand if $interactive is true
 	if [ -n "$interactive" ]; then
 		echo -e "Load all settings from gsettings.txt using:\n    $ gsettings set \$schema \$key \"\$val\""
 		read -p 'Proceed? [Y/n] '
 	fi
+	if [ -f  "$settings_dir/$release_name-gsettings.txt" ]; then
+		gsettings_path="$settings_dir/$release_name-gsettings.txt"
+	else
+		gsettings_path="$script_dir/$release_name-gsettings.txt"
+	fi
 	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		while read -r schema key val; do
 			echo -e "\nExecuting command...\n    $ gsettings set $schema $key \"$val\"\n"
 			gsettings set $schema $key "$val"
-		done < "$settings_dir/$release_name-gsettings.txt"
+		done < "$gsettings_path"
 	fi
 	touch "$status_dir/gsettings_loaded"
 	echo
@@ -321,8 +322,12 @@ fi
 if [ ! -f "$status_dir/dconf_loaded" ]; then
 	echo
 	echo "Applying $release_name-dconf.txt to Gnome..."
-	echo
-	confirm_cmd "dconf load / < $settings_dir/$release_name-dconf.txt"
+	if [ -f  "$settings_dir/$release_name-dconf.txt" ]; then
+		dconf_path="$settings_dir/$release_name-dconf.txt"
+	else
+		dconf_path="$script_dir/$release_name-dconf.txt"
+	fi
+	confirm_cmd "dconf load / < $dconf_path"
 	touch "$status_dir/dconf_loaded"
 	echo
 fi
@@ -332,7 +337,6 @@ fi
 if [ -n "${extension_urls[*]}" ] && [ ! -f "$status_dir/extensions_enabled" ]; then
 	echo
 	echo 'Enabling recently installed Gnome extensions...'
-	echo
 	for extension in "${extension_urls[@]}"; do
 		if [ -n "$(echo $extension | grep 'https://')" ]; then
 			ext_uuid="$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')"
@@ -345,7 +349,7 @@ if [ -n "${extension_urls[*]}" ] && [ ! -f "$status_dir/extensions_enabled" ]; t
 fi
 
 
-# Ignore suspend on closing lid tweak
+# Create statup application to ignore suspend on closing lid (normally installed through Tweaks)
 if [ -n "$ignore_lid_switch" ] && [ ! -f "$status_dir/lid_tweak_installed" ]; then
 	echo
 	echo 'Applying tweak to ignore suspend on lid closing...'
@@ -354,6 +358,7 @@ if [ -n "$ignore_lid_switch" ] && [ ! -f "$status_dir/lid_tweak_installed" ]; th
 	fi
 	confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
 	touch "$status_dir/lid_tweak_installed"
+	touch "$status_dir/reboot"
 	echo
 fi
 
@@ -368,7 +373,7 @@ if [ -n "$(contains extension_urls system-monitor)" ] && [ -n "$move_system_moni
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move system-monitor indicator\\\\nComment=Moves user-installed Gnome extension system-monitor to the right of all indicators (updates periodically move it back to the middle)\\\\nExec=/usr/local/bin/move-system-monitor\\\\n\" > $HOME/.config/autostart/move-system-monitor.desktop"
 	confirm_cmd "move-system-monitor"
 	touch "$status_dir/move_system_monitor_installed"
-	reboot=1
+	touch "$status_dir/reboot"
 	echo
 fi
 
@@ -383,13 +388,13 @@ if [ -n "$(contains extension_urls workspace-indicator)" ] && [ -n "$move_worksp
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move workspace-indicator\\\\nComment=Moves user-installed Gnome extension workspace-indicator to the left panel box (updates periodically move it back to the right)\\\\nExec=/usr/local/bin/move-workspace-indicator\\\\n\" > $HOME/.config/autostart/move-workspace-indicator.desktop"
 	confirm_cmd "move-workspace-indicator"
 	touch "$status_dir/move_workspace_indicator_installed"
-	reboot=1
+	touch "$status_dir/reboot"
 	echo
 fi
 
 
 # Reboot
-if [ -n "$reboot" ]; then
+if [ -f "$status_dir/reboot" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
@@ -400,11 +405,11 @@ if [ -n "$reboot" ]; then
 		echo
 		echo 'Setting new system monospace font, terminal text will become distorted'
 		echo 'then the reboot will happen immediately afterwards...'
-		echo
-		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font'"
+		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font $patched_font_size'"
 		touch "$status_dir/patched_font_installed"
 		echo
 	fi
+	rm "$status_dir/reboot"
 	systemctl reboot
 	sleep 5
 fi
@@ -427,7 +432,6 @@ fi
 if [ -n "${flatpaks[*]}" ] && [ ! -f "$status_dir/flatpaks_installed" ]; then
 	echo
 	echo 'Installing Flatpak applications...'
-	echo
 	confirm_cmd "flatpak -y install ${flatpaks[@]}"
 	touch "$status_dir/flatpaks_installed"
 	echo
@@ -440,8 +444,8 @@ if [ -n "$(contains flatpaks RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" 
 	echo "Configure Remote Touchpad Flatpak to always use port $remote_touchpad_set_up to work through the firewall..."
 	desktop_file_path='/var/lib/flatpak/app/com.github.unrud.RemoteTouchpad/current/active/export/share/applications/com.github.unrud.RemoteTouchpad.desktop'
 	confirm_cmd "sudo sed -i 's/\(Exec.*RemoteTouchpad.*\)/\1 --bind :$remote_touchpad_port/' $desktop_file_path"
-	reboot=1
 	touch "$status_dir/remote_touchpad_set_up"
+	touch "$status_dir/reboot"
 	echo
 fi
 
@@ -464,6 +468,19 @@ if [ ! -f "$status_dir/final_apt_update" ]; then
 	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
 	touch "$status_dir/final_apt_update"
 	echo
+fi
+
+
+# Reboot
+if [ -f "$status_dir/reboot" ]; then
+	echo
+	echo 'The script needs to reboot your system.  When it is finished rebooting,'
+	echo 'please re-run the same script and it will resume from where it left off.'
+	echo
+	read -p 'Press ENTER to reboot...'
+	rm "$status_dir/reboot"
+	systemctl reboot
+	sleep 5
 fi
 
 

@@ -89,7 +89,7 @@ if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 		echo 'Reinstalling grub and updating grub...'
 		confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 		confirm_cmd 'update-grub'
-		reboot=1
+		touch "$status_dir/reboot"
 		echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 	fi
 	echo
@@ -115,19 +115,21 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 		done
 		confirm_cmd 'umount /mnt'
 		confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
-		reboot=1
+		touch "$status_dir/reboot"
 		echo '@home btrfs subvolume was created and all user directories were copied to it.'
 	fi
 	echo
 fi
 
 
-if [ -n "$reboot" ]; then
+# Reboot
+if [ -f "$status_dir/reboot" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
 	read -p 'Press ENTER to reboot...'
+	rm "$status_dir/reboot"
 	systemctl reboot
 	sleep 5
 fi
@@ -227,6 +229,17 @@ if [ ! -f "$status_dir/initial_snapshot" ]; then
 fi
 
 
+if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$status_dir/grub_set_up" ]; then
+	echo
+	echo 'Setting up grub...'
+	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
+	confirm_cmd 'update-grub'
+	touch "$status_dir/grub_set_up"
+	touch "$status_dir/reboot"
+	echo
+fi
+
+
 # Inhibit suspend if on AC power but not logged in, useful for SSHing into a server
 if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$status_dir/gdm_inhibited" ]; then
 	echo
@@ -235,7 +248,7 @@ if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$status_dir/gdm_inhibited" ]; then
 	confirm_cmd "sudo sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
 	confirm_cmd "sudo sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
 	touch "$status_dir/gdm_inhibited"
-	reboot=1
+	touch "$status_dir/reboot"
 	echo
 fi
 
@@ -277,17 +290,6 @@ if [ -n "$install_windscribe" ] && [ ! -f "$status_dir/windscribe_installed" ]; 
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/downloads/windscribe.deb"
 	confirm_cmd "apt-get -y install $script_dir/downloads/windscribe.deb"
 	touch "$status_dir/windscribe_installed"
-	echo
-fi
-
-
-if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$status_dir/grub_set_up" ]; then
-	echo
-	echo 'Setting up grub...'
-	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
-	confirm_cmd 'update-grub'
-	reboot=1
-	touch "$status_dir/grub_set_up"
 	echo
 fi
 
@@ -371,9 +373,6 @@ if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$status_dir/flatpak_repo
 	echo 'Adding flathub repo...'
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
 	touch "$status_dir/flatpak_repo_added"
-	reboot=1
+	touch "$status_dir/reboot"
 	echo
 fi
-
-
-# TODO reboot now??? Or is there a way to reboot later? To return the reboot status from this script to the previous one when it's finished? Maybe touch a file at "$status_dir/reboot" and then rm it immediately before rebooting?

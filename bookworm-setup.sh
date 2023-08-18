@@ -168,17 +168,6 @@ if [ ! -f "$script_dir/status/reqs_confirmed" ]; then
 fi
 
 
-# Remove old configuration in .dotfiles
-if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
-	echo
-	echo 'Removing old .dotfiles (from prior Linux installation)...'
-	confirm_cmd "sudo rm -rf $HOME/.*"
-	confirm_cmd "cp -av /etc/skel/. $HOME/"
-	touch "$script_dir/status/removed_dotfiles"
-	echo
-fi
-
-
 if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	# This is SOOOOO ugly!  But part way through, it became more of a puzzle that I just wanted to solve, to see if it were possible to use a sed command to make this kind of modification...  Sorry!
 	echo
@@ -210,6 +199,17 @@ fi
 
 # Run commands as root (with sudo)
 sudo home="$HOME" interactive="$interactive" bash "$release_name"-as-root
+
+
+# Remove old configuration in .dotfiles
+if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
+	echo
+	echo 'Removing old .dotfiles (from prior Linux installation)...'
+	confirm_cmd "sudo rm -rf $HOME/.*"
+	confirm_cmd "cp -av /etc/skel/. $HOME/"
+	touch "$script_dir/status/removed_dotfiles"
+	echo
+fi
 
 
 # Set up Neovim

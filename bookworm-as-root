@@ -82,7 +82,7 @@ if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 fi
 
 
-if [ -n "$update_grub" ];
+if [ -n "$update_grub" ]; then
 	confirm_cmd 'update-grub'
 fi
 

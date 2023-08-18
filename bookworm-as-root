@@ -280,6 +280,27 @@ if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$script_dir/status/gufw_set
 fi
 
 
+# DVD
+if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$script_dir/status/dvd_set_up" ]; then
+	echo
+	echo 'Setting up packages to watch DVD movies...'
+	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
+	touch "$script_dir/status/dvd_set_up"
+	echo
+fi
+
+
+# Add Flatpak repository
+if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$script_dir/status/flatpak_repo_added" ]; then
+	echo
+	echo 'Adding flathub repo...'
+	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
+	touch "$script_dir/status/flatpak_repo_added"
+	touch "$script_dir/status/reboot"
+	echo
+fi
+
+
 # Download, compile, and install NeovimGtk from latest github source release
 if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
 	echo
@@ -360,26 +381,5 @@ if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspa
 	confirm_cmd "cp -av $script_dir/move-workspace-indicator /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/move-workspace-indicator"
 	touch "$script_dir/status/move_workspace_indicator_script_added"
-	echo
-fi
-
-
-# DVD
-if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$script_dir/status/dvd_set_up" ]; then
-	echo
-	echo 'Setting up packages to watch DVD movies...'
-	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
-	touch "$script_dir/status/dvd_set_up"
-	echo
-fi
-
-
-# Add Flatpak repository
-if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$script_dir/status/flatpak_repo_added" ]; then
-	echo
-	echo 'Adding flathub repo...'
-	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
-	touch "$script_dir/status/flatpak_repo_added"
-	touch "$script_dir/status/reboot"
 	echo
 fi

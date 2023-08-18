@@ -186,7 +186,7 @@ sudo home="$HOME" interactive="$interactive" bash "$release_name"-as-root
 if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	echo
 	echo 'Removing old .dotfiles (from prior Linux installation)...'
-	confirm_cmd "sudo rm -rf $HOME/.*"
+	confirm_cmd "rm -rf $HOME/.*"
 	confirm_cmd "cp -av /etc/skel/. $HOME/"
 	touch "$script_dir/status/removed_dotfiles"
 	echo
@@ -223,8 +223,8 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
 	confirm_cmd "mkdir $HOME/.config/nvim"
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
-	confirm_cmd "sed -i 's/\(default_fontsize = \).*/\1$patched_font_size/' $HOME/dotfiles/neovim-config/ginit.vim"
-	confirm_cmd "sed -i 's/\(font = \).*/\1\"$patched_font\"/' $HOME/dotfiles/neovim-config/ginit.vim"
+	confirm_cmd "sed -i 's/\(default_fontsize =\).*/\1 $patched_font_size/' $HOME/dotfiles/neovim-config/ginit.vim"
+	confirm_cmd "sed -i 's/\(font =\).*/\1 \"$patched_font\"/' $HOME/dotfiles/neovim-config/ginit.vim"
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/ginit.vim $HOME/.config/nvim/"
 	echo
 	echo 'Installing vim-plug into Neovim...'

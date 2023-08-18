@@ -264,7 +264,7 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 	echo 'Installing Gnome extensions...'
 	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
 	base_url='https://extensions.gnome.org'
-	for extension in "${extension_urls[@]}"; do
+	for extension in "${gnome_extensions[@]}"; do
 		if [ -n "$(echo $extension | grep 'https://')" ]; then
 			ext_uuid="$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')"
 		else
@@ -334,10 +334,10 @@ fi
 
 
 # Enable Gnome extensions
-if [ -n "${extension_urls[*]}" ] && [ ! -f "$script_dir/status/extensions_enabled" ]; then
+if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_enabled" ]; then
 	echo
 	echo 'Enabling recently installed Gnome extensions...'
-	for extension in "${extension_urls[@]}"; do
+	for extension in "${gnome_extensions[@]}"; do
 		if [ -n "$(echo $extension | grep 'https://')" ]; then
 			ext_uuid="$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')"
 		else
@@ -364,7 +364,7 @@ fi
 
 
 # Create startup application to move system-monitor indicator
-if [ -n "$(contains extension_urls system-monitor)" ] && [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monitor_installed" ]; then
+if [ -n "$(contains gnome_extensions system-monitor)" ] && [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monitor_installed" ]; then
 	echo
 	echo 'Creating startup application to move Gnome extension system-monitor to the right of all indicators...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
@@ -379,7 +379,7 @@ fi
 
 
 # Create startup application to move workspace-indicator
-if [ -n "$(contains extension_urls workspace-indicator)" ] && [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspace_indicator_installed" ]; then
+if [ -n "$(contains gnome_extensions workspace-indicator)" ] && [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspace_indicator_installed" ]; then
 	echo
 	echo 'Creating startup application to move Gnome extension workspace-indicator to the left panel box...'
 	if [ ! -d "$HOME/.config/autostart" ]; then

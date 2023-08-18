@@ -267,14 +267,12 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 	for extension in "${gnome_extensions[@]}"; do
 		if [ -n "$(echo $extension | grep 'https://')" ]; then
 			ext_uuid="$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')"
-		else
-			ext_uuid="$extension"
+			info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
+			download_url="$base_url$(curl -s "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
+			confirm_cmd "curl -L '$download_url' > '$script_dir/downloads/$ext_uuid.zip'"
+			ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
+			confirm_cmd "gnome-extensions install $script_dir/downloads/$ext_uuid.zip"
 		fi
-		info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
-		download_url="$base_url$(curl -s "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
-		confirm_cmd "curl -L '$download_url' > '$script_dir/downloads/$ext_uuid.zip'"
-		ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
-		confirm_cmd "gnome-extensions install $script_dir/downloads/$ext_uuid.zip"
 	done
 	touch "$script_dir/status/extensions_installed"
 	echo

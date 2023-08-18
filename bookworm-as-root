@@ -49,32 +49,6 @@ function contains {
 }
 
 
-# Inform user to turn on firewall with Gufw; always use protection!
-if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$script_dir/status/gufw_set_up" ]; then
-	echo
-	echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
-	echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
-	echo 'through SSH.'
-	echo
-	if [ -n "$(contains flatpaks RemoteTouchpad)" ]; then
-		echo 'Since you are installing the RemoteTouchpad flatpak, also add a rule'
-		echo "to allow all incoming requests for port $remote_touchpad_port as well."
-		echo
-	fi
-	if [ -n "$(contains gnome_extensions gsconnect)" ]; then
-		echo 'Since you are installing the GSConnect Gnome extension, also add a rule'
-		echo 'to allow all incoming requests for the KDE Connect app as well.'
-		echo
-	fi
-	echo 'Make sure the firewall is turned on before closing the window.'
-	echo
-	read -p 'Press ENTER to open gufw...'
-	confirm_cmd 'gufw'
-	touch "$script_dir/status/gufw_set_up"
-	echo
-fi
-
-
 # Move @rootfs btrfs subvolume to @ for timeshift
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 	echo
@@ -179,6 +153,30 @@ fi
 echo
 
 
+if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/grub_set_up" ]; then
+	echo
+	echo 'Setting up grub...'
+	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
+	confirm_cmd 'update-grub'
+	touch "$script_dir/status/grub_set_up"
+	touch "$script_dir/status/reboot"
+	echo
+fi
+
+
+# Inhibit suspend if on AC power but not logged in, useful for SSHing into a server
+if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
+	echo
+	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
+	echo 'Will still auto-suspend if on battery power...'
+	confirm_cmd "sudo sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
+	confirm_cmd "sudo sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
+	touch "$script_dir/status/gdm_inhibited"
+	touch "$script_dir/status/reboot"
+	echo
+fi
+
+
 # Add contrib and non-free to sources.list (this still works with or without non-free-firmware at the end of the repository list) 
 if [ -n "$extra_repos" ] && [ ! -f "$script_dir/status/extra_repos_added" ]; then
 	echo
@@ -229,26 +227,48 @@ if [ ! -f "$script_dir/status/initial_snapshot" ]; then
 fi
 
 
-if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/grub_set_up" ]; then
+# Add i386 (32-bit) libraries if playing Windows games on wine, needed before apt installs
+if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/i386_arch_added" ]; then
 	echo
-	echo 'Setting up grub...'
-	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
-	confirm_cmd 'update-grub'
-	touch "$script_dir/status/grub_set_up"
-	touch "$script_dir/status/reboot"
+	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
+	confirm_cmd dpkg --add-architecture i386
+	touch "$script_dir/status/i386_arch_added"
 	echo
 fi
 
 
-# Inhibit suspend if on AC power but not logged in, useful for SSHing into a server
-if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
+# Install all apt packages, this step will take a while...
+if [ -n "${apt_installs[*]}" ] && [ ! -f "$script_dir/status/apt_packages_installed" ]; then
 	echo
-	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
-	echo 'Will still auto-suspend if on battery power...'
-	confirm_cmd "sudo sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
-	confirm_cmd "sudo sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
-	touch "$script_dir/status/gdm_inhibited"
-	touch "$script_dir/status/reboot"
+	echo 'Installing apt packages...'
+	confirm_cmd "apt-get -y install ${apt_installs[@]}"
+	touch "$script_dir/status/apt_packages_installed"
+	echo
+fi
+
+
+# Inform user to turn on firewall with Gufw; always use protection!
+if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$script_dir/status/gufw_set_up" ]; then
+	echo
+	echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
+	echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
+	echo 'through SSH.'
+	echo
+	if [ -n "$(contains flatpaks RemoteTouchpad)" ]; then
+		echo 'Since you are installing the RemoteTouchpad flatpak, also add a rule'
+		echo "to allow all incoming requests for port $remote_touchpad_port as well."
+		echo
+	fi
+	if [ -n "$(contains gnome_extensions gsconnect)" ]; then
+		echo 'Since you are installing the GSConnect Gnome extension, also add a rule'
+		echo 'to allow all incoming requests for the KDE Connect app as well.'
+		echo
+	fi
+	echo 'Make sure the firewall is turned on before closing the window.'
+	echo
+	read -p 'Press ENTER to open gufw...'
+	confirm_cmd 'gufw'
+	touch "$script_dir/status/gufw_set_up"
 	echo
 fi
 
@@ -333,26 +353,6 @@ if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspa
 	confirm_cmd "cp -av $script_dir/move-workspace-indicator /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/move-workspace-indicator"
 	touch "$script_dir/status/move_workspace_indicator_script_added"
-	echo
-fi
-
-
-# Add i386 (32-bit) libraries if playing Windows games on wine, needed before apt installs
-if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/i386_arch_added" ]; then
-	echo
-	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
-	confirm_cmd dpkg --add-architecture i386
-	touch "$script_dir/status/i386_arch_added"
-	echo
-fi
-
-
-# Install all apt packages, this step will take a while...
-if [ -n "${apt_installs[*]}" ] && [ ! -f "$script_dir/status/apt_packages_installed" ]; then
-	echo
-	echo 'Installing apt packages...'
-	confirm_cmd "apt-get -y install ${apt_installs[@]}"
-	touch "$script_dir/status/apt_packages_installed"
 	echo
 fi
 

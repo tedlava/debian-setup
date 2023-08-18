@@ -122,10 +122,10 @@ fi
 
 
 # Create status directory
-if [ ! -d "$status_dir" ]; then
+if [ ! -d "$script_dir/status" ]; then
 	echo
 	echo "Create status directory to hold script's state between reboots..."
-	confirm_cmd "mkdir $status_dir"
+	confirm_cmd "mkdir $script_dir/status"
 	echo
 fi
 
@@ -139,7 +139,7 @@ if [ ! -d "$script_dir/downloads" ]; then
 fi
 
 
-if [ ! -f "$status_dir/reqs_confirmed" ]; then
+if [ ! -f "$script_dir/status/reqs_confirmed" ]; then
 	echo 'This script automates some common settings that I use for'
 	echo 'every Debian installation while still allowing for some changes'
 	echo 'through interactive questions.  You will be asked to enter your'
@@ -163,23 +163,23 @@ if [ ! -f "$status_dir/reqs_confirmed" ]; then
 		echo
 		exit
 	fi
-	touch "$status_dir/reqs_confirmed"
+	touch "$script_dir/status/reqs_confirmed"
 	echo
 fi
 
 
 # Remove old configuration in .dotfiles
-if [ -n "$rm_dotfiles" ] && [ ! -f "$status_dir/removed_dotfiles" ]; then
+if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	echo
 	echo 'Removing old .dotfiles (from prior Linux installation)...'
 	confirm_cmd "sudo rm -rf $HOME/.*"
 	confirm_cmd "cp -av /etc/skel/. $HOME/"
-	touch "$status_dir/removed_dotfiles"
+	touch "$script_dir/status/removed_dotfiles"
 	echo
 fi
 
 
-if [ ! -f "$status_dir/bash_set_up" ]; then
+if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	# This is SOOOOO ugly!  But part way through, it became more of a puzzle that I just wanted to solve, to see if it were possible to use a sed command to make this kind of modification...  Sorry!
 	echo
 	echo 'Copying any custom command line aliases from bash_aliases to ~/.bash_aliases...'
@@ -194,16 +194,16 @@ if [ ! -f "$status_dir/bash_set_up" ]; then
 	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/ (\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*033.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\[\\\\\\\\033[01;32m\\\\\\\\]\\\\\\\\u@\\\\\\\\h\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]:\\\\\\\\[\\\\\\\\033[01;34m\\\\\\\\]\\\\\\\\w\\\\\\\\[\\\\\\\\033[0;33m\\\\\\\\]\\\\\\\\\\\$(parse_git_branch)\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]\\\\\\\\$ \\\"/\" $HOME/.bashrc"
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
-	touch "$status_dir/bash_set_up"
+	touch "$script_dir/status/bash_set_up"
 fi
 
 
 # Inhibit suspend while on AC power
-if [ -n "$user_inhibit_ac" ] && [ ! -f "$status_dir/inhibited_user_ac_suspend" ]; then
+if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/inhibited_user_ac_suspend" ]; then
 	echo
 	echo 'Disabling suspend while on AC power...'
 	confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
-	touch "$status_dir/inhibited_user_ac_suspend"
+	touch "$script_dir/status/inhibited_user_ac_suspend"
 	echo
 fi
 
@@ -213,7 +213,7 @@ sudo home="$HOME" interactive="$interactive" bash "$release_name"-as-root
 
 
 # Set up Neovim
-if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$status_dir/neovim_installed" ]; then
+if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim_installed" ]; then
 	# Clone neovim-config from GitHub
 	echo
 	echo 'Setting up Neovim config (init.vim)...'
@@ -237,14 +237,14 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$status_dir/neovim_instal
 	echo
 	read -p 'Press ENTER to proceed with Neovim plugin installation. '
 	confirm_cmd "nvim -c PlugInstall"
-	touch "$status_dir/neovim_installed"
+	touch "$script_dir/status/neovim_installed"
 	echo
 fi
 
 
 # Load default applications mime types (double-click in Nautilus opens with your preferred app)
 # My default uses Neovim or NeovimGtk to open all text files and VLC for videos
-if [ ! -f "$status_dir/changed_default_apps" ]; then
+if [ ! -f "$script_dir/status/changed_default_apps" ]; then
 	echo
 	echo 'Loading default applications mime types...'
 	if [ -f "$settings_dir/mimeapps.list" ]; then
@@ -253,13 +253,13 @@ if [ ! -f "$status_dir/changed_default_apps" ]; then
 		mimeapps_path="$script_dir/mimeapps.list"
 	fi
 	confirm_cmd "cp -av $mimeapps_path $HOME/.config/"
-	touch "$status_dir/changed_default_apps"
+	touch "$script_dir/status/changed_default_apps"
 	echo
 fi
 
 
 # Install Gnome extensions
-if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$status_dir/extensions_installed" ]; then
+if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_installed" ]; then
 	echo
 	echo 'Installing Gnome extensions...'
 	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
@@ -276,24 +276,24 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$status_dir/extensions_installed" 
 		ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
 		confirm_cmd "gnome-extensions install $script_dir/downloads/$ext_uuid.zip"
 	done
-	touch "$status_dir/extensions_installed"
+	touch "$script_dir/status/extensions_installed"
 	echo
 fi
 
 
 # Set up fonts
-if [ ! -f "$status_dir/fonts_installed" ]; then
+if [ ! -f "$script_dir/status/fonts_installed" ]; then
 	echo
 	echo 'Setting up links to detect fonts...'
 	confirm_cmd "ln -s $HOME/fonts $HOME/.local/share/fonts"
 	confirm_cmd 'fc-cache -fv'
-	touch "$status_dir/fonts_installed"
+	touch "$script_dir/status/fonts_installed"
 	echo
 fi
 
 
 # Load gsettings
-if [ ! -f "$status_dir/gsettings_loaded" ]; then
+if [ ! -f "$script_dir/status/gsettings_loaded" ]; then
 	echo
 	echo "Applying $release_name-gsettings.txt to Gnome..."
 	# confirm_cmd in while loop won't work since it also uses 'read', so
@@ -313,13 +313,13 @@ if [ ! -f "$status_dir/gsettings_loaded" ]; then
 			gsettings set $schema $key "$val"
 		done < "$gsettings_path"
 	fi
-	touch "$status_dir/gsettings_loaded"
+	touch "$script_dir/status/gsettings_loaded"
 	echo
 fi
 
 
 # Load dconf settings
-if [ ! -f "$status_dir/dconf_loaded" ]; then
+if [ ! -f "$script_dir/status/dconf_loaded" ]; then
 	echo
 	echo "Applying $release_name-dconf.txt to Gnome..."
 	if [ -f  "$settings_dir/$release_name-dconf.txt" ]; then
@@ -328,13 +328,13 @@ if [ ! -f "$status_dir/dconf_loaded" ]; then
 		dconf_path="$script_dir/$release_name-dconf.txt"
 	fi
 	confirm_cmd "dconf load / < $dconf_path"
-	touch "$status_dir/dconf_loaded"
+	touch "$script_dir/status/dconf_loaded"
 	echo
 fi
 
 
 # Enable Gnome extensions
-if [ -n "${extension_urls[*]}" ] && [ ! -f "$status_dir/extensions_enabled" ]; then
+if [ -n "${extension_urls[*]}" ] && [ ! -f "$script_dir/status/extensions_enabled" ]; then
 	echo
 	echo 'Enabling recently installed Gnome extensions...'
 	for extension in "${extension_urls[@]}"; do
@@ -345,26 +345,26 @@ if [ -n "${extension_urls[*]}" ] && [ ! -f "$status_dir/extensions_enabled" ]; t
 		fi
 		confirm_cmd "gnome-extensions enable ${ext_uuid}"
 	done
-	touch "$status_dir/extensions_enabled"
+	touch "$script_dir/status/extensions_enabled"
 fi
 
 
 # Create statup application to ignore suspend on closing lid (normally installed through Tweaks)
-if [ -n "$ignore_lid_switch" ] && [ ! -f "$status_dir/lid_tweak_installed" ]; then
+if [ -n "$ignore_lid_switch" ] && [ ! -f "$script_dir/status/lid_tweak_installed" ]; then
 	echo
 	echo 'Applying tweak to ignore suspend on lid closing...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
 		confirm_cmd "mkdir $HOME/.config/autostart"
 	fi
 	confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
-	touch "$status_dir/lid_tweak_installed"
-	touch "$status_dir/reboot"
+	touch "$script_dir/status/lid_tweak_installed"
+	touch "$script_dir/status/reboot"
 	echo
 fi
 
 
 # Create startup application to move system-monitor indicator
-if [ -n "$(contains extension_urls system-monitor)" ] && [ -n "$move_system_monitor" ] && [ ! -f "$status_dir/move_system_monitor_installed" ]; then
+if [ -n "$(contains extension_urls system-monitor)" ] && [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monitor_installed" ]; then
 	echo
 	echo 'Creating startup application to move Gnome extension system-monitor to the right of all indicators...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
@@ -372,14 +372,14 @@ if [ -n "$(contains extension_urls system-monitor)" ] && [ -n "$move_system_moni
 	fi
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move system-monitor indicator\\\\nComment=Moves user-installed Gnome extension system-monitor to the right of all indicators (updates periodically move it back to the middle)\\\\nExec=/usr/local/bin/move-system-monitor\\\\n\" > $HOME/.config/autostart/move-system-monitor.desktop"
 	confirm_cmd "move-system-monitor"
-	touch "$status_dir/move_system_monitor_installed"
-	touch "$status_dir/reboot"
+	touch "$script_dir/status/move_system_monitor_installed"
+	touch "$script_dir/status/reboot"
 	echo
 fi
 
 
 # Create startup application to move workspace-indicator
-if [ -n "$(contains extension_urls workspace-indicator)" ] && [ -n "$move_workspace_indicator" ] && [ ! -f "$status_dir/move_workspace_indicator_installed" ]; then
+if [ -n "$(contains extension_urls workspace-indicator)" ] && [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspace_indicator_installed" ]; then
 	echo
 	echo 'Creating startup application to move Gnome extension workspace-indicator to the left panel box...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
@@ -387,65 +387,65 @@ if [ -n "$(contains extension_urls workspace-indicator)" ] && [ -n "$move_worksp
 	fi
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move workspace-indicator\\\\nComment=Moves user-installed Gnome extension workspace-indicator to the left panel box (updates periodically move it back to the right)\\\\nExec=/usr/local/bin/move-workspace-indicator\\\\n\" > $HOME/.config/autostart/move-workspace-indicator.desktop"
 	confirm_cmd "move-workspace-indicator"
-	touch "$status_dir/move_workspace_indicator_installed"
-	touch "$status_dir/reboot"
+	touch "$script_dir/status/move_workspace_indicator_installed"
+	touch "$script_dir/status/reboot"
 	echo
 fi
 
 
 # Reboot
-if [ -f "$status_dir/reboot" ]; then
+if [ -f "$script_dir/status/reboot" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
 	read -p 'Press ENTER to reboot...'
 	# Load patched monospace font immediately before reboot since it makes the terminal difficult to read
-	if [ -n "$patched_font" ] && [ ! -f "$status_dir/patched_font_installed" ]; then
+	if [ -n "$patched_font" ] && [ ! -f "$script_dir/status/patched_font_installed" ]; then
 		echo
 		echo 'Setting new system monospace font, terminal text will become distorted'
 		echo 'then the reboot will happen immediately afterwards...'
 		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font $patched_font_size'"
-		touch "$status_dir/patched_font_installed"
+		touch "$script_dir/status/patched_font_installed"
 		echo
 	fi
-	rm "$status_dir/reboot"
+	rm "$script_dir/status/reboot"
 	systemctl reboot
 	sleep 5
 fi
 
 
 # Open display settings to possibly change scaling
-if [ ! -f "$status_dir/display_settings" ]; then
+if [ ! -f "$script_dir/status/display_settings" ]; then
 	echo
-	echo 'Newer computers with HiDPI displays may need to adjust scaling settings. When'
+	echo 'Newer computers with HiDPI displays may need to adjust scaling settingshen'
 	echo 'you are finished, close the window to continue with the setup script...'
 	echo
 	read -p 'Press ENTER to open Display Settings...'
 	confirm_cmd 'gnome-control-center display'
-	touch "$status_dir/display_settings"
+	touch "$script_dir/status/display_settings"
 	echo
 fi
 
 
 # Install flatpaks, this step will take a while...
-if [ -n "${flatpaks[*]}" ] && [ ! -f "$status_dir/flatpaks_installed" ]; then
+if [ -n "${flatpaks[*]}" ] && [ ! -f "$script_dir/status/flatpaks_installed" ]; then
 	echo
 	echo 'Installing Flatpak applications...'
 	confirm_cmd "flatpak -y install ${flatpaks[@]}"
-	touch "$status_dir/flatpaks_installed"
+	touch "$script_dir/status/flatpaks_installed"
 	echo
 fi
 
 
 # Configure Remote Touchpad to have a stable port so it will work through the firewall
-if [ -n "$(contains flatpaks RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" ] && [ ! -f "$status_dir/remote_touchpad_set_up" ]; then
+if [ -n "$(contains flatpaks RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" ] && [ ! -f "$script_dir/status/remote_touchpad_set_up" ]; then
 	echo
 	echo "Configure Remote Touchpad Flatpak to always use port $remote_touchpad_set_up to work through the firewall..."
 	desktop_file_path='/var/lib/flatpak/app/com.github.unrud.RemoteTouchpad/current/active/export/share/applications/com.github.unrud.RemoteTouchpad.desktop'
 	confirm_cmd "sudo sed -i 's/\(Exec.*RemoteTouchpad.*\)/\1 --bind :$remote_touchpad_port/' $desktop_file_path"
-	touch "$status_dir/remote_touchpad_set_up"
-	touch "$status_dir/reboot"
+	touch "$script_dir/status/remote_touchpad_set_up"
+	touch "$script_dir/status/reboot"
 	echo
 fi
 
@@ -463,33 +463,33 @@ fi
 
 
 # Final apt upgrade check (sometimes needed for nvidia)
-if [ ! -f "$status_dir/final_apt_update" ]; then
+if [ ! -f "$script_dir/status/final_apt_update" ]; then
 	echo 'Final check for apt upgrades and clean up...'
 	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
-	touch "$status_dir/final_apt_update"
+	touch "$script_dir/status/final_apt_update"
 	echo
 fi
 
 
 # Reboot
-if [ -f "$status_dir/reboot" ]; then
+if [ -f "$script_dir/status/reboot" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
 	read -p 'Press ENTER to reboot...'
-	rm "$status_dir/reboot"
+	rm "$script_dir/status/reboot"
 	systemctl reboot
 	sleep 5
 fi
 
 
 # Create timeshift snapshot after setup script is complete
-if [ ! -f "$status_dir/final_snapshot" ]; then
+if [ ! -f "$script_dir/status/final_snapshot" ]; then
 	echo
 	echo 'Create a timeshift snapshot in case you screw up this awesome setup...'
 	confirm_cmd "sudo timeshift --create --comments 'Debian ${release_name^} setup script completed' --yes"
-	touch "$status_dir/final_snapshot"
+	touch "$script_dir/status/final_snapshot"
 	echo
 fi
 
@@ -518,6 +518,6 @@ fi
 echo
 echo
 echo "Ted's Debian Setup Script has finished.  If you want to run it again, please"
-echo "delete the status directory at \"$status_dir/\", or even just specific"
+echo "delete the status directory at \"$script_dir/status/\", or even just specific"
 echo 'sections that you want to set up again, and then re-run the script.'
 echo

@@ -50,7 +50,7 @@ function contains {
 
 
 # Inform user to turn on firewall with Gufw; always use protection!
-if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$status_dir/gufw_set_up" ]; then
+if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$script_dir/status/gufw_set_up" ]; then
 	echo
 	echo 'Gufw (Graphical Uncomplicated Firewall) also needs to be set up through'
 	echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
@@ -70,7 +70,7 @@ if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$status_dir/gufw_set_up" ];
 	echo
 	read -p 'Press ENTER to open gufw...'
 	confirm_cmd 'gufw'
-	touch "$status_dir/gufw_set_up"
+	touch "$script_dir/status/gufw_set_up"
 	echo
 fi
 
@@ -89,7 +89,7 @@ if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 		echo 'Reinstalling grub and updating grub...'
 		confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 		confirm_cmd 'update-grub'
-		touch "$status_dir/reboot"
+		touch "$script_dir/status/reboot"
 		echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 	fi
 	echo
@@ -115,7 +115,7 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 		done
 		confirm_cmd 'umount /mnt'
 		confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
-		touch "$status_dir/reboot"
+		touch "$script_dir/status/reboot"
 		echo '@home btrfs subvolume was created and all user directories were copied to it.'
 	fi
 	echo
@@ -123,20 +123,20 @@ fi
 
 
 # Reboot
-if [ -f "$status_dir/reboot" ]; then
+if [ -f "$script_dir/status/reboot" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
 	read -p 'Press ENTER to reboot...'
-	rm "$status_dir/reboot"
+	rm "$script_dir/status/reboot"
 	systemctl reboot
 	sleep 5
 fi
 
 
 # Remove old home directories in top level of btrfs @home partition
-if [ ! -f "$status_dir/moved_user_dirs" ]; then
+if [ ! -f "$script_dir/status/moved_user_dirs" ]; then
 	echo
 	read -p 'Check for and remove old copies of user directories (siblings to @home)? [Y/n] '
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
@@ -150,69 +150,69 @@ if [ ! -f "$status_dir/moved_user_dirs" ]; then
 			fi
 		done
 		confirm_cmd 'umount /mnt'
-		sudo -u $SUDO_USER touch "$status_dir/moved_user_dirs"
+		sudo -u $SUDO_USER touch "$script_dir/status/moved_user_dirs"
 	fi
 	echo
 fi
 
 
 # Purge unwanted packages
-if [ -n "${apt_purges[*]}" ] && [ ! -f "$status_dir/apt_purged" ]; then
+if [ -n "${apt_purges[*]}" ] && [ ! -f "$script_dir/status/apt_purged" ]; then
 	echo
 	echo 'Removing unwanted packages from the base installation...'
 	confirm_cmd "apt-get -y purge ${apt_purges[@]}"
 	confirm_cmd 'apt-get -y autopurge'
-	touch "$status_dir/apt_purged"
+	touch "$script_dir/status/apt_purged"
 	echo
 fi
 
 
 # SSD trim after deleting stuff to reclaim unused blocks
-if [ -n "$ssd" ] && [ ! -f "$status_dir/ssd_set_up" ]; then
+if [ -n "$ssd" ] && [ ! -f "$script_dir/status/ssd_set_up" ]; then
 	echo
 	echo 'SSD setup...'
 	confirm_cmd 'fstrim -v /'
 	confirm_cmd 'fstrim -v /home'
 	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
-	touch "$status_dir/ssd_set_up"
+	touch "$script_dir/status/ssd_set_up"
 fi
 echo
 
 
 # Add contrib and non-free to sources.list (this still works with or without non-free-firmware at the end of the repository list) 
-if [ -n "$extra_repos" ] && [ ! -f "$status_dir/extra_repos_added" ]; then
+if [ -n "$extra_repos" ] && [ ! -f "$script_dir/status/extra_repos_added" ]; then
 	echo
 	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
 	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)/\1 contrib non-free/' /etc/apt/sources.list"
-	touch "$status_dir/extra_repos_added"
+	touch "$script_dir/status/extra_repos_added"
 	echo
 fi
 
 
 # Update apt cache (with added repos) and upgrade
 # This step is unnecessary for network installs, but needed for live image installs
-if [ ! -f "$status_dir/apt_upgraded" ]; then
+if [ ! -f "$script_dir/status/apt_upgraded" ]; then
 	echo
 	echo 'Updating apt cache and upgrading current packages...'
 	confirm_cmd 'apt-get update'
 	confirm_cmd 'apt-get -y upgrade'
-	touch "$status_dir/apt_upgraded"
+	touch "$script_dir/status/apt_upgraded"
 	echo
 fi
 
 
 # Install basic utilities
-if [ ! -f "$status_dir/basic_utils_installed" ]; then
+if [ ! -f "$script_dir/status/basic_utils_installed" ]; then
 	echo
 	echo 'Installing git, curl, and timeshift...'
 	confirm_cmd 'apt-get -y install git curl timeshift'
-	touch "$status_dir/basic_utils_installed"
+	touch "$script_dir/status/basic_utils_installed"
 	echo
 fi
 
 
 # Inform user to take a snapshot with Timeshift, must use GUI
-if [ ! -f "$status_dir/initial_snapshot" ]; then
+if [ ! -f "$script_dir/status/initial_snapshot" ]; then
 	echo
 	echo 'Timeshift must be set up through the GUI before system snapshots can'
 	echo 'be taken to rollback a bad update or configuration or installation'
@@ -224,37 +224,37 @@ if [ ! -f "$status_dir/initial_snapshot" ]; then
 	echo
 	read -p 'Press ENTER to open timeshift...'
 	confirm_cmd 'timeshift-launcher'
-	sudo -u $SUDO_USER touch "$status_dir/initial_snapshot"
+	sudo -u $SUDO_USER touch "$script_dir/status/initial_snapshot"
 	echo
 fi
 
 
-if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$status_dir/grub_set_up" ]; then
+if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/grub_set_up" ]; then
 	echo
 	echo 'Setting up grub...'
 	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
 	confirm_cmd 'update-grub'
-	touch "$status_dir/grub_set_up"
-	touch "$status_dir/reboot"
+	touch "$script_dir/status/grub_set_up"
+	touch "$script_dir/status/reboot"
 	echo
 fi
 
 
 # Inhibit suspend if on AC power but not logged in, useful for SSHing into a server
-if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$status_dir/gdm_inhibited" ]; then
+if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
 	echo
 	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
 	echo 'Will still auto-suspend if on battery power...'
 	confirm_cmd "sudo sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
 	confirm_cmd "sudo sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
-	touch "$status_dir/gdm_inhibited"
-	touch "$status_dir/reboot"
+	touch "$script_dir/status/gdm_inhibited"
+	touch "$script_dir/status/reboot"
 	echo
 fi
 
 
 # Download, compile, and install NeovimGtk from latest github source release
-if [ -n "$install_neovim_gtk" ] && [ ! -f "$status_dir/neovim_gtk_installed" ]; then
+if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
 	echo
 	echo 'Installing Rust as root to compile and install NeovimGtk system-wide...'
 	confirm_cmd "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo -i sh -s -- -y"
@@ -267,112 +267,112 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$status_dir/neovim_gtk_installed" ]; 
 	echo 'Removing Rust installed as root...'
 	confirm_cmd 'sudo -i rustup self uninstall -y'
 	root=1
-	touch "$status_dir/neovim_gtk_installed"
+	touch "$script_dir/status/neovim_gtk_installed"
 	echo
 fi
 
 
 # Install Google Chrome
-if [ -n "$install_google_chrome" ] && [ ! -f "$status_dir/chrome_installed" ]; then
+if [ -n "$install_google_chrome" ] && [ ! -f "$script_dir/status/chrome_installed" ]; then
 	echo
 	echo 'Installing Google Chrome...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o $script_dir/downloads/chrome.deb"
 	confirm_cmd "apt-get -y install $script_dir/downloads/chrome.deb"
-	touch "$status_dir/chrome_installed"
+	touch "$script_dir/status/chrome_installed"
 	echo
 fi
 
 
 # Install Windscribe VPN
-if [ -n "$install_windscribe" ] && [ ! -f "$status_dir/windscribe_installed" ]; then
+if [ -n "$install_windscribe" ] && [ ! -f "$script_dir/status/windscribe_installed" ]; then
 	echo
 	echo 'Installing Windscribe VPN...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/downloads/windscribe.deb"
 	confirm_cmd "apt-get -y install $script_dir/downloads/windscribe.deb"
-	touch "$status_dir/windscribe_installed"
+	touch "$script_dir/status/windscribe_installed"
 	echo
 fi
 
 
 # Add private window to context menu for Firefox-ESR launcher
-if [ -n "$priv_firefox_launcher" ] && [ ! -f "$status_dir/priv_firefox_launcher_added" ]; then
+if [ -n "$priv_firefox_launcher" ] && [ ! -f "$script_dir/status/priv_firefox_launcher_added" ]; then
 	echo
 	echo 'Adding private window to context menu for Firefox-ESR launcher...'
 	confirm_cmd 'echo -e "Actions=new-window;new-private-window;\\n\\n[Desktop Action new-window]\\nName=Open a New Window\\nExec=/usr/lib/firefox-esr/firefox-esr -new-window\\n\\n[Desktop Action new-private-window]\\nName=Open a New Private Window\\nExec=/usr/lib/firefox-esr/firefox-esr -private-window\\n" >> /usr/share/applications/firefox-esr.desktop'
-	touch "$status_dir/priv_firefox_launcher_added"
+	touch "$script_dir/status/priv_firefox_launcher_added"
 	echo
 fi
 
 
 # Create launcher to switch between light/dark color schemes
-if [ ! -f "$status_dir/toggle_colors_script_added" ]; then
+if [ ! -f "$script_dir/status/toggle_colors_script_added" ]; then
 	echo
 	echo 'Create launcher to toggle light/dark color schemes... (keyboard shortcut: Super + c)'
 	confirm_cmd "cp -av $script_dir/toggle-color-scheme /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/toggle-color-scheme"
-	touch "$status_dir/toggle_colors_script_added"
+	touch "$script_dir/status/toggle_colors_script_added"
 	echo
 fi
 
 
 # Copy script into PATH to move system-monitor indicator
-if [ -n "$move_system_monitor" ] && [ ! -f "$status_dir/move_system_monitor_script_added" ]; then
+if [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monitor_script_added" ]; then
 	echo
 	echo 'Copy script into PATH to move Gnome extension system-monitor to the right of all indicators...'
 	confirm_cmd "cp -av $script_dir/move-system-monitor /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/move-system-monitor"
-	touch "$status_dir/move_system_monitor_script_added"
+	touch "$script_dir/status/move_system_monitor_script_added"
 	echo
 fi
 
 
 # Copy script into PATH to move workspace-indicator
-if [ -n "$move_workspace_indicator" ] && [ ! -f "$status_dir/move_workspace_indicator_script_added" ]; then
+if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspace_indicator_script_added" ]; then
 	echo
 	echo 'Copy script into PATH to move Gnome extension workspace-indicator to the left panel box...'
 	confirm_cmd "cp -av $script_dir/move-workspace-indicator /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/move-workspace-indicator"
-	touch "$status_dir/move_workspace_indicator_script_added"
+	touch "$script_dir/status/move_workspace_indicator_script_added"
 	echo
 fi
 
 
 # Add i386 (32-bit) libraries if playing Windows games on wine, needed before apt installs
-if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$status_dir/i386_arch_added" ]; then
+if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/i386_arch_added" ]; then
 	echo
 	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
 	confirm_cmd dpkg --add-architecture i386
-	touch "$status_dir/i386_arch_added"
+	touch "$script_dir/status/i386_arch_added"
 	echo
 fi
 
 
 # Install all apt packages, this step will take a while...
-if [ -n "${apt_installs[*]}" ] && [ ! -f "$status_dir/apt_packages_installed" ]; then
+if [ -n "${apt_installs[*]}" ] && [ ! -f "$script_dir/status/apt_packages_installed" ]; then
 	echo
 	echo 'Installing apt packages...'
 	confirm_cmd "apt-get -y install ${apt_installs[@]}"
-	touch "$status_dir/apt_packages_installed"
+	touch "$script_dir/status/apt_packages_installed"
 	echo
 fi
 
 
 # DVD
-if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$status_dir/dvd_set_up" ]; then
+if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$script_dir/status/dvd_set_up" ]; then
 	echo
 	echo 'Setting up packages to watch DVD movies...'
 	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
-	touch "$status_dir/dvd_set_up"
+	touch "$script_dir/status/dvd_set_up"
 	echo
 fi
 
 
 # Add Flatpak repository
-if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$status_dir/flatpak_repo_added" ]; then
+if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$script_dir/status/flatpak_repo_added" ]; then
 	echo
 	echo 'Adding flathub repo...'
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
-	touch "$status_dir/flatpak_repo_added"
-	touch "$status_dir/reboot"
+	touch "$script_dir/status/flatpak_repo_added"
+	touch "$script_dir/status/reboot"
 	echo
 fi

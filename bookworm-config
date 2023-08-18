@@ -9,7 +9,6 @@
 
 
 # To disable a setting below, simply comment out the entire line
-status_dir='status' # Holds script status between reboots, can be absolute path or relative (to script dir)
 rm_dotfiles=1 # Remove all old .dotfiles (from prior Linux distributions)
 GRUB_CMDLINE_LINUX_DEFAULT='quiet splash i915.enable_psr=0 module_blacklist=hid_sensor_hub'
 #     Above setting is for /etc/default/grub, boot-time hardware parameters go there

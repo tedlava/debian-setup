@@ -471,7 +471,7 @@ if [ -d "$script_dir/downloads" ]; then
 	echo 'All 3rd-party .deb packages and temporary .zip files were saved to the'
 	read -p "$script_dir/downloads directory.  Delete this directory? [Y/n] "
 	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "rm -rfv $script_dir/downloads"
+		confirm_cmd "sudo rm -rfv $script_dir/downloads"
 	fi
 	echo
 fi

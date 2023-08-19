@@ -333,7 +333,7 @@ fi
 
 
 # Reboot
-if [ -f "$script_dir/status/reboot" ] || [ ! -f "$script_dir/status/patched_font_installed"]; then
+if [ -f "$script_dir/status/reboot" ] || [ ! -f "$script_dir/status/patched_font_installed" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'

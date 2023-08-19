@@ -198,6 +198,16 @@ if [ -n "$extra_repos" ] && [ ! -f "$script_dir/status/extra_repos_added" ]; the
 fi
 
 
+# Add i386 (32-bit) libraries if playing Windows games on wine, needed before apt installs
+if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/i386_arch_added" ]; then
+	echo
+	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
+	confirm_cmd dpkg --add-architecture i386
+	sudo -u $SUDO_USER touch "$script_dir/status/i386_arch_added"
+	echo
+fi
+
+
 # Update apt cache (with added repos) and upgrade
 # This step is unnecessary for network installs, but needed for live image installs
 if [ ! -f "$script_dir/status/apt_upgraded" ]; then
@@ -234,16 +244,6 @@ if [ ! -f "$script_dir/status/initial_snapshot" ]; then
 	read -p 'Press ENTER to open timeshift...'
 	confirm_cmd 'timeshift-launcher'
 	sudo -u $SUDO_USER touch "$script_dir/status/initial_snapshot"
-	echo
-fi
-
-
-# Add i386 (32-bit) libraries if playing Windows games on wine, needed before apt installs
-if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/i386_arch_added" ]; then
-	echo
-	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
-	confirm_cmd dpkg --add-architecture i386
-	sudo -u $SUDO_USER touch "$script_dir/status/i386_arch_added"
 	echo
 fi
 

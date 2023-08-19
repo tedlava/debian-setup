@@ -54,8 +54,8 @@ if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/gr
 	echo 'Setting up grub...'
 	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
 	update_grub=1
-	touch "$script_dir/status/grub_set_up"
-	touch "$script_dir/status/reboot"
+	sudo -u $SUDO_USER touch "$script_dir/status/grub_set_up"
+	sudo -u $SUDO_USER touch "$script_dir/status/reboot"
 	echo
 fi
 
@@ -76,7 +76,7 @@ if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 		echo 'Reinstalling grub and updating grub...'
 		confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 		update_grub=1
-		touch "$script_dir/status/reboot"
+		sudo -u $SUDO_USER touch "$script_dir/status/reboot"
 		echo
 		echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 	fi
@@ -110,7 +110,7 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 		done
 		confirm_cmd 'umount /mnt'
 		confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
-		touch "$script_dir/status/reboot"
+		sudo -u $SUDO_USER touch "$script_dir/status/reboot"
 		echo
 		echo '@home btrfs subvolume was created and all user directories were copied to it.'
 	fi
@@ -159,8 +159,8 @@ if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
 	echo 'Will still auto-suspend if on battery power...'
 	confirm_cmd "sudo sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
 	confirm_cmd "sudo sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
-	touch "$script_dir/status/gdm_inhibited"
-	touch "$script_dir/status/reboot"
+	sudo -u $SUDO_USER touch "$script_dir/status/gdm_inhibited"
+	sudo -u $SUDO_USER touch "$script_dir/status/reboot"
 	echo
 fi
 
@@ -171,7 +171,7 @@ if [ -n "${apt_purges[*]}" ] && [ ! -f "$script_dir/status/apt_purged" ]; then
 	echo 'Removing unwanted packages from the base installation...'
 	confirm_cmd "apt-get -y purge ${apt_purges[@]}"
 	confirm_cmd 'apt-get -y autopurge'
-	touch "$script_dir/status/apt_purged"
+	sudo -u $SUDO_USER touch "$script_dir/status/apt_purged"
 	echo
 fi
 
@@ -183,7 +183,7 @@ if [ -n "$ssd" ] && [ ! -f "$script_dir/status/ssd_set_up" ]; then
 	confirm_cmd 'fstrim -v /'
 	confirm_cmd 'fstrim -v /home'
 	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
-	touch "$script_dir/status/ssd_set_up"
+	sudo -u $SUDO_USER touch "$script_dir/status/ssd_set_up"
 fi
 echo
 
@@ -193,7 +193,7 @@ if [ -n "$extra_repos" ] && [ ! -f "$script_dir/status/extra_repos_added" ]; the
 	echo
 	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
 	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)/\1 contrib non-free/' /etc/apt/sources.list"
-	touch "$script_dir/status/extra_repos_added"
+	sudo -u $SUDO_USER touch "$script_dir/status/extra_repos_added"
 	echo
 fi
 
@@ -205,7 +205,7 @@ if [ ! -f "$script_dir/status/apt_upgraded" ]; then
 	echo 'Updating apt cache and upgrading current packages...'
 	confirm_cmd 'apt-get update'
 	confirm_cmd 'apt-get -y upgrade'
-	touch "$script_dir/status/apt_upgraded"
+	sudo -u $SUDO_USER touch "$script_dir/status/apt_upgraded"
 	echo
 fi
 
@@ -215,7 +215,7 @@ if [ ! -f "$script_dir/status/basic_utils_installed" ]; then
 	echo
 	echo 'Installing git, curl, and timeshift...'
 	confirm_cmd 'apt-get -y install git curl timeshift'
-	touch "$script_dir/status/basic_utils_installed"
+	sudo -u $SUDO_USER touch "$script_dir/status/basic_utils_installed"
 	echo
 fi
 
@@ -243,7 +243,7 @@ if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/i386_arc
 	echo
 	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
 	confirm_cmd dpkg --add-architecture i386
-	touch "$script_dir/status/i386_arch_added"
+	sudo -u $SUDO_USER touch "$script_dir/status/i386_arch_added"
 	echo
 fi
 
@@ -253,7 +253,7 @@ if [ -n "${apt_installs[*]}" ] && [ ! -f "$script_dir/status/apt_packages_instal
 	echo
 	echo 'Installing apt packages...'
 	confirm_cmd "apt-get -y install ${apt_installs[@]}"
-	touch "$script_dir/status/apt_packages_installed"
+	sudo -u $SUDO_USER touch "$script_dir/status/apt_packages_installed"
 	echo
 fi
 
@@ -279,7 +279,7 @@ if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$script_dir/status/gufw_set
 	echo
 	read -p 'Press ENTER to open gufw...'
 	confirm_cmd 'gufw'
-	touch "$script_dir/status/gufw_set_up"
+	sudo -u $SUDO_USER touch "$script_dir/status/gufw_set_up"
 	echo
 fi
 
@@ -289,7 +289,7 @@ if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$script_dir/status/dv
 	echo
 	echo 'Setting up packages to watch DVD movies...'
 	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
-	touch "$script_dir/status/dvd_set_up"
+	sudo -u $SUDO_USER touch "$script_dir/status/dvd_set_up"
 	echo
 fi
 
@@ -299,8 +299,8 @@ if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$script_dir/status/flatp
 	echo
 	echo 'Adding flathub repo...'
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
-	touch "$script_dir/status/flatpak_repo_added"
-	touch "$script_dir/status/reboot"
+	sudo -u $SUDO_USER touch "$script_dir/status/flatpak_repo_added"
+	sudo -u $SUDO_USER touch "$script_dir/status/reboot"
 	echo
 fi
 
@@ -319,7 +319,7 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 	echo 'Removing Rust installed as root...'
 	confirm_cmd 'sudo -i rustup self uninstall -y'
 	root=1
-	touch "$script_dir/status/neovim_gtk_installed"
+	sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
 	echo
 fi
 
@@ -330,7 +330,7 @@ if [ -n "$install_google_chrome" ] && [ ! -f "$script_dir/status/chrome_installe
 	echo 'Installing Google Chrome...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o $script_dir/downloads/chrome.deb"
 	confirm_cmd "apt-get -y install $script_dir/downloads/chrome.deb"
-	touch "$script_dir/status/chrome_installed"
+	sudo -u $SUDO_USER touch "$script_dir/status/chrome_installed"
 	echo
 fi
 
@@ -341,7 +341,7 @@ if [ -n "$install_windscribe" ] && [ ! -f "$script_dir/status/windscribe_install
 	echo 'Installing Windscribe VPN...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/downloads/windscribe.deb"
 	confirm_cmd "apt-get -y install $script_dir/downloads/windscribe.deb"
-	touch "$script_dir/status/windscribe_installed"
+	sudo -u $SUDO_USER touch "$script_dir/status/windscribe_installed"
 	echo
 fi
 
@@ -351,7 +351,7 @@ if [ -n "$priv_firefox_launcher" ] && [ ! -f "$script_dir/status/priv_firefox_la
 	echo
 	echo 'Adding private window to context menu for Firefox-ESR launcher...'
 	confirm_cmd 'echo -e "Actions=new-window;new-private-window;\\n\\n[Desktop Action new-window]\\nName=Open a New Window\\nExec=/usr/lib/firefox-esr/firefox-esr -new-window\\n\\n[Desktop Action new-private-window]\\nName=Open a New Private Window\\nExec=/usr/lib/firefox-esr/firefox-esr -private-window\\n" >> /usr/share/applications/firefox-esr.desktop'
-	touch "$script_dir/status/priv_firefox_launcher_added"
+	sudo -u $SUDO_USER touch "$script_dir/status/priv_firefox_launcher_added"
 	echo
 fi
 
@@ -362,7 +362,7 @@ if [ ! -f "$script_dir/status/toggle_colors_script_added" ]; then
 	echo 'Create launcher to toggle light/dark color schemes... (keyboard shortcut: Super + c)'
 	confirm_cmd "cp -av $script_dir/toggle-color-scheme /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/toggle-color-scheme"
-	touch "$script_dir/status/toggle_colors_script_added"
+	sudo -u $SUDO_USER touch "$script_dir/status/toggle_colors_script_added"
 	echo
 fi
 
@@ -373,7 +373,7 @@ if [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monit
 	echo 'Copy script into PATH to move Gnome extension system-monitor to the right of all indicators...'
 	confirm_cmd "cp -av $script_dir/move-system-monitor /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/move-system-monitor"
-	touch "$script_dir/status/move_system_monitor_script_added"
+	sudo -u $SUDO_USER touch "$script_dir/status/move_system_monitor_script_added"
 	echo
 fi
 
@@ -384,6 +384,6 @@ if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspa
 	echo 'Copy script into PATH to move Gnome extension workspace-indicator to the left panel box...'
 	confirm_cmd "cp -av $script_dir/move-workspace-indicator /usr/local/bin/"
 	confirm_cmd "chmod +x /usr/local/bin/move-workspace-indicator"
-	touch "$script_dir/status/move_workspace_indicator_script_added"
+	sudo -u $SUDO_USER touch "$script_dir/status/move_workspace_indicator_script_added"
 	echo
 fi

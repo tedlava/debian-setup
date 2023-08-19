@@ -265,12 +265,12 @@ if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$script_dir/status/gufw_set
 	echo 'its GUI.  In the Home profile, add a rule to allow all incoming requests'
 	echo 'through SSH.'
 	echo
-	if [ -n "$(contains flatpaks RemoteTouchpad)" ]; then
+	if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ]; then
 		echo 'Since you are installing the RemoteTouchpad flatpak, also add a rule'
 		echo "to allow all incoming requests for port $remote_touchpad_port as well."
 		echo
 	fi
-	if [ -n "$(contains gnome_extensions gsconnect)" ]; then
+	if [ -n "$(echo "${gnome_extensions[@]}" | grep -o gsconnect)" ]; then
 		echo 'Since you are installing the GSConnect Gnome extension, also add a rule'
 		echo 'to allow all incoming requests for the KDE Connect app as well.'
 		echo

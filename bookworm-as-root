@@ -63,8 +63,10 @@ fi
 # Move @rootfs btrfs subvolume to @ for timeshift
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 	echo
-	read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+	if [ -n "$interactive" ]; then
+		read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
+	fi
+	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		dev=$(grep '\s/\s' /etc/mtab | cut -d' ' -f1)
 		echo "Detected your / partition is on device: $dev"
 		confirm_cmd "mount $dev /mnt"
@@ -90,8 +92,10 @@ fi
 # Create @home subvolume if not present, and Copy/merge all user directories to it
 if [ -z "$(grep @home /etc/fstab)" ]; then
 	echo
-	read -p 'Copy/merge the /home directory into an @home btrfs subvolume for timeshift? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+	if [ -n "$interactive" ]; then
+		read -p 'Copy/merge the /home directory into an @home btrfs subvolume for timeshift? [Y/n] '
+	fi
+	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		dev=$(grep /home /etc/mtab | cut -d' ' -f1)
 		echo "Detected your /home partition is on device: $dev"
 		confirm_cmd "mount $dev /mnt"

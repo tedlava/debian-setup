@@ -10,8 +10,8 @@
 
 # To disable a setting below, simply comment out the entire line
 rm_dotfiles=1 # Remove all old .dotfiles (from prior Linux distributions)
-GRUB_CMDLINE_LINUX_DEFAULT='quiet splash i915.enable_psr=0 module_blacklist=hid_sensor_hub'
-#     Above setting is for /etc/default/grub, boot-time hardware parameters go there
+GRUB_CMDLINE_LINUX_DEFAULT='quiet splash'
+#     Above setting is for /etc/default/grub, boot-time hardware parameters go there, separated by spaces
 #     "pci=noaer" to avoid errors on Toshiba
 #     "i915.enable_psr=0" for smoother mouse movement on Framework
 #     "module_blacklist=hid_sensor_hub" for brightness buttons on Framework
@@ -46,12 +46,11 @@ apt_installs=(
 	# nvidia-driver-libs:i386 # For playing Windows games with wine and NVIDIA cards
 	tlp # Smarter power management and better battery life than power-profiles-daemon
 	tlp-rdw
-	# plymouth # Graphical boot, installed by default in bookworm
 	flatpak
 	gnome-software-plugin-flatpak
 	rsync
 	gufw
-	vlc # Totem often doesn't work; VLC can fix subtitle/audio timing or step frame-by-frame
+	vlc # VLC can fix subtitle/audio timing, step frame-by-frame, and play more video formats. It's the goodest!!
 	catfish # Since we still cannot sort the search results in Nautilus...
 	gir1.2-gtop-2.0 # Required for the system-monitor Gnome extension
 	# libdvd-pkg # Uncomment to watch DVD movies with an internal/external DVD drive

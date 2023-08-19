@@ -11,7 +11,7 @@ ext_uuid='workspace-indicator@gnome-shell-extensions.gcampax.github.com'
 ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
 
 if [ -d "$ext_dir" ]; then
-	new_addToPanelBox="Main.panel._addToPanelBox('workspace-indicator', _indicator, 2, Main.panel._leftBox);"
+	new_addToPanelBox="Main.panel._addToPanelBox('workspace-indicator', _indicator, 1, Main.panel._leftBox);"
 	if [ -z "$(grep "$new_addToPanelBox" $ext_dir/extension.js)" ]; then
 		sed -i -r "s/Main\.panel\._?addTo.*$/$new_addToPanelBox/" $ext_dir/extension.js
 		sleep 1

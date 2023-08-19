@@ -385,7 +385,7 @@ fi
 
 
 # Create startup application to move system-monitor indicator
-if [ -n "$(contains gnome_extensions system-monitor)" ] && [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monitor_installed" ]; then
+if [ -n "$(echo "${gnome_extensions[@]}" | grep -o system-monitor)" ] && [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monitor_installed" ]; then
 	echo
 	echo 'Creating startup application to move Gnome extension system-monitor to the right of all indicators...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
@@ -400,7 +400,7 @@ fi
 
 
 # Create startup application to move workspace-indicator
-if [ -n "$(contains gnome_extensions workspace-indicator)" ] && [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspace_indicator_installed" ]; then
+if [ -n "$(echo "${gnome_extensions[@]}" | grep -o workspace-indicator)" ] && [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspace_indicator_installed" ]; then
 	echo
 	echo 'Creating startup application to move Gnome extension workspace-indicator to the left panel box...'
 	if [ ! -d "$HOME/.config/autostart" ]; then

@@ -14,7 +14,7 @@ if [ -n "$ext_uuid" ]; then
 	ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
 	new_addToPanelBox="Main.panel._addToPanelBox('system-monitor', tray, -1, panel);"
 	if [ -z "$(grep "$new_addToPanelBox" $ext_dir/extension.js)" ]; then
-		sed -i "s/Main.panel._addToPanelBox('system-monitor', tray, [-0-9]*, panel);/$new_addToPanelBox/" $ext_dir/extension.js
+		sed -i "s/Main\.panel\._addToPanelBox('system-monitor', tray, [-0-9]*, panel);/$new_addToPanelBox/" $ext_dir/extension.js
 		sleep 1
 		notify-send "system-monitor extension updated" "Please logout and login to reload it."
 	fi

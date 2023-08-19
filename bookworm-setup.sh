@@ -179,7 +179,7 @@ fi
 
 
 # Run commands as root (with sudo)
-sudo home="$HOME" interactive="$interactive" bash "$release_name"-as-root
+sudo home="$HOME" interactive="$interactive" bash "$script_dir/$release_name-as-root"
 
 
 # Remove old configuration in .dotfiles
@@ -214,7 +214,6 @@ fi
 
 # Set up Neovim
 if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim_installed" ]; then
-	# TODO Need to have alternative actions (git pull? rename to neovim-config-old?) so that the new version can be downloaded without error...
 	# Clone neovim-config from GitHub
 	echo
 	echo 'Setting up Neovim config (init.vim)...'

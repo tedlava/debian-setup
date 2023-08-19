@@ -16,9 +16,9 @@
 script_rel_dir=$(dirname "${BASH_SOURCE[0]}")
 cd $script_rel_dir
 script_dir=$(pwd)
-
-
-release_name=$(echo $0 | cut -d'-' -f1 | cut -d'/' -f2)
+delims="${0//[^\/]}"
+len=$((${#delims}+1))
+release_name=$(echo $0 | cut -d'/' -f$len | cut -d'-' -f1)
 
 
 # Load variables from config file and paths for gsettings and dconf configs

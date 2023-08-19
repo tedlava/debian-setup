@@ -214,11 +214,16 @@ fi
 
 # Set up Neovim
 if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim_installed" ]; then
+	# TODO Need to have alternative actions (git pull? rename to neovim-config-old?) so that the new version can be downloaded without error...
 	# Clone neovim-config from GitHub
 	echo
 	echo 'Setting up Neovim config (init.vim)...'
 	if [ ! -d "$HOME/dotfiles" ]; then
 		confirm_cmd "mkdir $HOME/dotfiles"
+	fi
+	if [ -d "$HOME/dotfiles/neovim-config" ]; then
+		echo 'Found old neovim-config directory, moving to make room for new neovim-config...'
+		confirm_cmd "mv $HOME/dotfiles/neovim-config $HOME/dotfiles/neovim-config-old"
 	fi
 	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
 	confirm_cmd "mkdir $HOME/.config/nvim"

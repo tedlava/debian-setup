@@ -44,6 +44,7 @@ apt_installs=(
 	# nvidia-driver
 	# nvidia-legacy-390xx-driver
 	# nvidia-driver-libs:i386 # For playing Windows games with wine and NVIDIA cards
+	libnotify-bin # Dependency for move-system-monitor and move-workspace-indicator scripts
 	tlp # Smarter power management and better battery life than power-profiles-daemon
 	tlp-rdw
 	flatpak

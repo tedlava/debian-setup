@@ -226,10 +226,22 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 		confirm_cmd "mv $HOME/dotfiles/neovim-config $HOME/dotfiles/neovim-config-old"
 	fi
 	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
-	confirm_cmd "mkdir $HOME/.config/nvim"
+	if [ ! -d "$HOME/.config/nvim" ]; then
+		confirm_cmd "mkdir $HOME/.config/nvim"
+	fi
+	if [ -L "$HOME/.config/nvim/init.vim" ]; then
+		confirm_cmd "rm $HOME/.config/nvim/init.vim"
+	elif [ -f "$HOME/.config/nvim/init.vim" ]; then
+		confirm_cmd "mv $HOME/.config/nvim/init.vim $HOME/.config/nvim/init-old.vim"
+	fi
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
 	confirm_cmd "sed -i 's/\(default_fontsize =\).*/\1 $patched_font_size/' $HOME/dotfiles/neovim-config/ginit.vim"
 	confirm_cmd "sed -i 's/\(font =\).*/\1 \"$patched_font\"/' $HOME/dotfiles/neovim-config/ginit.vim"
+	if [ -L "$HOME/.config/nvim/ginit.vim" ]; then
+		confirm_cmd "rm $HOME/.config/nvim/ginit.vim"
+	elif [ -f "$HOME/.config/nvim/ginit.vim" ]; then
+		confirm_cmd "mv $HOME/.config/nvim/ginit.vim $HOME/.config/nvim/ginit-old.vim"
+	fi
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/ginit.vim $HOME/.config/nvim/"
 	echo
 	echo 'Installing vim-plug into Neovim...'

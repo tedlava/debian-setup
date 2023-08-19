@@ -275,6 +275,7 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 		fi
 	done
 	touch "$script_dir/status/extensions_installed"
+	touch "$script_dir/status/reboot"
 	echo
 fi
 
@@ -332,7 +333,7 @@ fi
 
 
 # Reboot
-if [ -f "$script_dir/status/reboot" ]; then
+if [ -f "$script_dir/status/reboot" ] || [ ! -f "$script_dir/status/patched_font_installed"]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'

@@ -14,7 +14,7 @@ It is recommended (but not required) to copy any setup files you want customized
     $ mkdir ~/Setup
     $ cp ./debian-setup/bookworm-config ~/Setup
 
-*For further customization, repeat the above command but with different file names: ``bookworm-gsettings.txt, ``bookworm-dconf.txt``, ``bash_aliases``, ``mimeapps.list``*
+*For further customization, repeat the above command but with different file names: ``bookworm-gsettings.txt``, ``bookworm-dconf.txt``, ``bash_aliases``, ``mimeapps.list``*
 
 ### Run the setup script
     $ ./debian-setup/bookworm-setup.sh

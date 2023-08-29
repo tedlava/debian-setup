@@ -179,7 +179,7 @@ fi
 
 
 # Run commands as root (with sudo)
-sudo home="$HOME" interactive="$interactive" bash "$script_dir/$release_name-as-root"
+sudo -i home="$HOME" interactive="$interactive" bash "$script_dir/$release_name-as-root"
 
 
 # Remove old configuration in .dotfiles

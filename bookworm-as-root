@@ -159,8 +159,8 @@ if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
 	echo
 	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
 	echo 'Will still auto-suspend if on battery power...'
-	confirm_cmd "sudo sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
-	confirm_cmd "sudo sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
+	confirm_cmd "sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
+	confirm_cmd "sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
 	sudo -u $SUDO_USER touch "$script_dir/status/gdm_inhibited"
 	sudo -u $SUDO_USER touch "$script_dir/status/reboot"
 	echo
@@ -311,15 +311,21 @@ fi
 if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
 	echo
 	echo 'Installing Rust as root to compile and install NeovimGtk system-wide...'
-	confirm_cmd "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo -i sh -s -- -y"
+	confirm_cmd "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
 	echo
 	echo 'Installing NeovimGtk from the latest source code release on GitHub...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/downloads/nvim-gtk-source.zip"
 	confirm_cmd "sudo -u $SUDO_USER unzip -d $script_dir/downloads $script_dir/downloads/nvim-gtk-source.zip"
-	confirm_cmd "sudo -i make -C $script_dir/downloads/neovim-gtk-* install"
+	confirm_cmd "make -C $script_dir/downloads/neovim-gtk-* install"
+	if [ ! -d '/root/.config/nvim' ]; then
+		confirm_cmd 'mkdir /root/.config/nvim'
+	fi
+	echo
+	echo 'Add very basic init.vim configuration for root...'
+	confirm_cmd 'echo -e "colorscheme darkblue\\nset number\\nset mouse=a\\nset clipboard=unnamedplus" > /root/.config/nvim/init.vim'
 	echo
 	echo 'Removing Rust installed as root...'
-	confirm_cmd 'sudo -i rustup self uninstall -y'
+	confirm_cmd 'rustup self uninstall -y'
 	root=1
 	sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
 	echo
@@ -354,6 +360,16 @@ if [ -n "$priv_firefox_launcher" ] && [ ! -f "$script_dir/status/priv_firefox_la
 	echo 'Adding private window to context menu for Firefox-ESR launcher...'
 	confirm_cmd 'echo -e "Actions=new-window;new-private-window;\\n\\n[Desktop Action new-window]\\nName=Open a New Window\\nExec=/usr/lib/firefox-esr/firefox-esr -new-window\\n\\n[Desktop Action new-private-window]\\nName=Open a New Private Window\\nExec=/usr/lib/firefox-esr/firefox-esr -private-window\\n" >> /usr/share/applications/firefox-esr.desktop'
 	sudo -u $SUDO_USER touch "$script_dir/status/priv_firefox_launcher_added"
+	echo
+fi
+
+
+# Configure Firefox-ESR to use Wayland, if available
+if [ -z "$(echo "${apt_installs[@]}" | grep -o nvidia)" ] && [ ! -f "script_dir/status/wayland_firefox" ]; then
+	echo
+	echo 'Adding environment variable to allow Firefox to use Wayland (prevents black screen on application start up)...'
+	confirm_cmd 'echo "MOZ_ENABLE_WAYLAND=1" >> /etc/environment'
+	sudo -u $SUDO_USER touch "$script_dir/status/wayland_firefox"
 	echo
 fi
 

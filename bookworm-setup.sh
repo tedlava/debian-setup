@@ -81,7 +81,6 @@ while getopts ':hif' opt; do
 		echo
 		echo '        -i  Interactive mode'
 		echo '        -f  Force (minimal interaction)'
-		echo '        -e  Jump to Gnome extensions installation'
 		echo
 		exit
 		;;

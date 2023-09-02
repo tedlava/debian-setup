@@ -167,7 +167,7 @@ if [ ! -f "$script_dir/status/reqs_confirmed" ]; then
 fi
 
 
-# Inhibit suspend while on AC power
+# Inhibit user suspend while plugged into AC power, so the computer doesn't suspend while the script is running
 if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/inhibited_user_ac_suspend" ]; then
 	echo
 	echo "Disabling suspend while on AC power (so your system doesn't suspend while installing lots of packages)..."
@@ -192,6 +192,7 @@ if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 fi
 
 
+# Set up bash with .bash_aliases and custom bash prompt (shows ISO 8601 datetime stamp and git repo)
 if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	# This is SOOOOO ugly!  But part way through, it became more of a puzzle that I just wanted to solve, to see if it were possible to use a sed command to make this kind of modification...  Sorry!
 	echo
@@ -205,8 +206,8 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	echo
 	echo 'Setting up bash prompt to display git branch, if exists...'
 	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/ (\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
-	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*033.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\[\\\\\\\\033[01;32m\\\\\\\\]\\\\\\\\u@\\\\\\\\h\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]:\\\\\\\\[\\\\\\\\033[01;34m\\\\\\\\]\\\\\\\\w\\\\\\\\[\\\\\\\\033[0;33m\\\\\\\\]\\\\\\\\\\\$(parse_git_branch)\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]\\\\\\\\$ \\\"/\" $HOME/.bashrc"
-	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
+	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*033.*/PS1=\\\"\\\\\\\\[\\\\\\\\033[34m\\\\\\\\]\\\\\\\\D{%Y%m%d}\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]T\\\\\\\\[\\\\\\\\033[34m\\\\\\\\]\\\\\\\\D{%H%M} \\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\[\\\\\\\\033[01;32m\\\\\\\\]\\\\\\\\u@\\\\\\\\h\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]:\\\\\\\\[\\\\\\\\033[01;34m\\\\\\\\]\\\\\\\\w\\\\\\\\[\\\\\\\\033[0;33m\\\\\\\\]\\\\\\\\\\\$(parse_git_branch)\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]\\\\\\\\$ \\\"/\" $HOME/.bashrc"
+	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\\\\\\D{%Y%m%dT%H%M} \\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
 	touch "$script_dir/status/bash_set_up"
 fi
 
@@ -257,8 +258,7 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 fi
 
 
-# Load default applications mime types (double-click in Nautilus opens with your preferred app)
-# My default uses Neovim or NeovimGtk to open all text files and VLC for videos
+# Load default applications mime types (double-click in Nautilus opens with your preferred apps); my default uses NeovimGtk to open all text files and VLC for videos
 if [ ! -f "$script_dir/status/changed_default_apps" ]; then
 	echo
 	echo 'Loading default applications mime types...'

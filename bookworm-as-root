@@ -51,6 +51,7 @@ function contains {
 }
 
 
+# Copy new GRUB_CMDLINE_LINUX_DEFAULT string into /etc/default/grub
 if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/grub_set_up" ]; then
 	echo
 	echo 'Setting up grub...'
@@ -190,7 +191,7 @@ fi
 echo
 
 
-# Add contrib and non-free to sources.list (this still works with or without non-free-firmware at the end of the repository list) 
+# Add contrib and non-free to sources.list (this still works with or without non-free-firmware at the end of the repository list)
 if [ -n "$extra_repos" ] && [ ! -f "$script_dir/status/extra_repos_added" ]; then
 	echo
 	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
@@ -222,7 +223,7 @@ if [ ! -f "$script_dir/status/apt_upgraded" ]; then
 fi
 
 
-# Install basic utilities
+# Install git, curl, and timeshift
 if [ ! -f "$script_dir/status/basic_utils_installed" ]; then
 	echo
 	echo 'Installing git, curl, and timeshift...'
@@ -232,7 +233,7 @@ if [ ! -f "$script_dir/status/basic_utils_installed" ]; then
 fi
 
 
-# Inform user to take a snapshot with Timeshift, must use GUI
+# Inform user to take initial snapshot with Timeshift, must use GUI
 if [ ! -f "$script_dir/status/initial_snapshot" ]; then
 	echo
 	echo 'Timeshift must be set up through the GUI before system snapshots can'
@@ -296,7 +297,7 @@ if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$script_dir/status/dv
 fi
 
 
-# Add Flatpak repository
+# Add Flathub repository
 if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$script_dir/status/flatpak_repo_added" ]; then
 	echo
 	echo 'Adding flathub repo...'
@@ -374,7 +375,7 @@ if [ -z "$(echo "${apt_installs[@]}" | grep -o nvidia)" ] && [ ! -f "script_dir/
 fi
 
 
-# Create launcher to switch between light/dark color schemes
+# Create launcher to switch between light/dark color color schemes in Gnome with Super+c
 if [ ! -f "$script_dir/status/toggle_colors_script_added" ]; then
 	echo
 	echo 'Create launcher to toggle light/dark color schemes... (keyboard shortcut: Super + c)'

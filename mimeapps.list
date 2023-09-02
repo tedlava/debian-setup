@@ -11,6 +11,7 @@ text/x-csrc=org.daa.NeovimGtk.desktop;
 text/x-chdr=org.daa.NeovimGtk.desktop;
 application/json=org.daa.NeovimGtk.desktop;
 application/pdf=com.github.xournalpp.xournalpp.desktop;
+application/javascript=org.daa.NeovimGtk.desktop;
 video/ogg=vlc.desktop;
 video/x-ogm=vlc.desktop;
 video/x-theora+ogg=vlc.desktop;

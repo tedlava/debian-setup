@@ -8,8 +8,16 @@
 if [ "$(gsettings get org.gnome.desktop.interface color-scheme)" == "'prefer-light'" ]; then
 	gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 	gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+	mykitty_socket=($(ls /tmp | grep mykitty))
+	if [ -n "$mykitty_socket" ]; then
+		kitty @ --to unix:/tmp/$mykitty_socket kitten themes --reload-in=all Spacemacs
+	fi
 else
 	gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'
 	gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita'
+	mykitty_socket=($(ls /tmp | grep mykitty))
+	if [ -n "$mykitty_socket" ]; then
+		kitty @ --to unix:/tmp/$mykitty_socket kitten themes --reload-in=all Atom One Light
+	fi
 fi
 

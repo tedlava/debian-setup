@@ -208,9 +208,9 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	confirm_cmd "sed -i \"s/xterm-color|\\\*-256color) color_prompt=yes;;/xterm-color|*-256color|xterm-kitty) color_prompt=yes;;/\" $HOME/.bashrc"
 	echo
 	echo 'Setting up bash prompt to display git branch, if exists...'
-	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/ (\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
-	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*033.*/PS1=\\\"\\\\\\\\[\\\\\\\\033[34m\\\\\\\\]\\\\\\\\D{%Y%m%d}\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]T\\\\\\\\[\\\\\\\\033[34m\\\\\\\\]\\\\\\\\D{%H%M} \\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\[\\\\\\\\033[01;32m\\\\\\\\]\\\\\\\\u@\\\\\\\\h\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]:\\\\\\\\[\\\\\\\\033[01;34m\\\\\\\\]\\\\\\\\w\\\\\\\\[\\\\\\\\033[0;33m\\\\\\\\]\\\\\\\\\\\$(parse_git_branch)\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]\\\\\\\\$ \\\"/\" $HOME/.bashrc"
-	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\\\\\\D{%Y%m%dT%H%M} \\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
+	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/(\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
+	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*033.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\[\\\\\\\\033[01;32m\\\\\\\\]\\\\\\\\u@\\\\\\\\h\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]:\\\\\\\\[\\\\\\\\033[01;34m\\\\\\\\]\\\\\\\\w\\\\\\\\n\\\\\\\\[\\\\\\\\033[00;34m\\\\\\\\]\\\\\\\\D{%Y-%m-%d}\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]T\\\\\\\\[\\\\\\\\033[00;34m\\\\\\\\]\\\\\\\\D{%H:%M} \\\\\\\\[\\\\\\\\033[0;32m\\\\\\\\]\\\\\\\\\\\$(parse_git_branch)\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]\\\\\\\\$ \\\"/\" $HOME/.bashrc"
+	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\n\\\\\\\\D{%Y-%m-%dT%H:%M} \\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
 	touch "$script_dir/status/bash_set_up"
 fi
 

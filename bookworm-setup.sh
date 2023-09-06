@@ -204,14 +204,17 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	fi
 	confirm_cmd "cp -av $bash_aliases_path $HOME/.bash_aliases"
 	echo
-	echo 'Setting up kitty terminal to use color prompt...'
-	confirm_cmd "sed -i \"s/xterm-color|\\\*-256color) color_prompt=yes;;/xterm-color|*-256color|xterm-kitty) color_prompt=yes;;/\" $HOME/.bashrc"
-	echo
+	if [ -n "$(contains apt_installs kitty)" ]; then
+		echo 'Add kitty-terminal to bash color prompts list...'
+		confirm_cmd "sed -i \"s/xterm-color|\\\*-256color) color_prompt=yes;;/xterm-color|*-256color|xterm-kitty) color_prompt=yes;;/\" $HOME/.bashrc"
+		echo
+	fi
 	echo 'Setting up bash prompt to display git branch, if exists...'
 	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/(\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*033.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\[\\\\\\\\033[01;32m\\\\\\\\]\\\\\\\\u@\\\\\\\\h\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]:\\\\\\\\[\\\\\\\\033[01;34m\\\\\\\\]\\\\\\\\w\\\\\\\\n\\\\\\\\[\\\\\\\\033[00;34m\\\\\\\\]\\\\\\\\D{%Y-%m-%d}\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]T\\\\\\\\[\\\\\\\\033[00;34m\\\\\\\\]\\\\\\\\D{%H:%M} \\\\\\\\[\\\\\\\\033[0;32m\\\\\\\\]\\\\\\\\\\\$(parse_git_branch)\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]\\\\\\\\$ \\\"/\" $HOME/.bashrc"
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\n\\\\\\\\D{%Y-%m-%dT%H:%M} \\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
 	touch "$script_dir/status/bash_set_up"
+	echo
 fi
 
 
@@ -227,6 +230,7 @@ if [ -n "$(contains apt_installs kitty)" ] && [ ! -f "$script_dir/status/kitty_i
 		confirm_cmd "mkdir $HOME/.config/kitty"
 	fi
 	confirm_cmd "cp -av $kitty_conf_path $HOME/.config/kitty"
+	echo
 fi
 
 

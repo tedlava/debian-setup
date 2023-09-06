@@ -181,6 +181,16 @@ fi
 sudo -i home="$HOME" interactive="$interactive" bash "$script_dir/$release_name-as-root"
 
 
+exit_code = "$?"
+if [ "$exit_code" == 130 ]; then
+	# -as-root script was interrupted with CTRL+C, do not continue script
+	exit 130
+elif [ "$exit_code" == 93 ]; then
+	# -as-root script exited normally with reboot flag set to 1
+	reboot=1
+fi
+
+
 # Remove old configuration in .dotfiles
 if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	echo
@@ -312,7 +322,7 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 		fi
 	done
 	touch "$script_dir/status/extensions_installed"
-	touch "$script_dir/status/reboot"
+	reboot=1
 	echo
 fi
 
@@ -370,7 +380,7 @@ fi
 
 
 # Reboot
-if [ -f "$script_dir/status/reboot" ] || [ ! -f "$script_dir/status/patched_font_installed" ]; then
+if [ "$reboot" == 1 ] || [ ! -f "$script_dir/status/patched_font_installed" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
@@ -385,7 +395,6 @@ if [ -f "$script_dir/status/reboot" ] || [ ! -f "$script_dir/status/patched_font
 		touch "$script_dir/status/patched_font_installed"
 		echo
 	fi
-	rm "$script_dir/status/reboot"
 	systemctl reboot
 	sleep 5
 fi
@@ -416,7 +425,7 @@ if [ -n "$ignore_lid_switch" ] && [ ! -f "$script_dir/status/lid_tweak_installed
 	fi
 	confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
 	touch "$script_dir/status/lid_tweak_installed"
-	touch "$script_dir/status/reboot"
+	reboot=1
 	echo
 fi
 
@@ -431,7 +440,7 @@ if [ -n "$(echo "${gnome_extensions[@]}" | grep -o system-monitor)" ] && [ -n "$
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move system-monitor indicator\\\\nComment=Moves user-installed Gnome extension system-monitor to the right of all indicators (updates periodically move it back to the middle)\\\\nExec=/usr/local/bin/move-system-monitor\\\\n\" > $HOME/.config/autostart/move-system-monitor.desktop"
 	confirm_cmd "move-system-monitor"
 	touch "$script_dir/status/move_system_monitor_installed"
-	touch "$script_dir/status/reboot"
+	reboot=1
 	echo
 fi
 
@@ -446,7 +455,7 @@ if [ -n "$(echo "${gnome_extensions[@]}" | grep -o workspace-indicator)" ] && [ 
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move workspace-indicator\\\\nComment=Moves user-installed Gnome extension workspace-indicator to the left panel box (updates periodically move it back to the right)\\\\nExec=/usr/local/bin/move-workspace-indicator\\\\n\" > $HOME/.config/autostart/move-workspace-indicator.desktop"
 	confirm_cmd "move-workspace-indicator"
 	touch "$script_dir/status/move_workspace_indicator_installed"
-	touch "$script_dir/status/reboot"
+	reboot=1
 	echo
 fi
 
@@ -481,7 +490,7 @@ if [ -n "$(contains flatpaks RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" 
 	desktop_file_path='/var/lib/flatpak/app/com.github.unrud.RemoteTouchpad/current/active/export/share/applications/com.github.unrud.RemoteTouchpad.desktop'
 	confirm_cmd "sudo sed -i 's/\(Exec.*RemoteTouchpad.*\)/\1 --bind :$remote_touchpad_port/' $desktop_file_path"
 	touch "$script_dir/status/remote_touchpad_set_up"
-	touch "$script_dir/status/reboot"
+	reboot=1
 	echo
 fi
 
@@ -508,13 +517,12 @@ fi
 
 
 # Reboot
-if [ -f "$script_dir/status/reboot" ]; then
+if [ "$reboot" == 1 ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
 	read -p 'Press ENTER to reboot...'
-	rm "$script_dir/status/reboot"
 	systemctl reboot
 	sleep 5
 fi

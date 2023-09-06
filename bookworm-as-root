@@ -58,7 +58,7 @@ if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/gr
 	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
 	update_grub=1
 	sudo -u $SUDO_USER touch "$script_dir/status/grub_set_up"
-	sudo -u $SUDO_USER touch "$script_dir/status/reboot"
+	reboot=1
 	echo
 fi
 
@@ -79,7 +79,7 @@ if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 		echo 'Reinstalling grub and updating grub...'
 		confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
 		update_grub=1
-		sudo -u $SUDO_USER touch "$script_dir/status/reboot"
+		reboot=1
 		echo
 		echo '@rootfs btrfs subvolume was renamed to @ for use with timeshift.'
 	fi
@@ -92,7 +92,7 @@ if [ -n "$update_grub" ]; then
 fi
 
 
-# Create @home subvolume if not present, and Copy/merge all user directories to it
+# Create @home subvolume if not present, and Copy/merge all new user directories from the new installation to it (should just be the main user account)
 if [ -z "$(grep @home /etc/fstab)" ]; then
 	echo
 	if [ -n "$interactive" ]; then
@@ -113,7 +113,7 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 		done
 		confirm_cmd 'umount /mnt'
 		confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
-		sudo -u $SUDO_USER touch "$script_dir/status/reboot"
+		reboot=1
 		echo
 		echo '@home btrfs subvolume was created and all user directories were copied to it.'
 	fi
@@ -122,13 +122,12 @@ fi
 
 
 # Reboot
-if [ -f "$script_dir/status/reboot" ]; then
+if [ "$reboot" == 1 ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
 	echo
 	read -p 'Press ENTER to reboot...'
-	rm "$script_dir/status/reboot"
 	systemctl reboot
 	sleep 5
 fi
@@ -163,7 +162,7 @@ if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
 	confirm_cmd "sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
 	confirm_cmd "sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
 	sudo -u $SUDO_USER touch "$script_dir/status/gdm_inhibited"
-	sudo -u $SUDO_USER touch "$script_dir/status/reboot"
+	reboot=1
 	echo
 fi
 
@@ -303,7 +302,7 @@ if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$script_dir/status/flatp
 	echo 'Adding flathub repo...'
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
 	sudo -u $SUDO_USER touch "$script_dir/status/flatpak_repo_added"
-	sudo -u $SUDO_USER touch "$script_dir/status/reboot"
+	reboot=1
 	echo
 fi
 
@@ -405,4 +404,10 @@ if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspa
 	confirm_cmd "chmod +x /usr/local/bin/move-workspace-indicator"
 	sudo -u $SUDO_USER touch "$script_dir/status/move_workspace_indicator_script_added"
 	echo
+fi
+
+
+# Use exit code 93 if reboot flag variable is 1; Debian was created in 1993!
+if [ "$reboot" == 1 ]; then
+	exit 93
 fi

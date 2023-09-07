@@ -174,8 +174,7 @@ if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/inhibited_user_ac_sus
 	echo "Disabling suspend while on AC power (so your system doesn't suspend while installing lots of packages)..."
 	confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
 	((errors+=$?))
-	# TODO Change all == comparison operators to -eq
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/inhibited_user_ac_suspend"
 	fi
 	echo
@@ -187,12 +186,11 @@ sudo -i home="$HOME" interactive="$interactive" bash "$script_dir/$release_name-
 
 
 exit_code="$?"
-if [ "$exit_code" == 130 ]; then
-	# -as-root script was interrupted with CTRL+C, do not continue script
-	exit 130
-elif [ "$exit_code" == 93 ]; then
+if [ "$exit_code" -eq 93 ]; then
 	# -as-root script exited normally with reboot flag set to 1
 	reboot=1
+elif [ "$exit_code" -gt 0 ]; then
+	exit "$exit_code"
 fi
 
 
@@ -205,7 +203,7 @@ if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	((errors+=$?))
 	confirm_cmd "cp -av /etc/skel/. $HOME/"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/removed_dotfiles"
 	fi
 	echo
@@ -233,7 +231,7 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	((errors+=$?))
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\n\\\\\\\\D{%Y-%m-%dT%H:%M} \\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/bash_set_up"
 	fi
 	echo
@@ -296,7 +294,7 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 	read -p 'Press ENTER to proceed with Neovim plugin installation. '
 	confirm_cmd "nvim -c PlugInstall"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/neovim_installed"
 	fi
 	echo
@@ -315,7 +313,7 @@ if [ ! -f "$script_dir/status/changed_default_apps" ]; then
 	fi
 	confirm_cmd "cp -av $mimeapps_path $HOME/.config/"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/changed_default_apps"
 	fi
 	echo
@@ -341,7 +339,7 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 			((errors+=$?))
 		fi
 	done
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/extensions_installed"
 	fi
 	reboot=1
@@ -358,7 +356,7 @@ if [ ! -f "$script_dir/status/fonts_installed" ]; then
 	((errors+=$?))
 	confirm_cmd 'fc-cache -fv'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/fonts_installed"
 	fi
 	echo
@@ -388,7 +386,7 @@ if [ ! -f "$script_dir/status/gsettings_loaded" ]; then
 			((errors+=$?))
 		done < "$gsettings_path"
 	fi
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/gsettings_loaded"
 	fi
 	echo
@@ -407,7 +405,7 @@ if [ ! -f "$script_dir/status/dconf_loaded" ]; then
 	fi
 	confirm_cmd "dconf load / < $dconf_path"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/dconf_loaded"
 	fi
 	echo
@@ -415,7 +413,7 @@ fi
 
 
 # Reboot
-if [ "$reboot" == 1 ] || [ ! -f "$script_dir/status/patched_font_installed" ]; then
+if [ "$reboot" -eq 1 ] || [ ! -f "$script_dir/status/patched_font_installed" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
@@ -429,7 +427,7 @@ if [ "$reboot" == 1 ] || [ ! -f "$script_dir/status/patched_font_installed" ]; t
 		echo 'then the reboot will happen immediately afterwards...'
 		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font $patched_font_size'"
 		((errors+=$?))
-		if [ "$errors" == 0 ]; then
+		if [ "$errors" -eq 0 ]; then
 			touch "$script_dir/status/patched_font_installed"
 		fi
 		echo
@@ -453,7 +451,7 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_enab
 		confirm_cmd "gnome-extensions enable ${ext_uuid}"
 		((errors+=$?))
 	done
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/extensions_enabled"
 	fi
 fi
@@ -470,7 +468,7 @@ if [ -n "$ignore_lid_switch" ] && [ ! -f "$script_dir/status/lid_tweak_installed
 	fi
 	confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/lid_tweak_installed"
 	fi
 	reboot=1
@@ -491,7 +489,7 @@ if [ -n "$(echo "${gnome_extensions[@]}" | grep -o system-monitor)" ] && [ -n "$
 	((errors+=$?))
 	confirm_cmd "move-system-monitor"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/move_system_monitor_installed"
 	fi
 	reboot=1
@@ -512,7 +510,7 @@ if [ -n "$(echo "${gnome_extensions[@]}" | grep -o workspace-indicator)" ] && [ 
 	((errors+=$?))
 	confirm_cmd "move-workspace-indicator"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/move_workspace_indicator_installed"
 	fi
 	reboot=1
@@ -530,7 +528,7 @@ if [ ! -f "$script_dir/status/display_settings" ]; then
 	read -p 'Press ENTER to open Display Settings...'
 	confirm_cmd 'gnome-control-center display'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/display_settings"
 	fi
 	echo
@@ -544,7 +542,7 @@ if [ -n "${flatpaks[*]}" ] && [ ! -f "$script_dir/status/flatpaks_installed" ]; 
 	echo 'Installing Flatpak applications...'
 	confirm_cmd "flatpak -y install ${flatpaks[@]}"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/flatpaks_installed"
 	fi
 	echo
@@ -559,7 +557,7 @@ if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_t
 	desktop_file_path='/var/lib/flatpak/app/com.github.unrud.RemoteTouchpad/current/active/export/share/applications/com.github.unrud.RemoteTouchpad.desktop'
 	confirm_cmd "sudo sed -i 's/\(Exec.*RemoteTouchpad.*\)/\1 --bind :$remote_touchpad_port/' $desktop_file_path"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/remote_touchpad_set_up"
 	fi
 	reboot=1
@@ -582,7 +580,7 @@ if [ ! -f "$script_dir/status/final_apt_update" ]; then
 	echo 'Final check for apt upgrades and clean up...'
 	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/final_apt_update"
 	fi
 	echo
@@ -590,7 +588,7 @@ fi
 
 
 # Reboot
-if [ "$reboot" == 1 ]; then
+if [ "$reboot" -eq 1 ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
@@ -608,7 +606,7 @@ if [ ! -f "$script_dir/status/final_snapshot" ]; then
 	echo 'Create a timeshift snapshot in case you screw up this awesome setup...'
 	confirm_cmd "sudo timeshift --create --comments 'Debian ${release_name^} setup script completed' --yes"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/final_snapshot"
 	fi
 	echo

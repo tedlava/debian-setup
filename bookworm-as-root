@@ -59,7 +59,7 @@ if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/gr
 	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
 	((errors+=$?))
 	update_grub=1
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/grub_set_up"
 	fi
 	reboot=1
@@ -126,7 +126,7 @@ fi
 
 
 # Reboot
-if [ "$reboot" == 1 ]; then
+if [ "$reboot" -eq 1 ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
@@ -157,7 +157,7 @@ if [ ! -f "$script_dir/status/moved_user_dirs" ]; then
 	done
 	confirm_cmd 'umount /mnt'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/moved_user_dirs"
 	fi
 	echo
@@ -174,7 +174,7 @@ if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
 	((errors+=$?))
 	confirm_cmd "sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/gdm_inhibited"
 	fi
 	reboot=1
@@ -191,7 +191,7 @@ if [ -n "${apt_purges[*]}" ] && [ ! -f "$script_dir/status/apt_purged" ]; then
 	((errors+=$?))
 	confirm_cmd 'apt-get -y autopurge'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/apt_purged"
 	fi
 	echo
@@ -209,7 +209,7 @@ if [ -n "$ssd" ] && [ ! -f "$script_dir/status/ssd_set_up" ]; then
 	((errors+=$?))
 	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/ssd_set_up"
 	fi
 fi
@@ -223,7 +223,7 @@ if [ -n "$extra_repos" ] && [ ! -f "$script_dir/status/extra_repos_added" ]; the
 	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
 	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)/\1 contrib non-free/' /etc/apt/sources.list"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/extra_repos_added"
 	fi
 	echo
@@ -237,7 +237,7 @@ if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/i386_arc
 	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
 	confirm_cmd dpkg --add-architecture i386
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/i386_arch_added"
 	fi
 	echo
@@ -254,7 +254,7 @@ if [ ! -f "$script_dir/status/apt_upgraded" ]; then
 	((errors+=$?))
 	confirm_cmd 'apt-get -y upgrade'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/apt_upgraded"
 	fi
 	echo
@@ -268,7 +268,7 @@ if [ ! -f "$script_dir/status/basic_utils_installed" ]; then
 	echo 'Installing git, curl, and timeshift...'
 	confirm_cmd 'apt-get -y install git curl timeshift'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/basic_utils_installed"
 	fi
 	echo
@@ -294,7 +294,7 @@ if [ ! -f "$script_dir/status/initial_snapshot" ]; then
 	read -p 'Press ENTER to open timeshift...'
 	confirm_cmd 'timeshift-launcher'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/initial_snapshot"
 	fi
 	echo
@@ -308,7 +308,7 @@ if [ -n "${apt_installs[*]}" ] && [ ! -f "$script_dir/status/apt_packages_instal
 	echo 'Installing apt packages...'
 	confirm_cmd "apt-get -y install ${apt_installs[@]}"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/apt_packages_installed"
 	fi
 	echo
@@ -338,7 +338,7 @@ if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$script_dir/status/gufw_set
 	read -p 'Press ENTER to open gufw...'
 	confirm_cmd 'gufw'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/gufw_set_up"
 	fi
 	echo
@@ -352,7 +352,7 @@ if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$script_dir/status/dv
 	echo 'Setting up packages to watch DVD movies...'
 	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/dvd_set_up"
 	fi
 	echo
@@ -366,7 +366,7 @@ if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$script_dir/status/flatp
 	echo 'Adding flathub repo...'
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/flatpak_repo_added"
 	fi
 	reboot=1
@@ -403,7 +403,7 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 	echo 'Removing Rust installed as root...'
 	confirm_cmd 'rustup self uninstall -y'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
 	fi
 	echo
@@ -419,7 +419,7 @@ if [ -n "$install_google_chrome" ] && [ ! -f "$script_dir/status/chrome_installe
 	((errors+=$?))
 	confirm_cmd "apt-get -y install $script_dir/tmp/chrome.deb"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/chrome_installed"
 	fi
 	echo
@@ -435,7 +435,7 @@ if [ -n "$install_windscribe" ] && [ ! -f "$script_dir/status/windscribe_install
 	((errors+=$?))
 	confirm_cmd "apt-get -y install $script_dir/tmp/windscribe.deb"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/windscribe_installed"
 	fi
 	echo
@@ -449,7 +449,7 @@ if [ -n "$priv_firefox_launcher" ] && [ ! -f "$script_dir/status/priv_firefox_la
 	echo 'Adding private window to context menu for Firefox-ESR launcher...'
 	confirm_cmd 'echo -e "Actions=new-window;new-private-window;\\n\\n[Desktop Action new-window]\\nName=Open a New Window\\nExec=/usr/lib/firefox-esr/firefox-esr -new-window\\n\\n[Desktop Action new-private-window]\\nName=Open a New Private Window\\nExec=/usr/lib/firefox-esr/firefox-esr -private-window\\n" >> /usr/share/applications/firefox-esr.desktop'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/priv_firefox_launcher_added"
 	fi
 	echo
@@ -463,7 +463,7 @@ if [ -z "$(echo "${apt_installs[@]}" | grep -o nvidia)" ] && [ ! -f "script_dir/
 	echo 'Adding environment variable to allow Firefox to use Wayland (prevents black screen on application start up)...'
 	confirm_cmd 'echo "MOZ_ENABLE_WAYLAND=1" >> /etc/environment'
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/wayland_firefox"
 	fi
 	echo
@@ -479,7 +479,7 @@ if [ ! -f "$script_dir/status/toggle_colors_script_added" ]; then
 	((errors+=$?))
 	confirm_cmd "chmod +x /usr/local/bin/toggle-color-scheme"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/toggle_colors_script_added"
 	fi
 	echo
@@ -495,7 +495,7 @@ if [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monit
 	((errors+=$?))
 	confirm_cmd "chmod +x /usr/local/bin/move-system-monitor"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/move_system_monitor_script_added"
 	fi
 	echo
@@ -511,7 +511,7 @@ if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspa
 	((errors+=$?))
 	confirm_cmd "chmod +x /usr/local/bin/move-workspace-indicator"
 	((errors+=$?))
-	if [ "$errors" == 0 ]; then
+	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/move_workspace_indicator_script_added"
 	fi
 	echo
@@ -519,6 +519,6 @@ fi
 
 
 # Use exit code 93 if reboot flag variable is 1; Debian was created in 1993!
-if [ "$reboot" == 1 ]; then
+if [ "$reboot" -eq 1 ]; then
 	exit 93
 fi

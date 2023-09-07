@@ -485,7 +485,7 @@ fi
 
 
 # Configure Remote Touchpad to have a stable port so it will work through the firewall
-if [ -n "$(contains flatpaks RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" ] && [ ! -f "$script_dir/status/remote_touchpad_set_up" ]; then
+if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" ] && [ ! -f "$script_dir/status/remote_touchpad_set_up" ]; then
 	echo
 	echo "Configure Remote Touchpad Flatpak to always use port $remote_touchpad_set_up to work through the firewall..."
 	desktop_file_path='/var/lib/flatpak/app/com.github.unrud.RemoteTouchpad/current/active/export/share/applications/com.github.unrud.RemoteTouchpad.desktop'

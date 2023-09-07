@@ -21,9 +21,6 @@ binding='<Super>c'
 command='toggle-color-scheme'
 name='Toggle color scheme (light/dark)'
 
-[org/gnome/shell/extensions/caffeine]
-show-indicator='always'
-
 [org/gnome/shell/extensions/clipboard-indicator]
 disable-down-arrow=true
 

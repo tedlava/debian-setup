@@ -169,10 +169,15 @@ fi
 
 # Inhibit user suspend while plugged into AC power, so the computer doesn't suspend while the script is running
 if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/inhibited_user_ac_suspend" ]; then
+	errors=0
 	echo
 	echo "Disabling suspend while on AC power (so your system doesn't suspend while installing lots of packages)..."
 	confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
-	touch "$script_dir/status/inhibited_user_ac_suspend"
+	((errors+=$?))
+	# TODO Check exit code "$?" from each command, add them up?, if it is something other than 0, do not create the status file!
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/inhibited_user_ac_suspend"
+	fi
 	echo
 fi
 
@@ -193,17 +198,23 @@ fi
 
 # Remove old configuration in .dotfiles
 if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
+	errors=0
 	echo
 	echo 'Removing old .dotfiles (from prior Linux installation)...'
 	confirm_cmd "rm -rf $HOME/.*"
+	((errors+=$?))
 	confirm_cmd "cp -av /etc/skel/. $HOME/"
-	touch "$script_dir/status/removed_dotfiles"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/removed_dotfiles"
+	fi
 	echo
 fi
 
 
 # Set up bash with .bash_aliases and custom bash prompt (shows ISO 8601 datetime stamp and git repo)
 if [ ! -f "$script_dir/status/bash_set_up" ]; then
+	errors=0
 	# This is SOOOOO ugly!  But part way through, it became more of a puzzle that I just wanted to solve, to see if it were possible to use a sed command to make this kind of modification...  Sorry!
 	echo
 	echo 'Copying any custom command line aliases from bash_aliases to ~/.bash_aliases...'
@@ -213,23 +224,31 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 		bash_aliases_path="$script_dir/bash_aliases"
 	fi
 	confirm_cmd "cp -av $bash_aliases_path $HOME/.bash_aliases"
+	((errors+=$?))
 	echo
 	if [ -n "$(contains apt_installs kitty)" ]; then
 		echo 'Add kitty-terminal to bash color prompts list...'
 		confirm_cmd "sed -i \"s/xterm-color|\\\*-256color) color_prompt=yes;;/xterm-color|*-256color|xterm-kitty) color_prompt=yes;;/\" $HOME/.bashrc"
+		((errors+=$?))
 		echo
 	fi
 	echo 'Setting up bash prompt to display git branch, if exists...'
 	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/(\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
+	((errors+=$?))
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*033.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\[\\\\\\\\033[01;32m\\\\\\\\]\\\\\\\\u@\\\\\\\\h\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]:\\\\\\\\[\\\\\\\\033[01;34m\\\\\\\\]\\\\\\\\w\\\\\\\\n\\\\\\\\[\\\\\\\\033[00;34m\\\\\\\\]\\\\\\\\D{%Y-%m-%d}\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]T\\\\\\\\[\\\\\\\\033[00;34m\\\\\\\\]\\\\\\\\D{%H:%M} \\\\\\\\[\\\\\\\\033[0;32m\\\\\\\\]\\\\\\\\\\\$(parse_git_branch)\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]\\\\\\\\$ \\\"/\" $HOME/.bashrc"
+	((errors+=$?))
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\n\\\\\\\\D{%Y-%m-%dT%H:%M} \\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
-	touch "$script_dir/status/bash_set_up"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/bash_set_up"
+	fi
 	echo
 fi
 
 
 # Set up kitty terminal emulator
 if [ -n "$(contains apt_installs kitty)" ] && [ ! -f "$script_dir/status/kitty_installed" ]; then
+	errors=0
 	echo
 	if [ -d "$settings_dir/kitty" ]; then
 		kitty_conf_path="$settings_dir/kitty"
@@ -237,44 +256,61 @@ if [ -n "$(contains apt_installs kitty)" ] && [ ! -f "$script_dir/status/kitty_i
 		kitty_conf_path="$script_dir/kitty"
 	fi
 	confirm_cmd "cp -av $kitty_conf_path $HOME/.config/"
-	touch "$script_dir/status/kitty_installed"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/kitty_installed"
+	fi
 	echo
 fi
 
 
 # Set up Neovim
 if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim_installed" ]; then
+	errors=0
 	# Clone neovim-config from GitHub
 	echo
 	echo 'Setting up Neovim config (init.vim)...'
 	if [ ! -d "$HOME/dotfiles" ]; then
 		confirm_cmd "mkdir $HOME/dotfiles"
+		((errors+=$?))
 	fi
 	if [ -d "$HOME/dotfiles/neovim-config" ]; then
 		echo 'Found old neovim-config directory, moving to make room for new neovim-config...'
 		confirm_cmd "mv $HOME/dotfiles/neovim-config $HOME/dotfiles/neovim-config-old"
+		((errors+=$?))
 	fi
 	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
+	((errors+=$?))
 	if [ ! -d "$HOME/.config/nvim" ]; then
 		confirm_cmd "mkdir $HOME/.config/nvim"
+		((errors+=$?))
 	fi
 	if [ -L "$HOME/.config/nvim/init.vim" ]; then
 		confirm_cmd "rm $HOME/.config/nvim/init.vim"
+		((errors+=$?))
 	elif [ -f "$HOME/.config/nvim/init.vim" ]; then
 		confirm_cmd "mv $HOME/.config/nvim/init.vim $HOME/.config/nvim/init-old.vim"
+		((errors+=$?))
 	fi
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
+	((errors+=$?))
 	confirm_cmd "sed -i 's/\(default_fontsize =\).*/\1 $patched_font_size/' $HOME/dotfiles/neovim-config/ginit.vim"
+	((errors+=$?))
 	confirm_cmd "sed -i 's/\(font =\).*/\1 \"$patched_font\"/' $HOME/dotfiles/neovim-config/ginit.vim"
+	((errors+=$?))
 	if [ -L "$HOME/.config/nvim/ginit.vim" ]; then
 		confirm_cmd "rm $HOME/.config/nvim/ginit.vim"
+		((errors+=$?))
 	elif [ -f "$HOME/.config/nvim/ginit.vim" ]; then
 		confirm_cmd "mv $HOME/.config/nvim/ginit.vim $HOME/.config/nvim/ginit-old.vim"
+		((errors+=$?))
 	fi
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/ginit.vim $HOME/.config/nvim/"
+	((errors+=$?))
 	echo
 	echo 'Installing vim-plug into Neovim...'
 	confirm_cmd "sh -c 'curl -fLo \"${XDG_DATA_HOME:-$HOME/.local/share}\"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'"
+	((errors+=$?))
 	echo
 	echo 'About to install Neovim plugins.  When Neovim is finished, please exit'
 	echo 'Neovim by typing ":qa" and pressing ENTER.'
@@ -283,13 +319,17 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 	echo
 	read -p 'Press ENTER to proceed with Neovim plugin installation. '
 	confirm_cmd "nvim -c PlugInstall"
-	touch "$script_dir/status/neovim_installed"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/neovim_installed"
+	fi
 	echo
 fi
 
 
 # Load default applications mime types (double-click in Nautilus opens with your preferred apps); my default uses NeovimGtk to open all text files and VLC for videos
 if [ ! -f "$script_dir/status/changed_default_apps" ]; then
+	errors=0
 	echo
 	echo 'Loading default applications mime types...'
 	if [ -f "$settings_dir/mimeapps.list" ]; then
@@ -298,13 +338,17 @@ if [ ! -f "$script_dir/status/changed_default_apps" ]; then
 		mimeapps_path="$script_dir/mimeapps.list"
 	fi
 	confirm_cmd "cp -av $mimeapps_path $HOME/.config/"
-	touch "$script_dir/status/changed_default_apps"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/changed_default_apps"
+	fi
 	echo
 fi
 
 
 # Install Gnome extensions
 if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_installed" ]; then
+	errors=0
 	echo
 	echo 'Installing Gnome extensions...'
 	gnome_ver=$(gnome-shell --version | cut -d' ' -f3)
@@ -315,11 +359,15 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 			info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
 			download_url="$base_url$(curl -s "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
 			confirm_cmd "curl -L '$download_url' > '$script_dir/downloads/$ext_uuid.zip'"
+			((errors+=$?))
 			ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
 			confirm_cmd "gnome-extensions install $script_dir/downloads/$ext_uuid.zip"
+			((errors+=$?))
 		fi
 	done
-	touch "$script_dir/status/extensions_installed"
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/extensions_installed"
+	fi
 	reboot=1
 	echo
 fi
@@ -327,17 +375,23 @@ fi
 
 # Set up fonts
 if [ ! -f "$script_dir/status/fonts_installed" ]; then
+	errors=0
 	echo
 	echo 'Setting up links to detect fonts...'
 	confirm_cmd "ln -s $HOME/fonts $HOME/.local/share/fonts"
+	((errors+=$?))
 	confirm_cmd 'fc-cache -fv'
-	touch "$script_dir/status/fonts_installed"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/fonts_installed"
+	fi
 	echo
 fi
 
 
 # Load gsettings
 if [ ! -f "$script_dir/status/gsettings_loaded" ]; then
+	errors=0
 	echo
 	echo "Applying $release_name-gsettings.txt to Gnome..."
 	# confirm_cmd in while loop won't work since it also uses 'read', so
@@ -355,15 +409,19 @@ if [ ! -f "$script_dir/status/gsettings_loaded" ]; then
 		while read -r schema key val; do
 			echo -e "\nExecuting command...\n    $ gsettings set $schema $key \"$val\"\n"
 			gsettings set $schema $key "$val"
+			((errors+=$?))
 		done < "$gsettings_path"
 	fi
-	touch "$script_dir/status/gsettings_loaded"
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/gsettings_loaded"
+	fi
 	echo
 fi
 
 
 # Load dconf settings
 if [ ! -f "$script_dir/status/dconf_loaded" ]; then
+	errors=0
 	echo
 	echo "Applying $release_name-dconf.txt to Gnome..."
 	if [ -f  "$settings_dir/$release_name-dconf.txt" ]; then
@@ -372,7 +430,10 @@ if [ ! -f "$script_dir/status/dconf_loaded" ]; then
 		dconf_path="$script_dir/$release_name-dconf.txt"
 	fi
 	confirm_cmd "dconf load / < $dconf_path"
-	touch "$script_dir/status/dconf_loaded"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/dconf_loaded"
+	fi
 	echo
 fi
 
@@ -386,11 +447,15 @@ if [ "$reboot" == 1 ] || [ ! -f "$script_dir/status/patched_font_installed" ]; t
 	read -p 'Press ENTER to reboot...'
 	# Load patched monospace font immediately before reboot since it makes the terminal difficult to read
 	if [ -n "$patched_font" ] && [ ! -f "$script_dir/status/patched_font_installed" ]; then
+		errors=0
 		echo
 		echo 'Setting new system monospace font, terminal text will become distorted'
 		echo 'then the reboot will happen immediately afterwards...'
 		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font $patched_font_size'"
-		touch "$script_dir/status/patched_font_installed"
+		((errors+=$?))
+		if [ "$errors" == 0 ]; then
+			touch "$script_dir/status/patched_font_installed"
+		fi
 		echo
 	fi
 	systemctl reboot
@@ -400,6 +465,7 @@ fi
 
 # Enable Gnome extensions
 if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_enabled" ]; then
+	errors=0
 	echo
 	echo 'Enabling recently installed Gnome extensions...'
 	for extension in "${gnome_extensions[@]}"; do
@@ -409,20 +475,28 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_enab
 			ext_uuid="$extension"
 		fi
 		confirm_cmd "gnome-extensions enable ${ext_uuid}"
+		((errors+=$?))
 	done
-	touch "$script_dir/status/extensions_enabled"
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/extensions_enabled"
+	fi
 fi
 
 
 # Create statup application to ignore suspend on closing lid (normally installed through Tweaks)
 if [ -n "$ignore_lid_switch" ] && [ ! -f "$script_dir/status/lid_tweak_installed" ]; then
+	errors=0
 	echo
 	echo 'Applying tweak to ignore suspend on lid closing...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
 		confirm_cmd "mkdir $HOME/.config/autostart"
+		((errors+=$?))
 	fi
 	confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
-	touch "$script_dir/status/lid_tweak_installed"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/lid_tweak_installed"
+	fi
 	reboot=1
 	echo
 fi
@@ -430,14 +504,20 @@ fi
 
 # Create startup application to move system-monitor indicator
 if [ -n "$(echo "${gnome_extensions[@]}" | grep -o system-monitor)" ] && [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monitor_installed" ]; then
+	errors=0
 	echo
 	echo 'Creating startup application to move Gnome extension system-monitor to the right of all indicators...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
 		confirm_cmd "mkdir $HOME/.config/autostart"
+		((errors+=$?))
 	fi
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move system-monitor indicator\\\\nComment=Moves user-installed Gnome extension system-monitor to the right of all indicators (updates periodically move it back to the middle)\\\\nExec=/usr/local/bin/move-system-monitor\\\\n\" > $HOME/.config/autostart/move-system-monitor.desktop"
+	((errors+=$?))
 	confirm_cmd "move-system-monitor"
-	touch "$script_dir/status/move_system_monitor_installed"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/move_system_monitor_installed"
+	fi
 	reboot=1
 	echo
 fi
@@ -445,14 +525,20 @@ fi
 
 # Create startup application to move workspace-indicator
 if [ -n "$(echo "${gnome_extensions[@]}" | grep -o workspace-indicator)" ] && [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspace_indicator_installed" ]; then
+	errors=0
 	echo
 	echo 'Creating startup application to move Gnome extension workspace-indicator to the left panel box...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
 		confirm_cmd "mkdir $HOME/.config/autostart"
+		((errors+=$?))
 	fi
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move workspace-indicator\\\\nComment=Moves user-installed Gnome extension workspace-indicator to the left panel box (updates periodically move it back to the right)\\\\nExec=/usr/local/bin/move-workspace-indicator\\\\n\" > $HOME/.config/autostart/move-workspace-indicator.desktop"
+	((errors+=$?))
 	confirm_cmd "move-workspace-indicator"
-	touch "$script_dir/status/move_workspace_indicator_installed"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/move_workspace_indicator_installed"
+	fi
 	reboot=1
 	echo
 fi
@@ -460,34 +546,46 @@ fi
 
 # Open display settings to possibly change scaling
 if [ ! -f "$script_dir/status/display_settings" ]; then
+	errors=0
 	echo
 	echo 'Newer computers with HiDPI displays may need to adjust scaling settingshen'
 	echo 'you are finished, close the window to continue with the setup script...'
 	echo
 	read -p 'Press ENTER to open Display Settings...'
 	confirm_cmd 'gnome-control-center display'
-	touch "$script_dir/status/display_settings"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/display_settings"
+	fi
 	echo
 fi
 
 
 # Install flatpaks, this step will take a while...
 if [ -n "${flatpaks[*]}" ] && [ ! -f "$script_dir/status/flatpaks_installed" ]; then
+	errors=0
 	echo
 	echo 'Installing Flatpak applications...'
 	confirm_cmd "flatpak -y install ${flatpaks[@]}"
-	touch "$script_dir/status/flatpaks_installed"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/flatpaks_installed"
+	fi
 	echo
 fi
 
 
 # Configure Remote Touchpad to have a stable port so it will work through the firewall
 if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" ] && [ ! -f "$script_dir/status/remote_touchpad_set_up" ]; then
+	errors=0
 	echo
 	echo "Configure Remote Touchpad Flatpak to always use port $remote_touchpad_set_up to work through the firewall..."
 	desktop_file_path='/var/lib/flatpak/app/com.github.unrud.RemoteTouchpad/current/active/export/share/applications/com.github.unrud.RemoteTouchpad.desktop'
 	confirm_cmd "sudo sed -i 's/\(Exec.*RemoteTouchpad.*\)/\1 --bind :$remote_touchpad_port/' $desktop_file_path"
-	touch "$script_dir/status/remote_touchpad_set_up"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/remote_touchpad_set_up"
+	fi
 	reboot=1
 	echo
 fi
@@ -496,20 +594,21 @@ fi
 # Remove downloads directory
 if [ -d "$script_dir/downloads" ]; then
 	echo
-	echo 'All 3rd-party .deb packages and temporary .zip files were saved to the'
-	read -p "$script_dir/downloads directory.  Delete this directory? [Y/n] "
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		confirm_cmd "sudo rm -rfv $script_dir/downloads"
-	fi
+	echo 'Cleaning up temporary downloads directory...'
+	confirm_cmd "sudo rm -rfv $script_dir/downloads"
 	echo
 fi
 
 
 # Final apt upgrade check (sometimes needed for nvidia)
 if [ ! -f "$script_dir/status/final_apt_update" ]; then
+	errors=0
 	echo 'Final check for apt upgrades and clean up...'
 	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
-	touch "$script_dir/status/final_apt_update"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/final_apt_update"
+	fi
 	echo
 fi
 
@@ -528,10 +627,14 @@ fi
 
 # Create timeshift snapshot after setup script is complete
 if [ ! -f "$script_dir/status/final_snapshot" ]; then
+	errors=0
 	echo
 	echo 'Create a timeshift snapshot in case you screw up this awesome setup...'
 	confirm_cmd "sudo timeshift --create --comments 'Debian ${release_name^} setup script completed' --yes"
-	touch "$script_dir/status/final_snapshot"
+	((errors+=$?))
+	if [ "$errors" == 0 ]; then
+		touch "$script_dir/status/final_snapshot"
+	fi
 	echo
 fi
 

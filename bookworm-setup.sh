@@ -112,9 +112,9 @@ done
 if [ -z "$interactive" ] && [ -z "$force" ]; then
 	echo
 	echo 'Do you want to run the script in full interactive mode, which will ask for'
-	read -p 'confirmation for every command that may alter your system? [Y/n] '
+	read -p 'confirmation for every command that may alter your system? [y/N] '
 	echo
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+	if [ "${REPLY,}" == 'y' ]; then
 		interactive=1
 	fi
 fi

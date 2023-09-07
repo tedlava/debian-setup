@@ -231,15 +231,12 @@ fi
 # Set up kitty terminal emulator
 if [ -n "$(contains apt_installs kitty)" ] && [ ! -f "$script_dir/status/kitty_installed" ]; then
 	echo
-	if [ -f "$settings_dir/kitty.conf" ]; then
-		kitty_conf_path="$settings_dir/kitty.conf"
+	if [ -d "$settings_dir/kitty" ]; then
+		kitty_conf_path="$settings_dir/kitty"
 	else
-		kitty_conf_path="$script_dir/kitty.conf"
+		kitty_conf_path="$script_dir/kitty"
 	fi
-	if [ ! -d "$HOME/.config/kitty" ]; then
-		confirm_cmd "mkdir $HOME/.config/kitty"
-	fi
-	confirm_cmd "cp -av $kitty_conf_path $HOME/.config/kitty"
+	confirm_cmd "cp -av $kitty_conf_path $HOME/.config/"
 	touch "$script_dir/status/kitty_installed"
 	echo
 fi

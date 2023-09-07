@@ -57,12 +57,12 @@ if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/gr
 	echo
 	echo 'Setting up grub...'
 	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
-	((errors+=$?))
+	((errors += $?))
 	update_grub=1
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/grub_set_up"
+		reboot=1
 	fi
-	reboot=1
 	echo
 fi
 
@@ -145,18 +145,18 @@ if [ ! -f "$script_dir/status/moved_user_dirs" ]; then
 	dev=$(grep /home /etc/mtab | cut -d' ' -f1)
 	echo "Detected your old /home partition is on device: $dev"
 	confirm_cmd "mount $dev /mnt"
-	((errors+=$?))
+	((errors += $?))
 	user_dirs=( $(ls /mnt) )
 	for dir in ${user_dirs[@]}; do
 		if [ -z "$(echo "$dir" | grep timeshift)" ] && [ "$dir" != '@home' ]; then
 			echo
 			echo 'This directory should have already been copied to the new @home subvolume and can be safely deleted...'
 			confirm_cmd "rm -rf /mnt/$dir"
-			((errors+=$?))
+			((errors += $?))
 		fi
 	done
 	confirm_cmd 'umount /mnt'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/moved_user_dirs"
 	fi
@@ -171,13 +171,13 @@ if [ -n "$gdm_inhibit_ac" ] && [ ! -f "$script_dir/status/gdm_inhibited" ]; then
 	echo 'Setting up gdm to stay on when plugged in, but not logged in.'
 	echo 'Will still auto-suspend if on battery power...'
 	confirm_cmd "sed -i 's/# sleep-inactive-ac-timeout=1200/sleep-inactive-ac-timeout=0/' /etc/gdm3/greeter.dconf-defaults"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "sed -i \"s/# sleep-inactive-ac-type='suspend'/sleep-inactive-ac-type='nothing'/\" /etc/gdm3/greeter.dconf-defaults"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/gdm_inhibited"
+		reboot=1
 	fi
-	reboot=1
 	echo
 fi
 
@@ -188,9 +188,9 @@ if [ -n "${apt_purges[*]}" ] && [ ! -f "$script_dir/status/apt_purged" ]; then
 	echo
 	echo 'Removing unwanted packages from the base installation...'
 	confirm_cmd "apt-get -y purge ${apt_purges[@]}"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd 'apt-get -y autopurge'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/apt_purged"
 	fi
@@ -204,16 +204,16 @@ if [ -n "$ssd" ] && [ ! -f "$script_dir/status/ssd_set_up" ]; then
 	echo
 	echo 'SSD setup...'
 	confirm_cmd 'fstrim -v /'
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd 'fstrim -v /home'
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd 'echo -e "\\n#Swappiness\\nvm.swappiness=1\\n" >> /etc/sysctl.conf'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/ssd_set_up"
 	fi
+	echo
 fi
-echo
 
 
 # Add contrib and non-free to sources.list (this still works with or without non-free-firmware at the end of the repository list)
@@ -222,7 +222,7 @@ if [ -n "$extra_repos" ] && [ ! -f "$script_dir/status/extra_repos_added" ]; the
 	echo
 	echo 'Adding extra repositories (contrib, non-free) to sources.list...'
 	confirm_cmd "sed -i 's/^\(deb.*$release_name.*main\)/\1 contrib non-free/' /etc/apt/sources.list"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/extra_repos_added"
 	fi
@@ -236,7 +236,7 @@ if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/i386_arc
 	echo
 	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
 	confirm_cmd dpkg --add-architecture i386
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/i386_arch_added"
 	fi
@@ -251,9 +251,9 @@ if [ ! -f "$script_dir/status/apt_upgraded" ]; then
 	echo
 	echo 'Updating apt cache and upgrading current packages...'
 	confirm_cmd 'apt-get update'
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd 'apt-get -y upgrade'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/apt_upgraded"
 	fi
@@ -267,7 +267,7 @@ if [ ! -f "$script_dir/status/basic_utils_installed" ]; then
 	echo
 	echo 'Installing git, curl, and timeshift...'
 	confirm_cmd 'apt-get -y install git curl timeshift'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/basic_utils_installed"
 	fi
@@ -293,7 +293,7 @@ if [ ! -f "$script_dir/status/initial_snapshot" ]; then
 	echo
 	read -p 'Press ENTER to open timeshift...'
 	confirm_cmd 'timeshift-launcher'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/initial_snapshot"
 	fi
@@ -307,7 +307,7 @@ if [ -n "${apt_installs[*]}" ] && [ ! -f "$script_dir/status/apt_packages_instal
 	echo
 	echo 'Installing apt packages...'
 	confirm_cmd "apt-get -y install ${apt_installs[@]}"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/apt_packages_installed"
 	fi
@@ -337,7 +337,7 @@ if [ -n "$(contains apt_installs gufw)" ] && [ ! -f "$script_dir/status/gufw_set
 	echo
 	read -p 'Press ENTER to open gufw...'
 	confirm_cmd 'gufw'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/gufw_set_up"
 	fi
@@ -351,7 +351,7 @@ if [ -n "$(contains apt_installs libdvd-pkg)" ] && [ ! -f "$script_dir/status/dv
 	echo
 	echo 'Setting up packages to watch DVD movies...'
 	confirm_cmd 'dpkg-reconfigure libdvd-pkg'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/dvd_set_up"
 	fi
@@ -365,11 +365,11 @@ if [ -n "$(contains apt_installs flatpak)" ] && [ ! -f "$script_dir/status/flatp
 	echo
 	echo 'Adding flathub repo...'
 	confirm_cmd 'flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/flatpak_repo_added"
+		reboot=1
 	fi
-	reboot=1
 	echo
 fi
 
@@ -380,29 +380,29 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 	echo
 	echo 'Installing Rust as root to compile and install NeovimGtk system-wide...'
 	confirm_cmd "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "source '/root/.cargo/env'"
-	((errors+=$?))
+	((errors += $?))
 	echo
 	echo 'Installing NeovimGtk from the latest source code release on GitHub...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/tmp/nvim-gtk-source.zip"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "sudo -u $SUDO_USER unzip -d $script_dir/tmp $script_dir/tmp/nvim-gtk-source.zip"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "make -C $script_dir/tmp/neovim-gtk-* install"
-	((errors+=$?))
+	((errors += $?))
 	if [ ! -d '/root/.config/nvim' ]; then
 		confirm_cmd 'mkdir /root/.config/nvim'
-		((errors+=$?))
+		((errors += $?))
 	fi
 	echo
 	echo 'Add very basic init.vim configuration for root...'
 	confirm_cmd 'echo -e "colorscheme darkblue\\nset number\\nset mouse=a\\nset clipboard=unnamedplus" > /root/.config/nvim/init.vim'
-	((errors+=$?))
+	((errors += $?))
 	echo
 	echo 'Removing Rust installed as root...'
 	confirm_cmd 'rustup self uninstall -y'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
 	fi
@@ -416,9 +416,9 @@ if [ -n "$install_google_chrome" ] && [ ! -f "$script_dir/status/chrome_installe
 	echo
 	echo 'Installing Google Chrome...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o $script_dir/tmp/chrome.deb"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "apt-get -y install $script_dir/tmp/chrome.deb"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/chrome_installed"
 	fi
@@ -432,9 +432,9 @@ if [ -n "$install_windscribe" ] && [ ! -f "$script_dir/status/windscribe_install
 	echo
 	echo 'Installing Windscribe VPN...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/tmp/windscribe.deb"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "apt-get -y install $script_dir/tmp/windscribe.deb"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/windscribe_installed"
 	fi
@@ -448,7 +448,7 @@ if [ -n "$priv_firefox_launcher" ] && [ ! -f "$script_dir/status/priv_firefox_la
 	echo
 	echo 'Adding private window to context menu for Firefox-ESR launcher...'
 	confirm_cmd 'echo -e "Actions=new-window;new-private-window;\\n\\n[Desktop Action new-window]\\nName=Open a New Window\\nExec=/usr/lib/firefox-esr/firefox-esr -new-window\\n\\n[Desktop Action new-private-window]\\nName=Open a New Private Window\\nExec=/usr/lib/firefox-esr/firefox-esr -private-window\\n" >> /usr/share/applications/firefox-esr.desktop'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/priv_firefox_launcher_added"
 	fi
@@ -462,7 +462,7 @@ if [ -z "$(echo "${apt_installs[@]}" | grep -o nvidia)" ] && [ ! -f "script_dir/
 	echo
 	echo 'Adding environment variable to allow Firefox to use Wayland (prevents black screen on application start up)...'
 	confirm_cmd 'echo "MOZ_ENABLE_WAYLAND=1" >> /etc/environment'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/wayland_firefox"
 	fi
@@ -476,9 +476,9 @@ if [ ! -f "$script_dir/status/toggle_colors_script_added" ]; then
 	echo
 	echo 'Create launcher to toggle light/dark color schemes... (keyboard shortcut: Super + c)'
 	confirm_cmd "cp -av $script_dir/toggle-color-scheme /usr/local/bin/"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "chmod +x /usr/local/bin/toggle-color-scheme"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/toggle_colors_script_added"
 	fi
@@ -492,9 +492,9 @@ if [ -n "$move_system_monitor" ] && [ ! -f "$script_dir/status/move_system_monit
 	echo
 	echo 'Copy script into PATH to move Gnome extension system-monitor to the right of all indicators...'
 	confirm_cmd "cp -av $script_dir/move-system-monitor /usr/local/bin/"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "chmod +x /usr/local/bin/move-system-monitor"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/move_system_monitor_script_added"
 	fi
@@ -508,9 +508,9 @@ if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspa
 	echo
 	echo 'Copy script into PATH to move Gnome extension workspace-indicator to the left panel box...'
 	confirm_cmd "cp -av $script_dir/move-workspace-indicator /usr/local/bin/"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "chmod +x /usr/local/bin/move-workspace-indicator"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/move_workspace_indicator_script_added"
 	fi

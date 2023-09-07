@@ -131,9 +131,14 @@ fi
 
 # Create tmp directory to hold downloaded packages
 if [ ! -d "$script_dir/tmp" ]; then
+	errors=0
 	echo
 	echo 'Create temporary directory to hold downloaded packages...'
 	confirm_cmd "mkdir $script_dir/tmp"
+	((errors += $?))
+	if [ "$errors" -ne 0 ]; then
+		exit "$errors"
+	fi
 	echo
 fi
 
@@ -173,7 +178,7 @@ if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/inhibited_user_ac_sus
 	echo
 	echo "Disabling suspend while on AC power (so your system doesn't suspend while installing lots of packages)..."
 	confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/inhibited_user_ac_suspend"
 	fi
@@ -200,9 +205,9 @@ if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	echo
 	echo 'Removing old .dotfiles (from prior Linux installation)...'
 	confirm_cmd "rm -rf $HOME/.*"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "cp -av /etc/skel/. $HOME/"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/removed_dotfiles"
 	fi
@@ -222,15 +227,15 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 		bash_aliases_path="$script_dir/bash_aliases"
 	fi
 	confirm_cmd "cp -av $bash_aliases_path $HOME/.bash_aliases"
-	((errors+=$?))
+	((errors += $?))
 	echo
 	echo 'Setting up bash prompt to display git branch, if exists...'
 	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/(\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*033.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\[\\\\\\\\033[01;32m\\\\\\\\]\\\\\\\\u@\\\\\\\\h\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]:\\\\\\\\[\\\\\\\\033[01;34m\\\\\\\\]\\\\\\\\w\\\\\\\\n\\\\\\\\[\\\\\\\\033[00;34m\\\\\\\\]\\\\\\\\D{%Y-%m-%d}\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]T\\\\\\\\[\\\\\\\\033[00;34m\\\\\\\\]\\\\\\\\D{%H:%M} \\\\\\\\[\\\\\\\\033[0;32m\\\\\\\\]\\\\\\\\\\\$(parse_git_branch)\\\\\\\\[\\\\\\\\033[00m\\\\\\\\]\\\\\\\\$ \\\"/\" $HOME/.bashrc"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\n\\\\\\\\D{%Y-%m-%dT%H:%M} \\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/bash_set_up"
 	fi
@@ -246,45 +251,45 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 	echo 'Setting up Neovim config (init.vim)...'
 	if [ ! -d "$HOME/dotfiles" ]; then
 		confirm_cmd "mkdir $HOME/dotfiles"
-		((errors+=$?))
+		((errors += $?))
 	fi
 	if [ -d "$HOME/dotfiles/neovim-config" ]; then
 		echo 'Found old neovim-config directory, moving to make room for new neovim-config...'
 		confirm_cmd "mv $HOME/dotfiles/neovim-config $HOME/dotfiles/neovim-config-old"
-		((errors+=$?))
+		((errors += $?))
 	fi
 	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
-	((errors+=$?))
+	((errors += $?))
 	if [ ! -d "$HOME/.config/nvim" ]; then
 		confirm_cmd "mkdir $HOME/.config/nvim"
-		((errors+=$?))
+		((errors += $?))
 	fi
 	if [ -L "$HOME/.config/nvim/init.vim" ]; then
 		confirm_cmd "rm $HOME/.config/nvim/init.vim"
-		((errors+=$?))
+		((errors += $?))
 	elif [ -f "$HOME/.config/nvim/init.vim" ]; then
 		confirm_cmd "mv $HOME/.config/nvim/init.vim $HOME/.config/nvim/init-old.vim"
-		((errors+=$?))
+		((errors += $?))
 	fi
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "sed -i 's/\(default_fontsize =\).*/\1 $patched_font_size/' $HOME/dotfiles/neovim-config/ginit.vim"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "sed -i 's/\(font =\).*/\1 \"$patched_font\"/' $HOME/dotfiles/neovim-config/ginit.vim"
-	((errors+=$?))
+	((errors += $?))
 	if [ -L "$HOME/.config/nvim/ginit.vim" ]; then
 		confirm_cmd "rm $HOME/.config/nvim/ginit.vim"
-		((errors+=$?))
+		((errors += $?))
 	elif [ -f "$HOME/.config/nvim/ginit.vim" ]; then
 		confirm_cmd "mv $HOME/.config/nvim/ginit.vim $HOME/.config/nvim/ginit-old.vim"
-		((errors+=$?))
+		((errors += $?))
 	fi
 	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/ginit.vim $HOME/.config/nvim/"
-	((errors+=$?))
+	((errors += $?))
 	echo
 	echo 'Installing vim-plug into Neovim...'
 	confirm_cmd "sh -c 'curl -fLo \"${XDG_DATA_HOME:-$HOME/.local/share}\"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'"
-	((errors+=$?))
+	((errors += $?))
 	echo
 	echo 'About to install Neovim plugins.  When Neovim is finished, please exit'
 	echo 'Neovim by typing ":qa" and pressing ENTER.'
@@ -293,7 +298,7 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 	echo
 	read -p 'Press ENTER to proceed with Neovim plugin installation. '
 	confirm_cmd "nvim -c PlugInstall"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/neovim_installed"
 	fi
@@ -312,7 +317,7 @@ if [ ! -f "$script_dir/status/changed_default_apps" ]; then
 		mimeapps_path="$script_dir/mimeapps.list"
 	fi
 	confirm_cmd "cp -av $mimeapps_path $HOME/.config/"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/changed_default_apps"
 	fi
@@ -333,16 +338,16 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 			info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
 			download_url="$base_url$(curl -s "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
 			confirm_cmd "curl -L '$download_url' > '$script_dir/tmp/$ext_uuid.zip'"
-			((errors+=$?))
+			((errors += $?))
 			ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
 			confirm_cmd "gnome-extensions install $script_dir/tmp/$ext_uuid.zip"
-			((errors+=$?))
+			((errors += $?))
 		fi
 	done
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/extensions_installed"
+		reboot=1
 	fi
-	reboot=1
 	echo
 fi
 
@@ -353,9 +358,9 @@ if [ ! -f "$script_dir/status/fonts_installed" ]; then
 	echo
 	echo 'Setting up links to detect fonts...'
 	confirm_cmd "ln -s $HOME/fonts $HOME/.local/share/fonts"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd 'fc-cache -fv'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/fonts_installed"
 	fi
@@ -383,7 +388,7 @@ if [ ! -f "$script_dir/status/gsettings_loaded" ]; then
 		while read -r schema key val; do
 			echo -e "\nExecuting command...\n    $ gsettings set $schema $key \"$val\"\n"
 			gsettings set $schema $key "$val"
-			((errors+=$?))
+			((errors += $?))
 		done < "$gsettings_path"
 	fi
 	if [ "$errors" -eq 0 ]; then
@@ -404,7 +409,7 @@ if [ ! -f "$script_dir/status/dconf_loaded" ]; then
 		dconf_path="$script_dir/$release_name-dconf.txt"
 	fi
 	confirm_cmd "dconf load / < $dconf_path"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/dconf_loaded"
 	fi
@@ -426,7 +431,7 @@ if [ "$reboot" -eq 1 ] || [ ! -f "$script_dir/status/patched_font_installed" ]; 
 		echo 'Setting new system monospace font, terminal text will become distorted'
 		echo 'then the reboot will happen immediately afterwards...'
 		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font $patched_font_size'"
-		((errors+=$?))
+		((errors += $?))
 		if [ "$errors" -eq 0 ]; then
 			touch "$script_dir/status/patched_font_installed"
 		fi
@@ -449,11 +454,12 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_enab
 			ext_uuid="$extension"
 		fi
 		confirm_cmd "gnome-extensions enable ${ext_uuid}"
-		((errors+=$?))
+		((errors += $?))
 	done
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/extensions_enabled"
 	fi
+	echo
 fi
 
 
@@ -464,14 +470,14 @@ if [ -n "$ignore_lid_switch" ] && [ ! -f "$script_dir/status/lid_tweak_installed
 	echo 'Applying tweak to ignore suspend on lid closing...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
 		confirm_cmd "mkdir $HOME/.config/autostart"
-		((errors+=$?))
+		((errors += $?))
 	fi
 	confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/lid_tweak_installed"
+		reboot=1
 	fi
-	reboot=1
 	echo
 fi
 
@@ -483,16 +489,16 @@ if [ -n "$(echo "${gnome_extensions[@]}" | grep -o system-monitor)" ] && [ -n "$
 	echo 'Creating startup application to move Gnome extension system-monitor to the right of all indicators...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
 		confirm_cmd "mkdir $HOME/.config/autostart"
-		((errors+=$?))
+		((errors += $?))
 	fi
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move system-monitor indicator\\\\nComment=Moves user-installed Gnome extension system-monitor to the right of all indicators (updates periodically move it back to the middle)\\\\nExec=/usr/local/bin/move-system-monitor\\\\n\" > $HOME/.config/autostart/move-system-monitor.desktop"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "move-system-monitor"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/move_system_monitor_installed"
+		reboot=1
 	fi
-	reboot=1
 	echo
 fi
 
@@ -504,16 +510,16 @@ if [ -n "$(echo "${gnome_extensions[@]}" | grep -o workspace-indicator)" ] && [ 
 	echo 'Creating startup application to move Gnome extension workspace-indicator to the left panel box...'
 	if [ ! -d "$HOME/.config/autostart" ]; then
 		confirm_cmd "mkdir $HOME/.config/autostart"
-		((errors+=$?))
+		((errors += $?))
 	fi
 	confirm_cmd "echo -e \"[Desktop Entry]\\\\nType=Application\\\\nName=Move workspace-indicator\\\\nComment=Moves user-installed Gnome extension workspace-indicator to the left panel box (updates periodically move it back to the right)\\\\nExec=/usr/local/bin/move-workspace-indicator\\\\n\" > $HOME/.config/autostart/move-workspace-indicator.desktop"
-	((errors+=$?))
+	((errors += $?))
 	confirm_cmd "move-workspace-indicator"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/move_workspace_indicator_installed"
+		reboot=1
 	fi
-	reboot=1
 	echo
 fi
 
@@ -527,7 +533,7 @@ if [ ! -f "$script_dir/status/display_settings" ]; then
 	echo
 	read -p 'Press ENTER to open Display Settings...'
 	confirm_cmd 'gnome-control-center display'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/display_settings"
 	fi
@@ -541,7 +547,7 @@ if [ -n "${flatpaks[*]}" ] && [ ! -f "$script_dir/status/flatpaks_installed" ]; 
 	echo
 	echo 'Installing Flatpak applications...'
 	confirm_cmd "flatpak -y install ${flatpaks[@]}"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/flatpaks_installed"
 	fi
@@ -556,20 +562,27 @@ if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_t
 	echo "Configure Remote Touchpad Flatpak to always use port $remote_touchpad_set_up to work through the firewall..."
 	desktop_file_path='/var/lib/flatpak/app/com.github.unrud.RemoteTouchpad/current/active/export/share/applications/com.github.unrud.RemoteTouchpad.desktop'
 	confirm_cmd "sudo sed -i 's/\(Exec.*RemoteTouchpad.*\)/\1 --bind :$remote_touchpad_port/' $desktop_file_path"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/remote_touchpad_set_up"
+		reboot=1
+	else
+		exit "$errors"
 	fi
-	reboot=1
 	echo
 fi
 
 
 # Remove tmp directory
 if [ -d "$script_dir/tmp" ]; then
+	errors=0
 	echo
 	echo 'Cleaning up tmp directory...'
 	confirm_cmd "sudo rm -rfv $script_dir/tmp"
+	((errors += $?))
+	if [ "$errors" -ne 0 ]; then
+		exit "$errors"
+	fi
 	echo
 fi
 
@@ -579,9 +592,11 @@ if [ ! -f "$script_dir/status/final_apt_update" ]; then
 	errors=0
 	echo 'Final check for apt upgrades and clean up...'
 	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/final_apt_update"
+	else
+		exit "$errors"
 	fi
 	echo
 fi
@@ -605,9 +620,11 @@ if [ ! -f "$script_dir/status/final_snapshot" ]; then
 	echo
 	echo 'Create a timeshift snapshot in case you screw up this awesome setup...'
 	confirm_cmd "sudo timeshift --create --comments 'Debian ${release_name^} setup script completed' --yes"
-	((errors+=$?))
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/final_snapshot"
+	else
+		exit "$errors"
 	fi
 	echo
 fi

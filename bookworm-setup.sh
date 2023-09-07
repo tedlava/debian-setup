@@ -240,6 +240,7 @@ if [ -n "$(contains apt_installs kitty)" ] && [ ! -f "$script_dir/status/kitty_i
 		confirm_cmd "mkdir $HOME/.config/kitty"
 	fi
 	confirm_cmd "cp -av $kitty_conf_path $HOME/.config/kitty"
+	touch "$script_dir/status/kitty_installed"
 	echo
 fi
 

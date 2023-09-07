@@ -51,7 +51,6 @@ apt_installs=(
 	gnome-software-plugin-flatpak
 	rsync
 	gufw
-	kitty # GPU-powered terminal emulator
 	catfish # Since we still cannot sort the search results in Nautilus...
 	gir1.2-gtop-2.0 # Required for the system-monitor Gnome extension
 	# libdvd-pkg # Uncomment to watch DVD movies with an internal/external DVD drive

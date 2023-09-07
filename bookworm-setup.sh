@@ -174,7 +174,7 @@ if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/inhibited_user_ac_sus
 	echo "Disabling suspend while on AC power (so your system doesn't suspend while installing lots of packages)..."
 	confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
 	((errors+=$?))
-	# TODO Check exit code "$?" from each command, add them up?, if it is something other than 0, do not create the status file!
+	# TODO Change all == comparison operators to -eq
 	if [ "$errors" == 0 ]; then
 		touch "$script_dir/status/inhibited_user_ac_suspend"
 	fi
@@ -226,12 +226,6 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	confirm_cmd "cp -av $bash_aliases_path $HOME/.bash_aliases"
 	((errors+=$?))
 	echo
-	if [ -n "$(contains apt_installs kitty)" ]; then
-		echo 'Add kitty-terminal to bash color prompts list...'
-		confirm_cmd "sed -i \"s/xterm-color|\\\*-256color) color_prompt=yes;;/xterm-color|*-256color|xterm-kitty) color_prompt=yes;;/\" $HOME/.bashrc"
-		((errors+=$?))
-		echo
-	fi
 	echo 'Setting up bash prompt to display git branch, if exists...'
 	confirm_cmd "sed -i \"s~\(if \[ \\\"\\\$color_prompt\\\" = yes \]; then\)~function parse_git_branch {\\\\n\ \ \ \ git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \\\\\\\\(.*\\\\\\\\)/(\\\\\\\\1)/'\\\\n}\\\\n\1~\" $HOME/.bashrc"
 	((errors+=$?))
@@ -241,24 +235,6 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	((errors+=$?))
 	if [ "$errors" == 0 ]; then
 		touch "$script_dir/status/bash_set_up"
-	fi
-	echo
-fi
-
-
-# Set up kitty terminal emulator
-if [ -n "$(contains apt_installs kitty)" ] && [ ! -f "$script_dir/status/kitty_installed" ]; then
-	errors=0
-	echo
-	if [ -d "$settings_dir/kitty" ]; then
-		kitty_conf_path="$settings_dir/kitty"
-	else
-		kitty_conf_path="$script_dir/kitty"
-	fi
-	confirm_cmd "cp -av $kitty_conf_path $HOME/.config/"
-	((errors+=$?))
-	if [ "$errors" == 0 ]; then
-		touch "$script_dir/status/kitty_installed"
 	fi
 	echo
 fi

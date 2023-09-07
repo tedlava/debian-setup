@@ -136,20 +136,20 @@ fi
 # Remove old home directories in top level of btrfs @home partition
 if [ ! -f "$script_dir/status/moved_user_dirs" ]; then
 	echo
-	read -p 'Check for and remove old copies of user directories (siblings to @home)? [Y/n] '
-	if [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		dev=$(grep /home /etc/mtab | cut -d' ' -f1)
-		echo "Detected your /home partition is on device: $dev"
-		confirm_cmd "mount $dev /mnt"
-		user_dirs=( $(ls /mnt) )
-		for dir in ${user_dirs[@]}; do
-			if [ -z "$(echo "$dir" | grep timeshift)" ] && [ "$dir" != '@home' ]; then
-				confirm_cmd "rm -rf /mnt/$dir"
-			fi
-		done
-		confirm_cmd 'umount /mnt'
-		sudo -u $SUDO_USER touch "$script_dir/status/moved_user_dirs"
-	fi
+	echo 'Removing old copies of user directories (mostly empty, created by installation)...'
+	dev=$(grep /home /etc/mtab | cut -d' ' -f1)
+	echo "Detected your old /home partition is on device: $dev"
+	confirm_cmd "mount $dev /mnt"
+	user_dirs=( $(ls /mnt) )
+	for dir in ${user_dirs[@]}; do
+		if [ -z "$(echo "$dir" | grep timeshift)" ] && [ "$dir" != '@home' ]; then
+			echo
+			echo 'This directory should have already been copied to the new @home subvolume and can be safely deleted...'
+			confirm_cmd "rm -rf /mnt/$dir"
+		fi
+	done
+	confirm_cmd 'umount /mnt'
+	sudo -u $SUDO_USER touch "$script_dir/status/moved_user_dirs"
 	echo
 fi
 

@@ -312,6 +312,7 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 	echo
 	echo 'Installing Rust as root to compile and install NeovimGtk system-wide...'
 	confirm_cmd "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+	confirm_cmd "source '/root/.cargo/env'"
 	echo
 	echo 'Installing NeovimGtk from the latest source code release on GitHub...'
 	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/downloads/nvim-gtk-source.zip"

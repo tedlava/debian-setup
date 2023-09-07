@@ -181,7 +181,7 @@ fi
 sudo -i home="$HOME" interactive="$interactive" bash "$script_dir/$release_name-as-root"
 
 
-exit_code = "$?"
+exit_code="$?"
 if [ "$exit_code" == 130 ]; then
 	# -as-root script was interrupted with CTRL+C, do not continue script
 	exit 130

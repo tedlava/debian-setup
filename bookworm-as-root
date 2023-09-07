@@ -385,11 +385,11 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 	((errors+=$?))
 	echo
 	echo 'Installing NeovimGtk from the latest source code release on GitHub...'
-	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/downloads/nvim-gtk-source.zip"
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/tmp/nvim-gtk-source.zip"
 	((errors+=$?))
-	confirm_cmd "sudo -u $SUDO_USER unzip -d $script_dir/downloads $script_dir/downloads/nvim-gtk-source.zip"
+	confirm_cmd "sudo -u $SUDO_USER unzip -d $script_dir/tmp $script_dir/tmp/nvim-gtk-source.zip"
 	((errors+=$?))
-	confirm_cmd "make -C $script_dir/downloads/neovim-gtk-* install"
+	confirm_cmd "make -C $script_dir/tmp/neovim-gtk-* install"
 	((errors+=$?))
 	if [ ! -d '/root/.config/nvim' ]; then
 		confirm_cmd 'mkdir /root/.config/nvim'
@@ -415,9 +415,9 @@ if [ -n "$install_google_chrome" ] && [ ! -f "$script_dir/status/chrome_installe
 	errors=0
 	echo
 	echo 'Installing Google Chrome...'
-	confirm_cmd "sudo -u $SUDO_USER curl -L https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o $script_dir/downloads/chrome.deb"
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o $script_dir/tmp/chrome.deb"
 	((errors+=$?))
-	confirm_cmd "apt-get -y install $script_dir/downloads/chrome.deb"
+	confirm_cmd "apt-get -y install $script_dir/tmp/chrome.deb"
 	((errors+=$?))
 	if [ "$errors" == 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/chrome_installed"
@@ -431,9 +431,9 @@ if [ -n "$install_windscribe" ] && [ ! -f "$script_dir/status/windscribe_install
 	errors=0
 	echo
 	echo 'Installing Windscribe VPN...'
-	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/downloads/windscribe.deb"
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://windscribe.com/install/desktop/linux_deb_x64/beta -o $script_dir/tmp/windscribe.deb"
 	((errors+=$?))
-	confirm_cmd "apt-get -y install $script_dir/downloads/windscribe.deb"
+	confirm_cmd "apt-get -y install $script_dir/tmp/windscribe.deb"
 	((errors+=$?))
 	if [ "$errors" == 0 ]; then
 		sudo -u $SUDO_USER touch "$script_dir/status/windscribe_installed"

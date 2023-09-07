@@ -129,11 +129,11 @@ if [ ! -d "$script_dir/status" ]; then
 fi
 
 
-# Create temporary downloads directory
-if [ ! -d "$script_dir/downloads" ]; then
+# Create tmp directory to hold downloaded packages
+if [ ! -d "$script_dir/tmp" ]; then
 	echo
-	echo 'Create temporary downloads directory to hold packages...'
-	confirm_cmd "mkdir $script_dir/downloads"
+	echo 'Create temporary directory to hold downloaded packages...'
+	confirm_cmd "mkdir $script_dir/tmp"
 	echo
 fi
 
@@ -358,10 +358,10 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 			ext_uuid="$(curl -s $extension | grep -oP 'data-uuid="\K[^"]+')"
 			info_url="$base_url/extension-info/?uuid=$ext_uuid&shell_version=$gnome_ver"
 			download_url="$base_url$(curl -s "$info_url" | sed -e 's/.*"download_url": "\([^"]*\)".*/\1/')"
-			confirm_cmd "curl -L '$download_url' > '$script_dir/downloads/$ext_uuid.zip'"
+			confirm_cmd "curl -L '$download_url' > '$script_dir/tmp/$ext_uuid.zip'"
 			((errors+=$?))
 			ext_dir="$HOME/.local/share/gnome-shell/extensions/$ext_uuid"
-			confirm_cmd "gnome-extensions install $script_dir/downloads/$ext_uuid.zip"
+			confirm_cmd "gnome-extensions install $script_dir/tmp/$ext_uuid.zip"
 			((errors+=$?))
 		fi
 	done
@@ -591,11 +591,11 @@ if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_t
 fi
 
 
-# Remove downloads directory
-if [ -d "$script_dir/downloads" ]; then
+# Remove tmp directory
+if [ -d "$script_dir/tmp" ]; then
 	echo
-	echo 'Cleaning up temporary downloads directory...'
-	confirm_cmd "sudo rm -rfv $script_dir/downloads"
+	echo 'Cleaning up tmp directory...'
+	confirm_cmd "sudo rm -rfv $script_dir/tmp"
 	echo
 fi
 

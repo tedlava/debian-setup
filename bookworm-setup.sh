@@ -129,6 +129,8 @@ if [ ! -d "$script_dir/status" ]; then
 	((errors += $?))
 	confirm_cmd "mkdir $script_dir/status/basic-installation"
 	((errors += $?))
+	confirm_cmd "mkdir $script_dir/status/errors"
+	((errors += $?))
 	if [ "$errors" -ne 0 ]; then
 		exit "$errors"
 	fi
@@ -187,7 +189,12 @@ if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/basic-installation/in
 	confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/inhibited_user_ac_suspend" ]; then
+			rm "$script_dir/status/errors/inhibited_user_ac_suspend"
+		fi
 		touch "$script_dir/status/basic-installation/inhibited_user_ac_suspend"
+	else
+		touch "$script_dir/status/errors/inhibited_user_ac_suspend"
 	fi
 	echo
 fi
@@ -218,7 +225,12 @@ if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	confirm_cmd "mkdir $HOME/.config"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/removed_dotfiles" ]; then
+			rm "$script_dir/status/errors/removed_dotfiles"
+		fi
 		touch "$script_dir/status/removed_dotfiles"
+	else
+		touch "$script_dir/status/errors/removed_dotfiles"
 	fi
 	echo
 fi
@@ -246,7 +258,12 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 	confirm_cmd "sed -i \"s/PS1='\\\${debian_chroot:+(\\\$debian_chroot)}.*h:.*/PS1=\\\"\\\${debian_chroot:+(\\\$debian_chroot)}\\\\\\\\u@\\\\\\\\h:\\\\\\\\w\\\\\\\\n\\\\\\\\D{%Y-%m-%dT%H:%M} \\\\\\\\\\\$(parse_git_branch)\\\\\\\\$ \\\"/\" $HOME/.bashrc"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/bash_set_up" ]; then
+			rm "$script_dir/status/errors/bash_set_up"
+		fi
 		touch "$script_dir/status/bash_set_up"
+	else
+		touch "$script_dir/status/errors/bash_set_up"
 	fi
 	echo
 fi
@@ -314,7 +331,12 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 	confirm_cmd "nvim -c PlugInstall"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/neovim_installed" ]; then
+			rm "$script_dir/status/errors/neovim_installed"
+		fi
 		touch "$script_dir/status/neovim_installed"
+	else
+		touch "$script_dir/status/errors/neovim_installed"
 	fi
 	echo
 fi
@@ -333,7 +355,12 @@ if [ ! -f "$script_dir/status/changed_default_apps" ]; then
 	confirm_cmd "cp -av $mimeapps_path $HOME/.config/"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/changed_default_apps" ]; then
+			rm "$script_dir/status/errors/changed_default_apps"
+		fi
 		touch "$script_dir/status/changed_default_apps"
+	else
+		touch "$script_dir/status/errors/changed_default_apps"
 	fi
 	echo
 fi
@@ -359,8 +386,13 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 		fi
 	done
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/extensions_installed" ]; then
+			rm "$script_dir/status/errors/extensions_installed"
+		fi
 		touch "$script_dir/status/extensions_installed"
 		reboot=1
+	else
+		touch "$script_dir/status/errors/extensions_installed"
 	fi
 	echo
 fi
@@ -376,7 +408,12 @@ if [ ! -f "$script_dir/status/fonts_installed" ]; then
 	confirm_cmd 'fc-cache -fv'
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/fonts_installed" ]; then
+			rm "$script_dir/status/errors/fonts_installed"
+		fi
 		touch "$script_dir/status/fonts_installed"
+	else
+		touch "$script_dir/status/errors/fonts_installed"
 	fi
 	echo
 fi
@@ -406,7 +443,12 @@ if [ ! -f "$script_dir/status/gsettings_loaded" ]; then
 		done < "$gsettings_path"
 	fi
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/gsettings_loaded" ]; then
+			rm "$script_dir/status/errors/gsettings_loaded"
+		fi
 		touch "$script_dir/status/gsettings_loaded"
+	else
+		touch "$script_dir/status/errors/gsettings_loaded"
 	fi
 	echo
 fi
@@ -425,7 +467,12 @@ if [ ! -f "$script_dir/status/dconf_loaded" ]; then
 	confirm_cmd "dconf load / < $dconf_path"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/dconf_loaded" ]; then
+			rm "$script_dir/status/errors/dconf_loaded"
+		fi
 		touch "$script_dir/status/dconf_loaded"
+	else
+		touch "$script_dir/status/errors/dconf_loaded"
 	fi
 	echo
 fi
@@ -447,7 +494,12 @@ if [ "$reboot" == '1' ] || [ ! -f "$script_dir/status/patched_font_installed" ];
 		confirm_cmd "gsettings set org.gnome.desktop.interface monospace-font-name '$patched_font $patched_font_size'"
 		((errors += $?))
 		if [ "$errors" -eq 0 ]; then
+			if [ -f "$script_dir/status/errors/patched_font_installed" ]; then
+				rm "$script_dir/status/errors/patched_font_installed"
+			fi
 			touch "$script_dir/status/patched_font_installed"
+		else
+			touch "$script_dir/status/errors/patched_font_installed"
 		fi
 		echo
 	fi
@@ -471,7 +523,12 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_enab
 		((errors += $?))
 	done
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/extensions_enabled" ]; then
+			rm "$script_dir/status/errors/extensions_enabled"
+		fi
 		touch "$script_dir/status/extensions_enabled"
+	else
+		touch "$script_dir/status/errors/extensions_enabled"
 	fi
 	echo
 fi
@@ -489,8 +546,13 @@ if [ -n "$ignore_lid_switch" ] && [ ! -f "$script_dir/status/lid_tweak_installed
 	confirm_cmd 'echo -e "[Desktop Entry]\\nType=Application\\nName=ignore-lid-switch-tweak\\nExec=/usr/libexec/gnome-tweak-tool-lid-inhibitor\\n" > $HOME/.config/autostart/ignore-lid-switch-tweak.desktop'
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/lid_tweak_installed" ]; then
+			rm "$script_dir/status/errors/lid_tweak_installed"
+		fi
 		touch "$script_dir/status/lid_tweak_installed"
 		reboot=1
+	else
+		touch "$script_dir/status/errors/lid_tweak_installed"
 	fi
 	echo
 fi
@@ -510,8 +572,13 @@ if [ -n "$(echo "${gnome_extensions[@]}" | grep -o system-monitor)" ] && [ -n "$
 	confirm_cmd "move-system-monitor"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/move_system_monitor_installed" ]; then
+			rm "$script_dir/status/errors/move_system_monitor_installed"
+		fi
 		touch "$script_dir/status/move_system_monitor_installed"
 		reboot=1
+	else
+		touch "$script_dir/status/errors/move_system_monitor_installed"
 	fi
 	echo
 fi
@@ -531,8 +598,13 @@ if [ -n "$(echo "${gnome_extensions[@]}" | grep -o workspace-indicator)" ] && [ 
 	confirm_cmd "move-workspace-indicator"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/move_workspace_indicator_installed" ]; then
+			rm "$script_dir/status/errors/move_workspace_indicator_installed"
+		fi
 		touch "$script_dir/status/move_workspace_indicator_installed"
 		reboot=1
+	else
+		touch "$script_dir/status/errors/move_workspace_indicator_installed"
 	fi
 	echo
 fi
@@ -549,7 +621,12 @@ if [ ! -f "$script_dir/status/display_settings" ]; then
 	confirm_cmd 'gnome-control-center display'
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/display_settings" ]; then
+			rm "$script_dir/status/errors/display_settings"
+		fi
 		touch "$script_dir/status/display_settings"
+	else
+		touch "$script_dir/status/errors/display_settings"
 	fi
 	echo
 fi
@@ -563,7 +640,12 @@ if [ -n "${flatpaks[*]}" ] && [ ! -f "$script_dir/status/flatpaks_installed" ]; 
 	confirm_cmd "flatpak -y install ${flatpaks[@]}"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/flatpaks_installed" ]; then
+			rm "$script_dir/status/errors/flatpaks_installed"
+		fi
 		touch "$script_dir/status/flatpaks_installed"
+	else
+		touch "$script_dir/status/errors/flatpaks_installed"
 	fi
 	echo
 fi
@@ -578,24 +660,13 @@ if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_t
 	confirm_cmd "sudo sed -i 's/\(Exec.*RemoteTouchpad.*\)/\1 --bind :$remote_touchpad_port/' $desktop_file_path"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/remote_touchpad_set_up" ]; then
+			rm "$script_dir/status/errors/remote_touchpad_set_up"
+		fi
 		touch "$script_dir/status/remote_touchpad_set_up"
 		reboot=1
 	else
-		exit "$errors"
-	fi
-	echo
-fi
-
-
-# Remove tmp directory
-if [ -d "$script_dir/tmp" ]; then
-	errors=0
-	echo
-	echo 'Cleaning up tmp directory...'
-	confirm_cmd "sudo rm -rfv $script_dir/tmp"
-	((errors += $?))
-	if [ "$errors" -ne 0 ]; then
-		exit "$errors"
+		touch "$script_dir/status/errors/remote_touchpad_set_up"
 	fi
 	echo
 fi
@@ -608,9 +679,12 @@ if [ ! -f "$script_dir/status/final_apt_update" ]; then
 	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/final_apt_update" ]; then
+			rm "$script_dir/status/errors/final_apt_update"
+		fi
 		touch "$script_dir/status/final_apt_update"
 	else
-		exit "$errors"
+		touch "$script_dir/status/errors/final_apt_update"
 	fi
 	echo
 fi
@@ -628,6 +702,20 @@ if [ "$reboot" == '1' ]; then
 fi
 
 
+# Remove tmp directory
+if [ -d "$script_dir/tmp" ]; then
+	errors=0
+	echo
+	echo 'Cleaning up tmp directory...'
+	confirm_cmd "sudo rm -rf $script_dir/tmp"
+	((errors += $?))
+	if [ "$errors" -ne 0 ]; then
+		exit "$errors"
+	fi
+	echo
+fi
+
+
 # Create timeshift snapshot after setup script is complete
 if [ ! -f "$script_dir/status/final_snapshot" ]; then
 	errors=0
@@ -636,15 +724,29 @@ if [ ! -f "$script_dir/status/final_snapshot" ]; then
 	confirm_cmd "sudo timeshift --create --comments 'Debian ${release_name^} setup script completed' --yes"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/final_snapshot" ]; then
+			rm "$script_dir/status/errors/final_snapshot"
+		fi
 		touch "$script_dir/status/final_snapshot"
 	else
-		exit "$errors"
+		touch "$script_dir/status/errors/final_snapshot"
 	fi
 	echo
 fi
 
 
 # Settings to fix after this script...
+if [ -n "$(ls $script_dir/errors)" ]; then
+	echo
+	echo '*********************************** WARNING ***********************************'
+	echo 'There were some errors along the way.  Please check the following directory:'
+	echo "$script_dir/status/errors"
+	echo
+	echo 'If you run the script again, it will try to execute just those modules again.'
+	echo 'Check for any additional errors shown when those modules are attempted again.'
+	echo "It's usually simple like a file that already exists and can't be overwritten..."
+	echo
+fi
 echo
 echo 'There are a few items that need to be setup through a GUI, or at least that'
 echo "I haven't figured out how to do them through a bash script yet..."

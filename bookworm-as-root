@@ -121,7 +121,7 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 			fi
 		done
 		confirm_cmd 'umount /mnt'
-		confirm_cmd 'sed -i "s|\(.*/home.*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
+		confirm_cmd 'sed -i "s|\(.*/home .*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
 		reboot=1
 		echo
 		echo '@home btrfs subvolume was created and all user directories were copied to it.'

@@ -215,6 +215,8 @@ if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	((errors += $?))
 	confirm_cmd "cp -av /etc/skel/. $HOME/"
 	((errors += $?))
+	confirm_cmd "mkdir $HOME/.config"
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		touch "$script_dir/status/removed_dotfiles"
 	fi
@@ -262,6 +264,11 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 	fi
 	if [ -d "$HOME/dotfiles/neovim-config" ]; then
 		echo 'Found old neovim-config directory, moving to make room for new neovim-config...'
+		if [ -d "$HOME/dotfiles/neovim-config-old" ]; then
+			echo 'Deleting old neovim-config backup to make new backup...'
+			confirm_cmd "rm -rf $HOME/dotfiles/neovim-config-old"
+			((errors += $?))
+		fi
 		confirm_cmd "mv $HOME/dotfiles/neovim-config $HOME/dotfiles/neovim-config-old"
 		((errors += $?))
 	fi

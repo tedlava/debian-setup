@@ -122,9 +122,16 @@ fi
 
 # Create status directory
 if [ ! -d "$script_dir/status" ]; then
+	errors=0
 	echo
 	echo "Create status directory to hold script's state between reboots..."
 	confirm_cmd "mkdir $script_dir/status"
+	((errors += $?))
+	confirm_cmd "mkdir $script_dir/status/basic-installation"
+	((errors += $?))
+	if [ "$errors" -ne 0 ]; then
+		exit "$errors"
+	fi
 	echo
 fi
 
@@ -143,7 +150,7 @@ if [ ! -d "$script_dir/tmp" ]; then
 fi
 
 
-if [ ! -f "$script_dir/status/reqs_confirmed" ]; then
+if [ ! -f "$script_dir/status/basic-installation/reqs_confirmed" ]; then
 	echo 'This script automates some common settings that I use for'
 	echo 'every Debian installation while still allowing for some changes'
 	echo 'through interactive questions.  You will be asked to enter your'
@@ -167,20 +174,20 @@ if [ ! -f "$script_dir/status/reqs_confirmed" ]; then
 		echo
 		exit
 	fi
-	touch "$script_dir/status/reqs_confirmed"
+	touch "$script_dir/status/basic-installation/reqs_confirmed"
 	echo
 fi
 
 
 # Inhibit user suspend while plugged into AC power, so the computer doesn't suspend while the script is running
-if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/inhibited_user_ac_suspend" ]; then
+if [ -n "$user_inhibit_ac" ] && [ ! -f "$script_dir/status/basic-installation/inhibited_user_ac_suspend" ]; then
 	errors=0
 	echo
 	echo "Disabling suspend while on AC power (so your system doesn't suspend while installing lots of packages)..."
 	confirm_cmd "gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'"
 	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
-		touch "$script_dir/status/inhibited_user_ac_suspend"
+		touch "$script_dir/status/basic-installation/inhibited_user_ac_suspend"
 	fi
 	echo
 fi
@@ -418,7 +425,7 @@ fi
 
 
 # Reboot
-if [ "$reboot" -eq 1 ] || [ ! -f "$script_dir/status/patched_font_installed" ]; then
+if [ "$reboot" == '1' ] || [ ! -f "$script_dir/status/patched_font_installed" ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'
@@ -603,7 +610,7 @@ fi
 
 
 # Reboot
-if [ "$reboot" -eq 1 ]; then
+if [ "$reboot" == '1' ]; then
 	echo
 	echo 'The script needs to reboot your system.  When it is finished rebooting,'
 	echo 'please re-run the same script and it will resume from where it left off.'

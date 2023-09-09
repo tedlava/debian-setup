@@ -73,8 +73,8 @@ fi
 
 
 # Move @rootfs btrfs subvolume to @ for timeshift
+errors=0 # Catch errors over the sections that modify /etc/fstab and btrfs subvolumes...
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
-	errors=0
 	echo
 	if [ -n "$interactive" ]; then
 		read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '

@@ -179,7 +179,7 @@ if [ ! -f "$script_dir/status/basic-installation/moved_user_dirs" ]; then
 	errors=0
 	echo
 	echo 'Removing old copies of user directories (mostly empty, created by installation)...'
-	dev=$(grep /home /etc/mtab | cut -d' ' -f1)
+	dev=$(grep '/home ' /etc/mtab | cut -d' ' -f1)
 	echo "Detected your old /home partition is on device: $dev"
 	confirm_cmd "mount $dev /mnt"
 	((errors += $?))

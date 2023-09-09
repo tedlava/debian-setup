@@ -104,6 +104,10 @@ while getopts ':hif' opt; do
 		echo 'Normal account or No sudo/root privileges : Used to set up standard,'
 		echo 'non-sudo user accounts without modifying any system-wide settings.'
 		echo 'This include installing Gnome extensions, gsettings, dconf, etc.'
+		echo 'This option should only be used on normal/non-sudo user accounts'
+		echo '*AFTER* the script has been run with a sudo-enabled account, since'
+		echo 'there are some dependencies that need to be installed system-wide'
+		echo 'that the setup script requires.'
 		echo
 		nosudo=1
 		;;
@@ -164,8 +168,12 @@ fi
 if [ ! -f "$script_dir/status/basic-installation/reqs_confirmed" ]; then
 	echo 'This script automates some common settings that I use for'
 	echo 'every Debian installation while still allowing for some changes'
-	echo 'through interactive questions.  You will be asked to enter your'
-	echo 'password to sudo.'
+	echo 'through interactive questions.  Some settings require root privileges'
+	echo 'and you will get a few sudo prompts throughout the process.  There is'
+	echo 'an option to use this script to set up a normal user account, but it'
+	echo 'must be done AFTER the system has been configured with a sudo-enabled'
+	echo 'account first, since there are some dependencies that need to be installed'
+	echo 'system-wide first.'
 	echo
 	echo 'The script may require a few reboots, you will be prompted each'
 	echo 'time.  After the script reboots your system, please re-run the'

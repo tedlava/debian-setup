@@ -512,13 +512,15 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 	echo 'Removing Rust installed as root...'
 	confirm_cmd 'rustup self uninstall -y'
 	((errors += $?))
+	echo
+	echo 'NeovimGtk installation as root successful, cleaning up root-owned tmp files...'
+	confirm_cmd "rm -rf $script_dir/tmp/neovim-gtk-*"
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		if [ -f "$script_dir/status/errors/neovim_gtk_installed" ]; then
 			rm "$script_dir/status/errors/neovim_gtk_installed"
 		fi
 		sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
-		echo 'NeovimGtk installation as root successful, cleaning up root-owned tmp files...'
-		confirm_cmd "rm -rf $script_dir/tmp/neovim-gtk-*"
 	else
 		sudo -u $SUDO_USER touch "$script_dir/status/errors/neovim_gtk_installed"
 	fi

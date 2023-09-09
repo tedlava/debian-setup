@@ -309,6 +309,10 @@ if [ ! -f "$script_dir/status/fonts_installed" ]; then
 	echo "Downloading latest release of $patched_font_zip from GitHub..."
 	confirm_cmd "curl -L $(curl -L https://github.com/ryanoasis/nerd-fonts/releases/ | grep $patched_font_zip | head -n1 - | cut -d'"' -f2) -o $script_dir/tmp/$patched_font_zip"
 	((errors += $?))
+	if [ ! -d "$HOME/fonts" ]; then
+		confirm_cmd "mkdir $HOME/fonts"
+		((errors += $?))
+	fi
 	confirm_cmd "unzip $script_dir/tmp/$patched_font_zip -d $HOME/fonts"
 	((errors += $?))
 	echo

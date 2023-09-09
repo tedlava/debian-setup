@@ -80,6 +80,9 @@ if [ -n "$(grep @rootfs /etc/fstab)" ]; then
 		read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
 	fi
 	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
+		echo 'Making backup copy of /etc/fstab at /etc/fstab~'
+		confirm_cmd 'cp -av /etc/fstab /etc/fstab~'
+		((errors += $?))
 		dev=$(grep '\s/\s' /etc/mtab | cut -d' ' -f1)
 		((errors += $?))
 		echo "Detected your / partition is on device: $dev"

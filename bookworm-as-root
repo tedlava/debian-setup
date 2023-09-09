@@ -506,7 +506,8 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 	fi
 	echo
 	echo 'Add very basic init.vim configuration for root...'
-	confirm_cmd 'echo -e "colorscheme darkblue\\nset number\\nset mouse=a\\nset clipboard=unnamedplus" > /root/.config/nvim/init.vim'
+
+	confirm_cmd 'echo -e "set number\\nset mouse=a\\nset clipboard=unnamedplus\\nset cursorline\\nset background=dark\\nhi Comment cterm=italic\\nset termguicolors\\ncolorscheme darkblue" > /root/.config/nvim/init.vim'
 	((errors += $?))
 	echo
 	echo 'Removing Rust installed as root...'

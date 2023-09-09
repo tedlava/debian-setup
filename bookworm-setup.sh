@@ -74,7 +74,7 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 
-while getopts ':hif' opt; do
+while getopts ':hifn' opt; do
 	case $opt in
 	h)
 		echo
@@ -114,7 +114,7 @@ while getopts ':hif' opt; do
 	\?)
 		echo
 		echo 'You entered an incorrect option...'
-		echo
+		echo 'Please check the help file with -h'
 		exit
 		;;
 	esac

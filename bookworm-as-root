@@ -74,19 +74,26 @@ fi
 
 # Move @rootfs btrfs subvolume to @ for timeshift
 if [ -n "$(grep @rootfs /etc/fstab)" ]; then
+	errors=0
 	echo
 	if [ -n "$interactive" ]; then
 		read -p 'Rename the @rootfs btrfs subvolume to @ for timeshift? [Y/n] '
 	fi
 	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		dev=$(grep '\s/\s' /etc/mtab | cut -d' ' -f1)
+		((errors += $?))
 		echo "Detected your / partition is on device: $dev"
 		confirm_cmd "mount $dev /mnt"
+		((errors += $?))
 		confirm_cmd 'mv /mnt/@rootfs /mnt/@'
+		((errors += $?))
 		confirm_cmd 'umount /mnt'
+		((errors += $?))
 		confirm_cmd 'sed -i "s/@rootfs/@/" /etc/fstab'
+		((errors += $?))
 		echo 'Reinstalling grub and updating grub...'
 		confirm_cmd "grub-install ${dev:0:$((${#dev}-1))}"
+		((errors += $?))
 		update_grub=1
 		reboot=1
 		echo
@@ -98,6 +105,7 @@ fi
 
 if [ -n "$update_grub" ]; then
 	confirm_cmd 'update-grub'
+	((errors += $?))
 fi
 
 
@@ -109,24 +117,45 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 	fi
 	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
 		dev=$(grep /home /etc/mtab | cut -d' ' -f1)
+		((errors += $?))
 		echo "Detected your /home partition is on device: $dev"
 		confirm_cmd "mount $dev /mnt"
+		((errors += $?))
 		user_dirs=( $(ls /mnt) )
+		((errors += $?))
 		if [ ! -d /mnt/@home ]; then
 			confirm_cmd "btrfs subvolume create /mnt/@home"
+			((errors += $?))
 		fi
 		for dir in ${user_dirs[@]}; do
 			if [ -z "$(echo "$dir" | grep timeshift)" ] && [ "$dir" != '@home' ]; then
 				confirm_cmd "cp -a /mnt/$dir /mnt/@home/"
+				((errors += $?))
 			fi
 		done
 		confirm_cmd 'umount /mnt'
+		((errors += $?))
 		confirm_cmd 'sed -i "s|\(.*/home .*btrfs.*\sdefaults\)\s*\(.*\)|\1,subvol=@home \2|" /etc/fstab'
-		reboot=1
+		((errors += $?))
 		echo
 		echo '@home btrfs subvolume was created and all user directories were copied to it.'
 	fi
 	echo
+fi
+
+
+# Handle possible errors from configuring btrfs subvolumes and grub
+if [ "$errors" -eq 0 ]; then
+	reboot=1
+else
+	echo 'ERRORS occured when configuring btrfs subvolumes and/or grub!  Do *NOT* reboot'
+	echo 'your computer since it may not boot properly!  Please check the script output'
+	echo 'above, double check your /etc/fstab file, and possibly re-run grub-install'
+	echo 'and/or update-grub, if needed, before you proceed with the setup script...'
+	echo 'Keep in mind, it is possible your computer partitions and subdirectories might'
+	echo 'be set up in a way that is uncommon from a standard Debian installation and'
+	echo 'might require further tweaking to get past this part...'
+	exit $errors
 fi
 
 

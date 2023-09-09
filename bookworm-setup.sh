@@ -303,7 +303,7 @@ fi
 
 
 # Set up fonts
-if [ -z "$nosudo" ] && [ ! -f "$script_dir/status/fonts_installed" ]; then
+if [ ! -f "$script_dir/status/fonts_installed" ]; then
 	errors=0
 	echo
 	echo "Downloading latest release of $patched_font_zip from GitHub..."

@@ -245,12 +245,18 @@ if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	((errors += $?))
 	confirm_cmd "cp -av /etc/skel/. $HOME/"
 	((errors += $?))
-	confirm_cmd "mkdir $HOME/.config"
-	((errors += $?))
-	confirm_cmd "mkdir $HOME/.local"
-	((errors += $?))
-	confirm_cmd "mkdir $HOME/.local/share"
-	((errors += $?))
+	if [ ! -d "$HOME/.config" ]; then
+		confirm_cmd "mkdir $HOME/.config"
+		((errors += $?))
+	fi
+	if [ ! -d "$HOME/.local" ]; then
+		confirm_cmd "mkdir $HOME/.local"
+		((errors += $?))
+	fi
+	if [ ! -d "$HOME/.local/share" ]; then
+		confirm_cmd "mkdir $HOME/.local/share"
+		((errors += $?))
+	fi
 	if [ "$errors" -eq 0 ]; then
 		if [ -f "$script_dir/status/errors/removed_dotfiles" ]; then
 			rm "$script_dir/status/errors/removed_dotfiles"

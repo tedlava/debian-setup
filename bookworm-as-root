@@ -148,14 +148,18 @@ fi
 if [ "$errors" -eq 0 ]; then
 	reboot=1
 else
-	echo 'ERRORS occured when configuring btrfs subvolumes and/or grub!  Do *NOT* reboot'
+	echo
+	echo '***** ERRORS occured when configuring btrfs subvolumes and/or grub!  Do *NOT* reboot'
 	echo 'your computer since it may not boot properly!  Please check the script output'
 	echo 'above, double check your /etc/fstab file, and possibly re-run grub-install'
 	echo 'and/or update-grub, if needed, before you proceed with the setup script...'
 	echo 'Keep in mind, it is possible your computer partitions and subdirectories might'
 	echo 'be set up in a way that is uncommon from a standard Debian installation and'
 	echo 'might require further tweaking to get past this part...'
-	exit $errors
+	echo
+	echo "$errors"
+	read -p 'Press ENTER to exit the script...'
+	exit 9
 fi
 
 

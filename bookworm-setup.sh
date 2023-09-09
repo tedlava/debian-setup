@@ -236,6 +236,10 @@ elif [ "$exit_code" -gt 0 ]; then
 fi
 
 
+# TODO for debugging...
+read -p 'Press ENTER to continue the script...'
+
+
 # Remove old configuration in .dotfiles
 if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	errors=0

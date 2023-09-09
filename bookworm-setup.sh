@@ -251,6 +251,10 @@ if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 	((errors += $?))
 	confirm_cmd "mkdir $HOME/.config"
 	((errors += $?))
+	confirm_cmd "mkdir $HOME/.local"
+	((errors += $?))
+	confirm_cmd "mkdir $HOME/.local/share"
+	((errors += $?))
 	if [ "$errors" -eq 0 ]; then
 		if [ -f "$script_dir/status/errors/removed_dotfiles" ]; then
 			rm "$script_dir/status/errors/removed_dotfiles"

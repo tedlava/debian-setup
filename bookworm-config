@@ -26,7 +26,10 @@ install_windscribe=1 # VPN with slick Linux GUI! Use my referral link (https://w
 priv_firefox_launcher=1 # Add private window to context menu for Firefox-ESR launcher
 load_mimetypes=1 # Load default applications mime types (double-click in Nautilus opens with your preferred app)
 patched_font='Hack Nerd Font' # Because only 1337 hax0rz use a font called Hack
+patched_font_zip='Hack.zip' # Or another file from: https://github.com/ryanoasis/nerd-fonts/releases/
 patched_font_size=9
+# Is the following link discoverable??? What about when a new version is released?
+# patched_font_link='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Hack.zip'
 move_system_monitor=1 # Move Gnome extension system-monitor to the right of all indicators (against screen edge)
 move_workspace_indicator=1 # Move Gnome extension workspace-indicator to the left panel box (just to the left of the app menu)
 remote_touchpad_port=16180 # Golden ratio port!  But you can use any port >= 1024 and <= 65535

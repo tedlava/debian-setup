@@ -65,9 +65,10 @@ echo
 
 if [ "$(id -u)" -eq 0 ]; then
 	echo
-	echo 'Please run this shell script as a normal user (with sudo privileges).'
-	echo "Some commands (such as gnome-extensions) need to connect to the user's"
-	echo "Gnome environment and will not work if run as root."
+	echo 'Please run this shell script as a normal user. Some commands (such as those'
+	echo "installing gnome-extensions) need to connect to the user's Gnome environment"
+	echo 'and will not work if run as root.  It is possible to run it on a normal user'
+	echo 'to setup normal (non-sudo) user accounts.  Please check the options with -h.'
 	echo
 	exit
 fi
@@ -97,6 +98,14 @@ while getopts ':hif' opt; do
 		echo 'and confirmation is still required before rebooting the computer.'
 		echo
 		force=1
+		;;
+	n)
+		echo
+		echo 'Normal account or No sudo/root privileges : Used to set up standard,'
+		echo 'non-sudo user accounts without modifying any system-wide settings.'
+		echo 'This include installing Gnome extensions, gsettings, dconf, etc.'
+		echo
+		nosudo=1
 		;;
 	\?)
 		echo
@@ -164,10 +173,14 @@ if [ ! -f "$script_dir/status/basic-installation/reqs_confirmed" ]; then
 	echo
 	echo 'Requirements:'
 	echo "    - Debian ${release_name^} installed, / and /home partitions set up as btrfs"
-	echo '    - Have patched fonts saved and unzipped in ~/fonts directory (default: Hack)'
 	echo '    - Have a stable Internet connection to download packages'
-	echo "    - Copied the files \"$release_name-config\", \"$release_name-gsettings.txt\", \"$release_name-dconf.txt\""
-	echo '          to a ~/Setup directory and customized them for this specific computer'
+	echo "    - Copied \"$release_name-config\" to a ~/Setup directory to customize it"
+	echo '      for this computer.  Other files you may want to copy for further'
+	echo '      customization include:'
+	echo "          $release_name-gsettings.txt"
+	echo "          $release_name-dconf.txt"
+	echo '          bash_aliases'
+	echo '          mimeapps.list'
 	echo
 	read -p 'Have all of the above been completed? [y/N] '
 	if [ "${REPLY,}" != 'y' ]; then
@@ -201,7 +214,9 @@ fi
 
 
 # Run commands as root (with sudo)
-sudo -i home="$HOME" interactive="$interactive" bash "$script_dir/$release_name-as-root"
+if [ -z "$nosudo" ]; then
+	sudo -i home="$HOME" interactive="$interactive" bash "$script_dir/$release_name-as-root"
+fi
 
 
 exit_code="$?"
@@ -264,6 +279,33 @@ if [ ! -f "$script_dir/status/bash_set_up" ]; then
 		touch "$script_dir/status/bash_set_up"
 	else
 		touch "$script_dir/status/errors/bash_set_up"
+	fi
+	echo
+fi
+
+
+# Set up fonts
+if [ -z "$nosudo" ] && [ ! -f "$script_dir/status/fonts_installed" ]; then
+	errors=0
+	echo
+	echo "Downloading latest release of $patched_font_zip from GitHub..."
+	confirm_cmd "curl -L $(curl -L https://github.com/ryanoasis/nerd-fonts/releases/ | grep $patched_font_zip | head -n1 - | cut -d'"' -f2) -o $script_dir/tmp/$patched_font_zip"
+	((errors += $?))
+	confirm_cmd "unzip $script_dir/tmp/$patched_font_zip -d $HOME/fonts"
+	((errors += $?))
+	echo
+	echo 'Setting up links to detect fonts...'
+	confirm_cmd "ln -s $HOME/fonts $HOME/.local/share/fonts"
+	((errors += $?))
+	confirm_cmd 'fc-cache -fv'
+	((errors += $?))
+	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/fonts_installed" ]; then
+			rm "$script_dir/status/errors/fonts_installed"
+		fi
+		touch "$script_dir/status/fonts_installed"
+	else
+		touch "$script_dir/status/errors/fonts_installed"
 	fi
 	echo
 fi
@@ -398,27 +440,6 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_inst
 fi
 
 
-# Set up fonts
-if [ ! -f "$script_dir/status/fonts_installed" ]; then
-	errors=0
-	echo
-	echo 'Setting up links to detect fonts...'
-	confirm_cmd "ln -s $HOME/fonts $HOME/.local/share/fonts"
-	((errors += $?))
-	confirm_cmd 'fc-cache -fv'
-	((errors += $?))
-	if [ "$errors" -eq 0 ]; then
-		if [ -f "$script_dir/status/errors/fonts_installed" ]; then
-			rm "$script_dir/status/errors/fonts_installed"
-		fi
-		touch "$script_dir/status/fonts_installed"
-	else
-		touch "$script_dir/status/errors/fonts_installed"
-	fi
-	echo
-fi
-
-
 # Load gsettings
 if [ ! -f "$script_dir/status/gsettings_loaded" ]; then
 	errors=0
@@ -534,7 +555,7 @@ if [ -n "${gnome_extensions[*]}" ] && [ ! -f "$script_dir/status/extensions_enab
 fi
 
 
-# Create statup application to ignore suspend on closing lid (normally installed through Tweaks)
+# Create startup application to ignore suspend on closing lid (normally installed through Tweaks)
 if [ -n "$ignore_lid_switch" ] && [ ! -f "$script_dir/status/lid_tweak_installed" ]; then
 	errors=0
 	echo
@@ -633,7 +654,7 @@ fi
 
 
 # Install flatpaks, this step will take a while...
-if [ -n "${flatpaks[*]}" ] && [ ! -f "$script_dir/status/flatpaks_installed" ]; then
+if [ -z "$nosudo" ] && [ -n "${flatpaks[*]}" ] && [ ! -f "$script_dir/status/flatpaks_installed" ]; then
 	errors=0
 	echo
 	echo 'Installing Flatpak applications...'
@@ -652,7 +673,9 @@ fi
 
 
 # Configure Remote Touchpad to have a stable port so it will work through the firewall
-if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" ] && [ ! -f "$script_dir/status/remote_touchpad_set_up" ]; then
+#     This needed to be done after the RemoteTouchpad flatpak was installed in user space,
+#     even though it requires sudo/root permissions...
+if [ -z "$nosudo" ] && [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_touchpad_port" ] && [ ! -f "$script_dir/status/remote_touchpad_set_up" ]; then
 	errors=0
 	echo
 	echo "Configure Remote Touchpad Flatpak to always use port $remote_touchpad_set_up to work through the firewall..."
@@ -672,8 +695,8 @@ if [ -n "$(echo "${flatpaks[@]}" | grep -o RemoteTouchpad)" ] && [ -n "$remote_t
 fi
 
 
-# Final apt upgrade check (sometimes needed for nvidia)
-if [ ! -f "$script_dir/status/final_apt_update" ]; then
+# Final apt upgrade check
+if [ -z "$nosudo" ] && [ ! -f "$script_dir/status/final_apt_update" ]; then
 	errors=0
 	echo 'Final check for apt upgrades and clean up...'
 	confirm_cmd 'sudo apt update && sudo apt -y upgrade && sudo apt -y autopurge && sudo apt -y autoclean'
@@ -707,7 +730,7 @@ if [ -d "$script_dir/tmp" ]; then
 	errors=0
 	echo
 	echo 'Cleaning up tmp directory...'
-	confirm_cmd "sudo rm -rf $script_dir/tmp"
+	confirm_cmd "rm -rf $script_dir/tmp"
 	((errors += $?))
 	if [ "$errors" -ne 0 ]; then
 		exit "$errors"
@@ -717,7 +740,7 @@ fi
 
 
 # Create timeshift snapshot after setup script is complete
-if [ ! -f "$script_dir/status/final_snapshot" ]; then
+if [ -z "$nosudo" ] && [ ! -f "$script_dir/status/final_snapshot" ]; then
 	errors=0
 	echo
 	echo 'Create a timeshift snapshot in case you screw up this awesome setup...'

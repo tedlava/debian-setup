@@ -455,7 +455,7 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 	((errors += $?))
 	echo
 	echo 'Installing NeovimGtk from the latest source code release on GitHub...'
-	confirm_cmd "sudo -u $SUDO_USER curl -L https://www.github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/tmp/nvim-gtk-source.zip"
+	confirm_cmd "sudo -u $SUDO_USER curl -L https://github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/tmp/nvim-gtk-source.zip"
 	((errors += $?))
 	confirm_cmd "sudo -u $SUDO_USER unzip -d $script_dir/tmp $script_dir/tmp/nvim-gtk-source.zip"
 	((errors += $?))
@@ -482,6 +482,8 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 			rm "$script_dir/status/errors/neovim_gtk_installed"
 		fi
 		sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
+		echo 'NeovimGtk installation as root successful, cleaning up root-owned tmp files...'
+		confirm_cmd "rm $script_dir/tmp/neovim-gtk-*"	
 	else
 		sudo -u $SUDO_USER touch "$script_dir/status/errors/neovim_gtk_installed"
 	fi

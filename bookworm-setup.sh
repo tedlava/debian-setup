@@ -748,7 +748,7 @@ fi
 
 
 # Remove tmp directory
-if [ -d "$script_dir/tmp" ]; then
+if [ -z "$(ls $script_dir/status/errors)" ] && [ -d "$script_dir/tmp" ]; then
 	errors=0
 	echo
 	echo 'Cleaning up tmp directory...'
@@ -781,7 +781,7 @@ fi
 
 
 # Settings to fix after this script...
-if [ -n "$(ls $script_dir/errors)" ]; then
+if [ -n "$(ls $script_dir/status/errors)" ]; then
 	echo
 	echo '*********************************** WARNING ***********************************'
 	echo 'There were some errors along the way.  Please check the following directory:'

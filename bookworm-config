@@ -25,8 +25,8 @@ install_google_chrome=1 # The native .deb version is better than the Flatpak
 install_windscribe=1 # VPN with slick Linux GUI! Use my referral link (https://windscribe.com/yo/jltrv4cs) to get an extra GB when you sign up for a FREE account, total of 11GB free VPN data per month!  AND you can do their tweet4data program to get an extra 5GB per month too!!
 priv_firefox_launcher=1 # Add private window to context menu for Firefox-ESR launcher
 load_mimetypes=1 # Load default applications mime types (double-click in Nautilus opens with your preferred app)
-patched_font='Hack Nerd Font' # Because only 1337 hax0rz use a font called Hack
 patched_font_zip='Hack.zip' # Or another file from: https://github.com/ryanoasis/nerd-fonts/releases/
+patched_font='Hack Nerd Font' # Because only 1337 hax0rz use a font called Hack
 patched_font_size=9
 # Is the following link discoverable??? What about when a new version is released?
 # patched_font_link='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Hack.zip'

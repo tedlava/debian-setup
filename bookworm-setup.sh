@@ -755,6 +755,9 @@ if [ -z "$(ls $script_dir/status/errors)" ] && [ -d "$script_dir/tmp" ]; then
 	confirm_cmd "rm -rf $script_dir/tmp"
 	((errors += $?))
 	if [ "$errors" -ne 0 ]; then
+		echo
+		echo "Problem removing the tmp directory...  If it's just permissions, run:"
+		echo "    $ sudo rm $script_dir/tmp"
 		exit "$errors"
 	fi
 	echo

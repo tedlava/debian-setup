@@ -518,7 +518,7 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_install
 		fi
 		sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
 		echo 'NeovimGtk installation as root successful, cleaning up root-owned tmp files...'
-		confirm_cmd "rm $script_dir/tmp/neovim-gtk-*"	
+		confirm_cmd "rm -rf $script_dir/tmp/neovim-gtk-*"
 	else
 		sudo -u $SUDO_USER touch "$script_dir/status/errors/neovim_gtk_installed"
 	fi

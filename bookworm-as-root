@@ -116,7 +116,7 @@ if [ -z "$(grep @home /etc/fstab)" ]; then
 		read -p 'Copy/merge the /home directory into an @home btrfs subvolume for timeshift? [Y/n] '
 	fi
 	if [ -z "$interactive" ] || [ -z "$REPLY" ] || [ "${REPLY,}" == 'y' ]; then
-		dev=$(grep /home /etc/mtab | cut -d' ' -f1)
+		dev=$(grep '/home ' /etc/mtab | cut -d' ' -f1)
 		((errors += $?))
 		echo "Detected your /home partition is on device: $dev"
 		confirm_cmd "mount $dev /mnt"

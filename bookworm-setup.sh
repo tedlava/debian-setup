@@ -657,7 +657,7 @@ fi
 if [ ! -f "$script_dir/status/display_settings" ]; then
 	errors=0
 	echo
-	echo 'Newer computers with HiDPI displays may need to adjust scaling settingshen'
+	echo 'Newer computers with HiDPI displays may need to adjust scaling settings.  When'
 	echo 'you are finished, close the window to continue with the setup script...'
 	echo
 	read -p 'Press ENTER to open Display Settings...'

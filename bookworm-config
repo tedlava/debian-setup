@@ -38,6 +38,7 @@ remote_touchpad_port=16180 # Golden ratio port!  But you can use any port >= 102
 apt_purges=(
 	evolution
 	power-profiles-daemon # Gnome power profiles saves battery by just limiting your CPU all the time, TLP is smarter
+	totem # Thumbnailer is still broken and vlc is superior in every way
 )
 
 
@@ -50,6 +51,7 @@ apt_installs=(
 	libnotify-bin # Dependency for move-system-monitor and move-workspace-indicator scripts
 	tlp # Smarter power management and better battery life than power-profiles-daemon
 	tlp-rdw
+	ffmpegthumbnailer # totem-video-thumbnailer is still broken in Debian 12
 	flatpak
 	gnome-software-plugin-flatpak
 	rsync

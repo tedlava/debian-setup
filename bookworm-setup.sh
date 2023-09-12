@@ -806,6 +806,7 @@ echo '          than what was installed through this script'
 echo '    - Set up Firefox:'
 echo '          - Set up Firefox Sync, customize toolbar, restore synced tabs, etc.'
 echo '          - Open Settings: DRM enabled, search with DuckDuckGo, remove Bing'
+echo '          - about:config >> media.webrtc.hw.h264.enabled = true'
 echo '    - Set up Google Chrome:'
 echo '          - chrome://flags >> Preferred Ozone platform = Auto (uses Wayland, if present, X11 otherwise)'
 if [ -n "$ssd" ]; then

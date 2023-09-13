@@ -302,6 +302,9 @@ if [ -n "$(contains apt_installs wine)" ] && [ ! -f "$script_dir/status/basic-in
 	echo 'Enabling 32-bit libraries for playing Windows games on wine...'
 	confirm_cmd dpkg --add-architecture i386
 	((errors += $?))
+	if [ -f "$script_dir/status/basic-installation/apt_upgraded" ]; then # Force apt update
+		rm "$script_dir/status/basic-installation/apt_upgraded"
+	fi
 	if [ "$errors" -eq 0 ]; then
 		if [ -f "$script_dir/status/errors/i386_arch_added" ]; then
 			rm "$script_dir/status/errors/i386_arch_added"

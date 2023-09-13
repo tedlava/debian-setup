@@ -28,8 +28,6 @@ load_mimetypes=1 # Load default applications mime types (double-click in Nautilu
 patched_font_zip='Hack.zip' # Or another file from: https://github.com/ryanoasis/nerd-fonts/releases/
 patched_font='Hack Nerd Font' # Because only 1337 hax0rz use a font called Hack
 patched_font_size=9
-# Is the following link discoverable??? What about when a new version is released?
-# patched_font_link='https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Hack.zip'
 move_system_monitor=1 # Move Gnome extension system-monitor to the right of all indicators (against screen edge)
 move_workspace_indicator=1 # Move Gnome extension workspace-indicator to the left panel box (just to the left of the app menu)
 remote_touchpad_port=16180 # Golden ratio port!  But you can use any port >= 1024 and <= 65535
@@ -46,8 +44,9 @@ apt_installs=(
 	# OS packages
 	# linux-headers-amd64 # required for NVIDIA drivers
 	# nvidia-driver
-	# nvidia-legacy-390xx-driver
 	# nvidia-driver-libs:i386 # For playing Windows games with wine and NVIDIA cards
+	# nvidia-tesla-470-driver # For older NVIDIA cards
+	# nvidia-tesla-470-driver-libs:i386 # For playing Windows games with wine and NVIDIA cards
 	libnotify-bin # Dependency for move-system-monitor and move-workspace-indicator scripts
 	tlp # Smarter power management and better battery life than power-profiles-daemon
 	tlp-rdw
@@ -76,7 +75,7 @@ apt_installs=(
 	inkscape-open-symbols
 	gnucash
 	python3-gnucash
-	# audacity
+	audacity
 	# kdenlive # Beware the KDE dependencies!
 	# krita # Beware the KDE dependencies!
 	wine # Will add i386 architecture to apt for playing Win32 games

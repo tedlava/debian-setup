@@ -480,50 +480,75 @@ fi
 
 
 # Download, compile, and install NeovimGtk from latest github source release
-if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
-	errors=0
-	echo
-	echo 'Installing Rust as root to compile and install NeovimGtk system-wide...'
-	confirm_cmd "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-	((errors += $?))
-	confirm_cmd "source '/root/.cargo/env'"
-	((errors += $?))
-	echo
-	echo 'Installing NeovimGtk from the latest source code release on GitHub...'
-	confirm_cmd "sudo -u $SUDO_USER curl -L https://github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/tmp/nvim-gtk-source.zip"
-	((errors += $?))
-	confirm_cmd "sudo -u $SUDO_USER unzip -d $script_dir/tmp $script_dir/tmp/nvim-gtk-source.zip"
-	((errors += $?))
-	confirm_cmd "make -C $script_dir/tmp/neovim-gtk-* install"
-	((errors += $?))
-	if [ ! -d '/root/.config' ]; then
-		confirm_cmd 'mkdir /root/.config'
+if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/rust_removed" ]; then
+	if [ ! -f "$scipt_dir/status/rust_installed" ]; then
+		errors=0
+		echo
+		echo 'Installing Rust as root to compile and install NeovimGtk system-wide...'
+		confirm_cmd "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
 		((errors += $?))
-	fi
-	if [ ! -d '/root/.config/nvim' ]; then
-		confirm_cmd 'mkdir /root/.config/nvim'
+		confirm_cmd "source '/root/.cargo/env'"
 		((errors += $?))
-	fi
-	echo
-	echo 'Add very basic init.vim configuration for root...'
-
-	confirm_cmd 'echo -e "set number\\nset mouse=a\\nset clipboard=unnamedplus\\nset background=dark\\nhi Comment cterm=italic\\nset termguicolors\\ncolorscheme darkblue" > /root/.config/nvim/init.vim'
-	((errors += $?))
-	echo
-	echo 'Removing Rust installed as root...'
-	confirm_cmd 'rustup self uninstall -y'
-	((errors += $?))
-	echo
-	echo 'NeovimGtk installation as root successful, cleaning up root-owned tmp files...'
-	confirm_cmd "rm -rf $script_dir/tmp/neovim-gtk-*"
-	((errors += $?))
-	if [ "$errors" -eq 0 ]; then
-		if [ -f "$script_dir/status/errors/neovim_gtk_installed" ]; then
-			rm "$script_dir/status/errors/neovim_gtk_installed"
+		if [ "$errors" -eq 0 ]; then
+			if [ -f "$script_dir/status/errors/rust_installed" ]; then
+				rm "$script_dir/status/errors/rust_installed"
+			fi
+			sudo -u $SUDO_USER touch "$script_dir/status/rust_installed"
+		else
+			sudo -u $SUDO_USER touch "$script_dir/status/errors/rust_installed"
 		fi
-		sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
-	else
-		sudo -u $SUDO_USER touch "$script_dir/status/errors/neovim_gtk_installed"
+	fi
+	if [ -f "$scipt_dir/status/rust_installed" ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
+		errors=0
+		echo
+		echo 'Installing NeovimGtk from the latest source code release on GitHub...'
+		confirm_cmd "sudo -u $SUDO_USER curl -L https://github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/tmp/nvim-gtk-source.zip"
+		((errors += $?))
+		confirm_cmd "sudo -u $SUDO_USER unzip -d $script_dir/tmp $script_dir/tmp/nvim-gtk-source.zip"
+		((errors += $?))
+		confirm_cmd "make -C $script_dir/tmp/neovim-gtk-* install"
+		((errors += $?))
+		if [ ! -d '/root/.config' ]; then
+			confirm_cmd 'mkdir /root/.config'
+			((errors += $?))
+		fi
+		if [ ! -d '/root/.config/nvim' ]; then
+			confirm_cmd 'mkdir /root/.config/nvim'
+			((errors += $?))
+		fi
+		echo
+		echo 'Add very basic init.vim configuration for root...'
+
+		confirm_cmd 'echo -e "set number\\nset mouse=a\\nset clipboard=unnamedplus\\nset background=dark\\nhi Comment cterm=italic\\nset termguicolors\\ncolorscheme darkblue" > /root/.config/nvim/init.vim'
+		((errors += $?))
+		echo
+		if [ "$errors" -eq 0 ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
+			if [ -f "$script_dir/status/errors/neovim_gtk_installed" ]; then
+				rm "$script_dir/status/errors/neovim_gtk_installed"
+			fi
+			sudo -u $SUDO_USER touch "$script_dir/status/neovim_gtk_installed"
+		else
+			sudo -u $SUDO_USER touch "$script_dir/status/errors/neovim_gtk_installed"
+		fi
+	fi
+	if [ -f "$script_dir/status/neovim_gtk_installed" ] && [ ! -f "$scipt_dir/status/rust_removed" ]; then
+		errors=0
+		echo
+		echo 'Removing Rust installed as root...'
+		confirm_cmd 'rustup self uninstall -y'
+		((errors += $?))
+		echo
+		echo 'NeovimGtk installation as root successful, cleaning up root-owned tmp files...'
+		confirm_cmd "rm -rf $script_dir/tmp/neovim-gtk-*"
+		((errors += $?))
+		if [ "$errors" -eq 0 ]; then
+			if [ -f "$script_dir/status/errors/rust_removed" ]; then
+				rm "$script_dir/status/errors/rust_removed"
+			fi
+			sudo -u $SUDO_USER touch "$script_dir/status/rust_removed"
+		else
+			sudo -u $SUDO_USER touch "$script_dir/status/errors/rust_removed"
+		fi
 	fi
 	echo
 fi

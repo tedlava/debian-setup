@@ -804,18 +804,9 @@ echo '    - Connect to online accounts'
 echo '    - Run "sudo dmesg" and look for RED text, which may require more firmware'
 echo '          than what was installed through this script'
 echo '    - Set up Firefox:'
-echo '          - Set up Firefox Sync, customize toolbar, restore synced tabs, etc.'
-echo '          - Open Settings: DRM enabled, search with DuckDuckGo, remove Bing'
-echo '          - about:config >> media.webrtc.hw.h264.enabled = true'
+echo '          - Set up Firefox Sync, customize toolbar, restore synced tabs, remove Bing, etc.'
 echo '    - Set up Google Chrome:'
 echo '          - chrome://flags >> Preferred Ozone platform = Auto (uses Wayland, if present, X11 otherwise)'
-if [ -n "$ssd" ]; then
-	echo '          * For SSD:'
-	echo '                - about:config >> browser.cache.disk.enable = false'
-	echo '                - about:config >> browser.sessionstore.interval = 15000000'
-	echo "          (add three 0's; this setting is how often Firefox saves sessions to"
-	echo '          disk in case of a browser crash, not really needed with Firefox Sync)'
-fi
 echo
 echo
 echo "Ted's Debian Setup Script has finished.  If you want to run it again, please"

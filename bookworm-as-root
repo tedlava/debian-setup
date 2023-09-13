@@ -609,6 +609,35 @@ if [ -z "$(echo "${apt_installs[@]}" | grep -o nvidia)" ] && [ ! -f "$script_dir
 fi
 
 
+# Set my preferred Firefox defaults as global settings
+if [ -n "$(apt list firefox-esr 2> /dev/null | grep installed)" ] && [ ! -f "$script_dir/status/firefox_defaults" ]; then
+	errors=0
+	echo
+	echo 'Adding some Firefox settings as global defaults...'
+	echo
+	echo 'Enable playing of DRM-controlled content...'
+	confirm_cmd 'echo -e "\\n// Enable playing of DRM-controlled content\\npref(\"media.eme.enabled\", true);" >> /etc/firefox-esr/firefox-esr.js'
+	((errors += $?))
+	if [ -n "$ssd" ]; then
+		echo 'Add settings to prevent excess writes to an SSD drive...'
+		confirm_cmd 'echo -e "\\n// Settings to prevent excess writes to an SSD drive\\npref(\"browser.cache.disk.enable\", false);\\npref(\"browser.sessionstore.interval\", 15000000);" >> /etc/firefox-esr/firefox-esr.js'
+		((errors += $?))
+	fi
+	echo 'Enable OpenH264 for video calls...'
+	confirm_cmd "sed -i 's|^\(pref(\"media.gmp-gmpopenh264.enabled\", false);\)$|// \1|' /etc/firefox-esr/firefox-esr.js"
+	((errors += $?))
+	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/firefox_defaults" ]; then
+			rm "$script_dir/status/errors/firefox_defaults"
+		fi
+		sudo -u $SUDO_USER touch "$script_dir/status/firefox_defaults"
+	else
+		sudo -u $SUDO_USER touch "$script_dir/status/errors/firefox_defaults"
+	fi
+	echo
+fi
+
+
 # Create launcher to switch between light/dark color color schemes in Gnome with Super+c
 if [ ! -f "$script_dir/status/toggle_colors_script_added" ]; then
 	errors=0

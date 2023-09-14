@@ -140,11 +140,38 @@ if [ ! -d "$script_dir/status" ]; then
 	echo "Create status directory to hold script's state between reboots..."
 	confirm_cmd "mkdir $script_dir/status"
 	((errors += $?))
+	if [ "$errors" -ne 0 ]; then
+		echo "Problem creating '$script_dir/status' directory..."
+		exit "$errors"
+	fi
+	echo
+fi
+
+
+# Create status/basic-installation directory
+if [ ! -d "$script_dir/status/basic-installation" ]; then
+	errors=0
+	echo
+	echo "Create status/basic-installation directory to hold script's state up to the initial timeshift snapshot..."
 	confirm_cmd "mkdir $script_dir/status/basic-installation"
 	((errors += $?))
+	if [ "$errors" -ne 0 ]; then
+		echo "Problem creating '$script_dir/status/basic-installation' directory..."
+		exit "$errors"
+	fi
+	echo
+fi
+
+
+# Create status/errors directory
+if [ ! -d "$script_dir/status/errors" ]; then
+	errors=0
+	echo
+	echo "Create status/errors directory to hold the names of modules with errors to try them again later..."
 	confirm_cmd "mkdir $script_dir/status/errors"
 	((errors += $?))
 	if [ "$errors" -ne 0 ]; then
+		echo "Problem creating '$script_dir/status/errors' directory..."
 		exit "$errors"
 	fi
 	echo
@@ -159,6 +186,7 @@ if [ ! -d "$script_dir/tmp" ]; then
 	confirm_cmd "mkdir $script_dir/tmp"
 	((errors += $?))
 	if [ "$errors" -ne 0 ]; then
+		echo "Problem creating '$script_dir/tmp' directory..."
 		exit "$errors"
 	fi
 	echo
@@ -232,6 +260,7 @@ if [ "$exit_code" -eq 93 ]; then
 	# -as-root script exited normally with reboot flag set to 1
 	reboot=1
 elif [ "$exit_code" -gt 0 ]; then
+	echo "Received unexpected exit code $exit_code from the '$script_dir/$release_name-as-root' script..."
 	exit "$exit_code"
 fi
 

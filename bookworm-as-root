@@ -484,7 +484,7 @@ fi
 
 # Download, compile, and install NeovimGtk from latest github source release
 if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/rust_removed" ]; then
-	if [ ! -f "$scipt_dir/status/rust_installed" ]; then
+	if [ ! -f "$script_dir/status/rust_installed" ]; then
 		errors=0
 		echo
 		echo 'Installing Rust as root to compile and install NeovimGtk system-wide...'
@@ -501,7 +501,7 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/rust_removed" ]; t
 			sudo -u $SUDO_USER touch "$script_dir/status/errors/rust_installed"
 		fi
 	fi
-	if [ -f "$scipt_dir/status/rust_installed" ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
+	if [ -f "$script_dir/status/rust_installed" ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
 		errors=0
 		echo
 		echo 'Installing NeovimGtk from the latest source code release on GitHub...'
@@ -534,7 +534,7 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/rust_removed" ]; t
 			sudo -u $SUDO_USER touch "$script_dir/status/errors/neovim_gtk_installed"
 		fi
 	fi
-	if [ -f "$script_dir/status/neovim_gtk_installed" ] && [ ! -f "$scipt_dir/status/rust_removed" ]; then
+	if [ -f "$script_dir/status/neovim_gtk_installed" ] && [ ! -f "$script_dir/status/rust_removed" ]; then
 		errors=0
 		echo
 		echo 'Removing Rust installed as root...'

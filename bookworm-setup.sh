@@ -286,6 +286,18 @@ if [ -n "$rm_dotfiles" ] && [ ! -f "$script_dir/status/removed_dotfiles" ]; then
 		confirm_cmd "mkdir $HOME/.local/share"
 		((errors += $?))
 	fi
+	echo
+	echo "Creating dotted (hidden) symbolic links to all files/directories in $HOME/dotfiles..."
+	if [ -d "$HOME/dotfiles" ]; then
+		for f in $(ls $HOME/dotfiles); do
+			if [ -e "$HOME/.$f" ]; then
+				echo
+				echo "Removing default file $HOME/.$f to replace with link to custom file $HOME/dotfiles/$f ..."
+				confirm_cmd "rm $HOME/.$f"
+			fi
+			confirm_cmd "ln -s $HOME/dotfiles/$f $HOME/.$f"
+		done
+	fi
 	if [ "$errors" -eq 0 ]; then
 		if [ -f "$script_dir/status/errors/removed_dotfiles" ]; then
 			rm "$script_dir/status/errors/removed_dotfiles"
@@ -336,17 +348,22 @@ if [ ! -f "$script_dir/status/fonts_installed" ]; then
 	errors=0
 	echo
 	echo "Downloading latest release of $patched_font_zip from GitHub..."
-	confirm_cmd "curl -L $(curl -L https://github.com/ryanoasis/nerd-fonts/releases/ | grep $patched_font_zip | head -n1 - | cut -d'"' -f2) -o $script_dir/tmp/$patched_font_zip"
+	patched_font_href="$(curl -L https://github.com/ryanoasis/nerd-fonts/releases/ | grep $patched_font_zip | head -n1 - | cut -d'"' -f2)"
+	confirm_cmd "curl -L $patched_font_href -o $script_dir/tmp/$patched_font_zip"
 	((errors += $?))
-	if [ ! -d "$HOME/fonts" ]; then
-		confirm_cmd "mkdir $HOME/fonts"
+	if [ ! -d "$HOME/Setup" ]; then
+		confirm_cmd "mkdir $HOME/Setup"
 		((errors += $?))
 	fi
-	confirm_cmd "unzip $script_dir/tmp/$patched_font_zip -d $HOME/fonts"
+	if [ ! -d "$HOME/Setup/fonts" ]; then
+		confirm_cmd "mkdir $HOME/Setup/fonts"
+		((errors += $?))
+	fi
+	confirm_cmd "unzip $script_dir/tmp/$patched_font_zip -d $HOME/Setup/fonts"
 	((errors += $?))
 	echo
 	echo 'Setting up links to detect fonts...'
-	confirm_cmd "ln -s $HOME/fonts $HOME/.local/share/fonts"
+	confirm_cmd "ln -s $HOME/Setup/fonts $HOME/.local/share/fonts"
 	((errors += $?))
 	confirm_cmd 'fc-cache -fv'
 	((errors += $?))
@@ -368,21 +385,21 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 	# Clone neovim-config from GitHub
 	echo
 	echo 'Setting up Neovim config (init.vim)...'
-	if [ ! -d "$HOME/dotfiles" ]; then
-		confirm_cmd "mkdir $HOME/dotfiles"
+	if [ ! -d "$HOME/Setup" ]; then
+		confirm_cmd "mkdir $HOME/Setup"
 		((errors += $?))
 	fi
-	if [ -d "$HOME/dotfiles/neovim-config" ]; then
+	if [ -d "$HOME/Setup/neovim-config" ]; then
 		echo 'Found old neovim-config directory, moving to make room for new neovim-config...'
-		if [ -d "$HOME/dotfiles/neovim-config-old" ]; then
+		if [ -d "$HOME/Setup/neovim-config-old" ]; then
 			echo 'Deleting old neovim-config backup to make new backup...'
-			confirm_cmd "rm -rf $HOME/dotfiles/neovim-config-old"
+			confirm_cmd "rm -rf $HOME/Setup/neovim-config-old"
 			((errors += $?))
 		fi
-		confirm_cmd "mv $HOME/dotfiles/neovim-config $HOME/dotfiles/neovim-config-old"
+		confirm_cmd "mv $HOME/Setup/neovim-config $HOME/Setup/neovim-config-old"
 		((errors += $?))
 	fi
-	confirm_cmd "git -C $HOME/dotfiles/ clone https://github.com/tedlava/neovim-config.git"
+	confirm_cmd "git -C $HOME/Setup/ clone https://github.com/tedlava/neovim-config.git"
 	((errors += $?))
 	if [ ! -d "$HOME/.config/nvim" ]; then
 		confirm_cmd "mkdir $HOME/.config/nvim"
@@ -395,11 +412,11 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 		confirm_cmd "mv $HOME/.config/nvim/init.vim $HOME/.config/nvim/init-old.vim"
 		((errors += $?))
 	fi
-	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/init.vim $HOME/.config/nvim/"
+	confirm_cmd "ln -s $HOME/Setup/neovim-config/init.vim $HOME/.config/nvim/"
 	((errors += $?))
-	confirm_cmd "sed -i 's/\(default_fontsize =\).*/\1 $patched_font_size/' $HOME/dotfiles/neovim-config/ginit.vim"
+	confirm_cmd "sed -i 's/\(default_fontsize =\).*/\1 $patched_font_size/' $HOME/Setup/neovim-config/ginit.vim"
 	((errors += $?))
-	confirm_cmd "sed -i 's/\(font =\).*/\1 \"$patched_font\"/' $HOME/dotfiles/neovim-config/ginit.vim"
+	confirm_cmd "sed -i 's/\(font =\).*/\1 \"$patched_font\"/' $HOME/Setup/neovim-config/ginit.vim"
 	((errors += $?))
 	if [ -L "$HOME/.config/nvim/ginit.vim" ]; then
 		confirm_cmd "rm $HOME/.config/nvim/ginit.vim"
@@ -408,7 +425,7 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 		confirm_cmd "mv $HOME/.config/nvim/ginit.vim $HOME/.config/nvim/ginit-old.vim"
 		((errors += $?))
 	fi
-	confirm_cmd "ln -s $HOME/dotfiles/neovim-config/ginit.vim $HOME/.config/nvim/"
+	confirm_cmd "ln -s $HOME/Setup/neovim-config/ginit.vim $HOME/.config/nvim/"
 	((errors += $?))
 	echo
 	echo 'Installing vim-plug into Neovim...'

@@ -55,6 +55,9 @@ function contains {
 if [ "$GRUB_CMDLINE_LINUX_DEFAULT" != 'quiet' ] && [ ! -f "$script_dir/status/basic-installation/grub_set_up" ]; then
 	errors=0
 	echo
+	echo 'Backup old grub config...'
+	confirm_cmd 'cp /etc/default/grub /etc/default/grub~'
+	echo
 	echo 'Setting up grub...'
 	confirm_cmd "sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT\"/' /etc/default/grub"
 	((errors += $?))
@@ -727,6 +730,29 @@ if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspa
 		sudo -u $SUDO_USER touch "$script_dir/status/move_workspace_indicator_script_added"
 	else
 		sudo -u $SUDO_USER touch "$script_dir/status/errors/move_workspace_indicator_script_added"
+	fi
+	echo
+fi
+
+
+# Setup nsswitch.conf for discovering network printers
+if [ ! -f "$script_dir/status/nsswitch_fixed" ]; then
+	errors=0
+	echo
+	echo 'Fix nsswitch bug to use network printers...'
+	echo
+	echo 'Backup old nsswitch.conf...'
+	confirm_cmd 'cp /etc/nsswitch.conf /etc/nsswitch.conf~'
+	((errors += $?))
+	confirm_cmd "sed -i 's/\[NOTFOUND=return\] //' /etc/nsswitch.conf"
+	((errors += $?))
+	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/nsswitch_fixed" ]; then
+			rm "$script_dir/status/errors/nsswitch_fixed"
+		fi
+		sudo -u $SUDO_USER touch "$script_dir/status/nsswitch_fixed"
+	else
+		sudo -u $SUDO_USER touch "$script_dir/status/errors/nsswitch_fixed"
 	fi
 	echo
 fi

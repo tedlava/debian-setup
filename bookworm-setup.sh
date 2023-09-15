@@ -854,10 +854,9 @@ echo '          - Set up Firefox Sync, customize toolbar, restore synced tabs, r
 echo '    - Set up Google Chrome:'
 echo '          - chrome://flags >> Preferred Ozone platform = Auto (uses Wayland, if present, X11 otherwise)'
 echo '    - Set up printers/scanners and test they are working'
-echo '          - For my networked HP laserjet, no additional drivers need to be installed'
-echo '          - Sometimes the printer needs to be modified in CUPS (http://localhost:631)'
-echo '          - For my printer, the dnssd network connection with the IPP Everywhere driver works best'
-echo '          - However, sometimes the print button is disabled until you do a "print preview"'
+echo '          - Sometimes, network printers needs to be modified in CUPS (http://localhost:631)'
+echo '          - For my printer, remove the autodetected one and re-add it as an HP JetDirect printer'
+echo '              with the address "ipp://PRINTERHOSTNAME/ipp" using the IPP Everywhere driver'
 echo '          - For my scanner, pick the "eSCL" version of the detected scanner'
 echo
 echo

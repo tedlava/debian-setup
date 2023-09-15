@@ -735,29 +735,6 @@ if [ -n "$move_workspace_indicator" ] && [ ! -f "$script_dir/status/move_workspa
 fi
 
 
-# Setup nsswitch.conf for discovering network printers
-if [ ! -f "$script_dir/status/nsswitch_fixed" ]; then
-	errors=0
-	echo
-	echo 'Fix nsswitch bug to use network printers...'
-	echo
-	echo 'Backup old nsswitch.conf...'
-	confirm_cmd 'cp /etc/nsswitch.conf /etc/nsswitch.conf~'
-	((errors += $?))
-	confirm_cmd "sed -i 's/\[NOTFOUND=return\] //' /etc/nsswitch.conf"
-	((errors += $?))
-	if [ "$errors" -eq 0 ]; then
-		if [ -f "$script_dir/status/errors/nsswitch_fixed" ]; then
-			rm "$script_dir/status/errors/nsswitch_fixed"
-		fi
-		sudo -u $SUDO_USER touch "$script_dir/status/nsswitch_fixed"
-	else
-		sudo -u $SUDO_USER touch "$script_dir/status/errors/nsswitch_fixed"
-	fi
-	echo
-fi
-
-
 # Use exit code 93 if reboot flag variable is 1; Debian was created in 1993!
 if [ "$reboot" == '1' ]; then
 	exit 93

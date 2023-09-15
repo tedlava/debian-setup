@@ -505,7 +505,10 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/rust_removed" ]; t
 		errors=0
 		echo
 		echo 'Installing NeovimGtk from the latest source code release on GitHub...'
-		confirm_cmd "sudo -u $SUDO_USER curl -L https://github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/tmp/nvim-gtk-source.zip"
+		# confirm_cmd "sudo -u $SUDO_USER curl -L https://github.com$(curl -s -L "$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)" | grep -o 'href=.*.zip' | cut -d'"' -f2) -o $script_dir/tmp/nvim-gtk-source.zip"
+		latest_version_page="$(curl -s -L https://github.com/Lyude/neovim-gtk/releases/latest | grep -o '"https://.*expanded_assets.*"' | cut -d'"' -f2)"
+		zip_relative_link="$(curl -s -L $latest_version_page | grep -o 'href=.*.zip' | cut -d'"' -f2)"
+		confirm_cmd "sudo -u $SUDO_USER curl -L https://github.com$zip_relative_link -o $script_dir/tmp/nvim-gtk-source.zip"
 		((errors += $?))
 		confirm_cmd "sudo -u $SUDO_USER unzip -d $script_dir/tmp $script_dir/tmp/nvim-gtk-source.zip"
 		((errors += $?))

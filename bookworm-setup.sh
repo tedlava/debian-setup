@@ -836,6 +836,10 @@ echo '    - Set up Firefox:'
 echo '          - Set up Firefox Sync, customize toolbar, restore synced tabs, remove Bing, etc.'
 echo '    - Set up Google Chrome:'
 echo '          - chrome://flags >> Preferred Ozone platform = Auto (uses Wayland, if present, X11 otherwise)'
+echo '    - Set up printers/scanners and test they are working'
+echo '          - For my networked HP laserjet, no additional drivers need to be installed'
+echo '          - However, sometimes the print button is disabled until you do a "print preview"'
+echo '          - For my scanner, pick the "eSCL" version of the detected scanner'
 echo
 echo
 echo "Ted's Debian Setup Script has finished.  If you want to run it again, please"

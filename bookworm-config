@@ -13,7 +13,7 @@ rm_dotfiles=1 # Remove all old .dotfiles (from prior Linux distributions)
 GRUB_CMDLINE_LINUX_DEFAULT='quiet splash'
 #     Above setting is for /etc/default/grub, boot-time hardware parameters go there, separated by spaces
 #     "pci=noaer" to avoid errors on Toshiba
-#     "i915.enable_psr=0" for smoother mouse movement on Framework
+#     "i915.enable_psr=0" prevent screen flicker on Intel iGPU on Framework
 #     "module_blacklist=hid_sensor_hub" for brightness buttons on Framework
 extra_repos=1 # Add contrib and non-free to sources.list
 ssd=1 # Comment if installed to a spinning HDD

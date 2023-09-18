@@ -363,6 +363,10 @@ if [ ! -f "$script_dir/status/fonts_installed" ]; then
 	((errors += $?))
 	echo
 	echo 'Setting up links to detect fonts...'
+	if [ -L "$HOME/.local/share/fonts" ]; then
+		echo 'Remove old symbolic link to prevent recursive links...'
+		confirm_cmd "rm $HOME/.local/share/fonts"
+	fi
 	confirm_cmd "ln -s $HOME/Setup/fonts $HOME/.local/share/fonts"
 	((errors += $?))
 	confirm_cmd 'fc-cache -fv'

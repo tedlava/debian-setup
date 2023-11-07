@@ -65,6 +65,12 @@ apt_installs=(
 	python3-venv
 	tree
 	ipython3
+	sqlite3
+	sqlitebrowser
+	# mariadb-server
+	# postgresql
+	# docker.io
+	# docker-compose
 	
 	# Apps
 	vlc # VLC can fix subtitle/audio timing, step frame-by-frame, and play more video formats. It's the goodest!!
@@ -103,6 +109,7 @@ gnome_extensions=(
 	# https://extensions.gnome.org/extension/120/system-monitor/ # Not updated for bookworm yet...
 	https://extensions.gnome.org/extension/2890/tray-icons-reloaded/
 	https://extensions.gnome.org/extension/21/workspace-indicator/ # Pre-installed, but needs code adjustment for my preferred positioning on the top bar, so I'm downloading it instead
+	https://extensions.gnome.org/extension/36/lock-keys/
 	# https://extensions.gnome.org/extension/1319/gsconnect/
 	#     GSConnect is kinda cool, but some of the functionality does not work fully.
 	#     The gufw (firewall) instructions will show extra steps if gsconnect is uncommented.

@@ -27,7 +27,6 @@ org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
 org.gnome.desktop.interface clock-show-date true
 org.gnome.desktop.interface clock-show-weekday true
 org.gnome.desktop.interface clock-show-seconds true
-org.gnome.desktop.interface enable-hot-corners false
 org.gnome.desktop.interface show-battery-percentage true
 org.gnome.desktop.sound event-sounds false
 org.gnome.desktop.sound allow-volume-above-100-percent true

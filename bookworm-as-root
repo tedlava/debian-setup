@@ -517,19 +517,6 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/rust_removed" ]; t
 		((errors += $?))
 		confirm_cmd "make -C $script_dir/tmp/neovim-gtk-* install"
 		((errors += $?))
-		if [ ! -d '/root/.config' ]; then
-			confirm_cmd 'mkdir /root/.config'
-			((errors += $?))
-		fi
-		if [ ! -d '/root/.config/nvim' ]; then
-			confirm_cmd 'mkdir /root/.config/nvim'
-			((errors += $?))
-		fi
-		echo
-		echo 'Add very basic init.vim configuration for root...'
-
-		confirm_cmd 'echo -e "set number\\nset mouse=a\\nset clipboard=unnamedplus\\nset background=dark\\nhi Comment cterm=italic\\nset termguicolors\\ncolorscheme darkblue" > /root/.config/nvim/init.vim'
-		((errors += $?))
 		echo
 		if [ "$errors" -eq 0 ] && [ ! -f "$script_dir/status/neovim_gtk_installed" ]; then
 			if [ -f "$script_dir/status/errors/neovim_gtk_installed" ]; then
@@ -558,6 +545,34 @@ if [ -n "$install_neovim_gtk" ] && [ ! -f "$script_dir/status/rust_removed" ]; t
 		else
 			sudo -u $SUDO_USER touch "$script_dir/status/errors/rust_removed"
 		fi
+	fi
+	echo
+fi
+
+
+# Setup basic init.vim for root, if installing Neovim
+if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/nvim_root_init" ]; then
+	errors=0
+	echo
+	echo 'Add very basic init.vim configuration for root...'
+	if [ ! -d '/root/.config' ]; then
+		confirm_cmd 'mkdir /root/.config'
+		((errors += $?))
+	fi
+	if [ ! -d '/root/.config/nvim' ]; then
+		confirm_cmd 'mkdir /root/.config/nvim'
+		((errors += $?))
+	fi
+	echo
+	confirm_cmd 'echo -e "set number\\nset mouse=a\\nset clipboard=unnamedplus\\nset background=dark\\nhi Comment cterm=italic\\nset termguicolors\\ncolorscheme darkblue" > /root/.config/nvim/init.vim'
+	((errors += $?))
+	if [ "$errors" -eq 0 ]; then
+		if [ -f "$script_dir/status/errors/nvim_root_init" ]; then
+			rm "$script_dir/status/errors/nvim_root_init"
+		fi
+		sudo -u $SUDO_USER touch "$script_dir/status/nvim_root_init"
+	else
+		sudo -u $SUDO_USER touch "$script_dir/status/errors/nvim_root_init"
 	fi
 	echo
 fi

@@ -8,8 +8,8 @@ name='Launch terminal'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1]
 binding='<Primary><Alt>n'
-command='nvim-gtk'
-name='Launch NeovimGtk'
+command='nvim-qt'
+name='Launch Neovim-Qt'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2]
 binding='<Super>c'

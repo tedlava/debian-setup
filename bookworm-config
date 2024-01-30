@@ -20,8 +20,6 @@ ssd=1 # Comment if installed to a spinning HDD
 gdm_inhibit_ac=1 # Inhibit suspend if on AC power but not logged (for servers with SSH access)
 user_inhibit_ac=1 # Inhibit suspend when logged in and plugged into AC power
 ignore_lid_switch=1 # Ignore suspend on closing lid tweak
-install_neovim_gtk=0 # No binary packages yet, will build from source! Not completely stable for
-                     # large file editing though, turning off by default...
 install_google_chrome=1 # The native .deb version is better than the Flatpak
 install_windscribe=1 # VPN with slick Linux GUI! Use my referral link (https://windscribe.com/yo/jltrv4cs) to get an extra GB when you sign up for a FREE account, total of 11GB free VPN data per month!  AND you can do their tweet4data program to get an extra 5GB per month too!!
 priv_firefox_launcher=1 # Add private window to context menu for Firefox-ESR launcher
@@ -37,7 +35,7 @@ remote_touchpad_port=16180 # Golden ratio port!  But you can use any port >= 102
 apt_purges=(
 	evolution
 	power-profiles-daemon # Gnome power profiles saves battery by just limiting your CPU all the time, TLP is smarter
-	totem # Thumbnailer is still broken and vlc is superior in every way
+	totem # Thumbnailer is still broken
 )
 
 
@@ -62,7 +60,7 @@ apt_installs=(
 	
 	# Developer packages
 	neovim
-	# libgtk-4-dev # Dependency for compiling neovim-gtk, comment out if not using neovim-gtk
+	neovim-qt
 	python3-venv
 	tree
 	ipython3
@@ -74,7 +72,8 @@ apt_installs=(
 	# docker-compose
 	
 	# Apps
-	vlc # VLC can fix subtitle/audio timing, step frame-by-frame, and play more video formats. It's the goodest!!
+	vlc
+	celluloid # Plays 4K video better than VLC!
 	gimp
 	gimp-data-extras
 	inkscape
@@ -84,7 +83,8 @@ apt_installs=(
 	audacity
 	# kdenlive # Beware the KDE dependencies!
 	# krita # Beware the KDE dependencies!
-	wine # Will add i386 architecture to apt for playing Win32 games
+	lutris
+	wine # Will add i386 architecture to apt for playing Win32 games, required to find steam
 	steam
 )
 
@@ -103,14 +103,14 @@ gnome_extensions=(
 	# URLs for Gnome extensions to download, install, and enable
 	https://extensions.gnome.org/extension/517/caffeine/
 	https://extensions.gnome.org/extension/779/clipboard-indicator/
+	https://extensions.gnome.org/extension/307/dash-to-dock/
 	https://extensions.gnome.org/extension/4651/notification-banner-reloaded/
 	https://extensions.gnome.org/extension/72/recent-items/
 	https://extensions.gnome.org/extension/355/status-area-horizontal-spacing/
 	https://extensions.gnome.org/extension/3010/system-monitor-next/
-	# https://extensions.gnome.org/extension/120/system-monitor/ # Not updated for bookworm yet...
 	https://extensions.gnome.org/extension/2890/tray-icons-reloaded/
 	https://extensions.gnome.org/extension/21/workspace-indicator/ # Pre-installed, but needs code adjustment for my preferred positioning on the top bar, so I'm downloading it instead
-	https://extensions.gnome.org/extension/36/lock-keys/
+	# https://extensions.gnome.org/extension/36/lock-keys/
 	# https://extensions.gnome.org/extension/1319/gsconnect/
 	#     GSConnect is kinda cool, but some of the functionality does not work fully.
 	#     The gufw (firewall) instructions will show extra steps if gsconnect is uncommented.

@@ -456,7 +456,7 @@ if [ -n "$(contains apt_installs neovim)" ] && [ ! -f "$script_dir/status/neovim
 fi
 
 
-# Load default applications mime types (double-click in Nautilus opens with your preferred apps); my default uses NeovimGtk to open all text files and VLC for videos
+# Load default applications mime types (double-click in Nautilus opens with your preferred apps)
 if [ ! -f "$script_dir/status/changed_default_apps" ]; then
 	errors=0
 	echo

@@ -29,12 +29,11 @@ patched_font='Hack Nerd Font' # Because only 1337 hax0rz use a font called Hack
 patched_font_size=9
 move_system_monitor=1 # Move Gnome extension system-monitor to the right of all indicators (against screen edge)
 move_workspace_indicator=1 # Move Gnome extension workspace-indicator to the left panel box (just to the left of the app menu)
-remote_touchpad_port=16180 # Golden ratio port!  But you can use any port >= 1024 and <= 65535
+# remote_touchpad_port=16180 # Golden ratio port!  But you can use any port >= 1024 and <= 65535
 
 
 apt_purges=(
 	evolution
-	power-profiles-daemon # Gnome power profiles saves battery by just limiting your CPU all the time, TLP is smarter
 	totem # Thumbnailer is still broken
 )
 
@@ -47,8 +46,6 @@ apt_installs=(
 	# nvidia-tesla-470-driver # For older NVIDIA cards
 	# nvidia-tesla-470-driver-libs:i386 # For playing Windows games with wine and NVIDIA cards
 	libnotify-bin # Dependency for move-system-monitor and move-workspace-indicator scripts
-	tlp # Smarter power management and better battery life than power-profiles-daemon
-	tlp-rdw
 	ffmpegthumbnailer # totem-video-thumbnailer is still broken in Debian 12
 	flatpak
 	gnome-software-plugin-flatpak
@@ -56,7 +53,7 @@ apt_installs=(
 	gufw
 	gir1.2-gtop-2.0 # Required for the system-monitor Gnome extension
 	# libdvd-pkg # Uncomment to watch DVD movies with an internal/external DVD drive
-	nautilus-dropbox # Be careful how many computers you have connected to the same account
+	# nautilus-dropbox # Be careful how many computers you have connected to the same account
 	
 	# Developer packages
 	neovim
@@ -67,12 +64,13 @@ apt_installs=(
 	sqlite3
 	sqlitebrowser
 	# mariadb-server
+	# libmariadb-dev # To connect Django to MariaDB
 	# postgresql
 	# docker.io
 	# docker-compose
 	
 	# Apps
-	vlc
+	# vlc
 	celluloid # Plays 4K video better than VLC!
 	gimp
 	gimp-data-extras
@@ -95,7 +93,7 @@ flatpaks=(
 	org.libretro.RetroArch
 	com.stepmania.StepMania # DDR uses vim arrows! Just another reason why vim > emacs
 	com.github.iwalton3.jellyfin-media-player
-	com.github.unrud.RemoteTouchpad
+	# com.github.unrud.RemoteTouchpad # Remote control for your laptop when it's hooked up to a TV
 )
 
 
@@ -109,8 +107,8 @@ gnome_extensions=(
 	https://extensions.gnome.org/extension/355/status-area-horizontal-spacing/
 	https://extensions.gnome.org/extension/3010/system-monitor-next/
 	https://extensions.gnome.org/extension/2890/tray-icons-reloaded/
+	https://extensions.gnome.org/extension/36/lock-keys/ # I prefer to look at my screen, not at my keyboard, to see if there's a keyboard lock left on...
 	https://extensions.gnome.org/extension/21/workspace-indicator/ # Pre-installed, but needs code adjustment for my preferred positioning on the top bar, so I'm downloading it instead
-	# https://extensions.gnome.org/extension/36/lock-keys/
 	# https://extensions.gnome.org/extension/1319/gsconnect/
 	#     GSConnect is kinda cool, but some of the functionality does not work fully.
 	#     The gufw (firewall) instructions will show extra steps if gsconnect is uncommented.

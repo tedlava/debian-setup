@@ -1,5 +1,10 @@
 #!/usr/bin/bash
 
+# TODO For btrfs and timeshift snapshots, need to either create /var/lib/docker
+# as a subvolume (since docker uses btrfs subvolumes if it detects btrfs) OR
+# create /var as a subvolume, since systemd also creates btrfs subvolumes under
+# /var/lib/portables and /var/lib/machines, that mess up snapshot deletion with
+# timeshift
 
 delims="${0//[^\/]}"
 len=$((${#delims}+1))
